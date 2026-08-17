@@ -209,11 +209,16 @@ Implemented semantics:
 - sequence must increase;
 - baseball bat: 15 damage, 54 range, 8-tick cooldown;
 - pistol: 20 damage, 260 range, 5-tick cooldown;
-- each pistol attack consumes one `pistol_ammo` item instance, including a valid miss;
+- pistol has a server-owned six-round magazine stored on the pistol item instance;
+- `INPUT_RELOAD` (`5`) contains `weapon_slot` and increasing `sequence`; a successful reload consumes loose `pistol_ammo` instances up to magazine capacity;
+- `RELOAD_EVENT` (`24`) returns the pistol's authoritative post-mutation slot because removing loose ammo can compact inventory slots;
+- each accepted pistol attack consumes one magazine round, including a valid miss;
+- an empty magazine rejects the attack and does not emit `ATTACK_EVENT` (`23`);
+- accepted melee/pistol attacks emit `ATTACK_EVENT`, which clients use for presentation; client input alone never starts an authoritative-looking attack effect;
 - hit selection uses authoritative player/zombie positions and an aim cone;
 - `DAMAGE_EVENT` (`20`) reports the applied result; `DEATH_EVENT` (`21`) and `RESPAWN_EVENT` (`22`) report lifecycle transitions.
 
-Zombie attacks can now reduce player HP to zero. A dead player cannot move, attack or mutate inventory, drops every inventory instance at the death position, and respawns after 45 ticks (3 seconds) with 100 HP at its server-owned spawn. Dead zombies respawn after 75 ticks (5 seconds).
+Zombie attacks can now reduce player HP to zero. A dead player cannot move, attack, reload or mutate inventory, drops every inventory instance at the death position, and respawns after 45 ticks (3 seconds) with 100 HP at its server-owned spawn. The world contains three fixed zombies; dead zombies remain dead and are not replaced.
 
 ## 9. Errors
 

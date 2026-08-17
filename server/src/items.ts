@@ -4,7 +4,7 @@ import { movementPayloadText } from "./movement";
 
 export const ITEM_DEFINITIONS = definitions;
 
-export interface ItemInstance { id: string; definitionId: keyof typeof definitions; }
+export interface ItemInstance { id: string; definitionId: keyof typeof definitions; magazineAmmo?: number; }
 export interface WorldItem extends ItemInstance { x: number; y: number; }
 export interface Container { id: string; x: number; y: number; version: number; items: ItemInstance[]; }
 export interface ItemPlayer { id: string; x: number; y: number; inventory: ItemInstance[]; }
@@ -18,7 +18,7 @@ export function createItemState(): ItemState {
       "item:world-bandage": { id: "item:world-bandage", definitionId: "bandage", x: 640, y: 360 },
       "item:world-water": { id: "item:world-water", definitionId: "water_bottle", x: 690, y: 360 },
       "item:world-bat": { id: "item:world-bat", definitionId: "baseball_bat", x: 575, y: 360 },
-      "item:world-pistol": { id: "item:world-pistol", definitionId: "pistol", x: 590, y: 360 },
+      "item:world-pistol": { id: "item:world-pistol", definitionId: "pistol", magazineAmmo: 0, x: 590, y: 360 },
       "item:world-ammo-1": { id: "item:world-ammo-1", definitionId: "pistol_ammo", x: 605, y: 360 },
       "item:world-ammo-2": { id: "item:world-ammo-2", definitionId: "pistol_ammo", x: 620, y: 360 },
       "item:world-ammo-3": { id: "item:world-ammo-3", definitionId: "pistol_ammo", x: 635, y: 360 },

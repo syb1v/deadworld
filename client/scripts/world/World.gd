@@ -17,6 +17,9 @@ const ERROR_NAMES := {
 	"STALE_CONTAINER_VERSION": "Содержимое контейнера изменилось",
 	"WEAPON_NOT_OWNED": "В выбранном слоте нет оружия",
 	"NO_AMMO": "Нет патронов",
+	"MAGAZINE_EMPTY": "Магазин пуст. Нажмите R для перезарядки",
+	"MAGAZINE_FULL": "Магазин уже полон",
+	"PISTOL_NOT_SELECTED": "Для перезарядки выберите пистолет",
 	"ATTACK_COOLDOWN": "Оружие ещё не готово",
 	"PLAYER_DEAD": "Мёртвый игрок не может действовать"
 }
@@ -37,6 +40,8 @@ func _ready() -> void:
 	Network.snapshot_received.connect(_on_snapshot)
 	Network.inventory_received.connect(_on_inventory)
 	Network.damage_received.connect(_on_damage)
+	Network.attack_confirmed.connect(_on_attack_confirmed)
+	Network.reload_confirmed.connect(_on_reload_confirmed)
 	Network.server_error.connect(func(code: String): $HUD/Status.text = ERROR_NAMES.get(code, "Действие отклонено: %s" % code))
 	$Menus/MainMenu/Play.pressed.connect(_start_game)
 	$Menus/MainMenu/Quit.pressed.connect(func(): get_tree().quit())
@@ -64,6 +69,8 @@ func _process(delta: float) -> void:
 		_interact()
 	if Input.is_action_just_pressed("drop_item") and selected_slot < inventory.size():
 		Network.drop(inventory[selected_slot].id)
+	if Input.is_action_just_pressed("reload"):
+		Network.reload(selected_slot)
 	for slot in range(8):
 		if Input.is_key_pressed(KEY_1 + slot) and selected_slot != slot:
 			selected_slot = slot
@@ -74,7 +81,6 @@ func _process(delta: float) -> void:
 		if local_player != null and selected_slot < inventory.size():
 			var aim: Vector2 = local_player.get_global_mouse_position() - local_player.global_position
 			Network.attack(selected_slot, aim)
-			_show_attack(local_player.position, aim, inventory[selected_slot].definitionId == "baseball_bat")
 
 func _on_snapshot(snapshot: Dictionary) -> void:
 	var seen := {}
@@ -107,6 +113,8 @@ func _on_snapshot(snapshot: Dictionary) -> void:
 		if not seen_zombies.has(id):
 			zombies[id].queue_free()
 			zombies.erase(id)
+	var zombie_states: Array = snapshot.get("zombies", [])
+	$HUD/ZombieCount.text = "Зомби: живы %d / всего %d" % [zombie_states.filter(func(zombie): return zombie.hp > 0).size(), zombie_states.size()]
 	world_version = snapshot.get("world_version", world_version)
 	_sync_world_items(snapshot.get("world_items", []))
 	_sync_containers(snapshot.get("containers", []))
@@ -140,7 +148,11 @@ func _on_inventory(items: Array) -> void:
 func _update_inventory_label() -> void:
 	var lines: Array[String] = []
 	for index in range(inventory.size()):
-		lines.append("%s%d. %s" % ["> " if index == selected_slot else "  ", index + 1, _item_name(inventory[index].definitionId)])
+		var item = inventory[index]
+		var ammo := " [%d/6]" % int(item.get("magazineAmmo", 0)) if item.definitionId == "pistol" else ""
+		lines.append("%s%d. %s%s" % ["> " if index == selected_slot else "  ", index + 1, _item_name(item.definitionId), ammo])
+	var reserve := inventory.filter(func(item): return item.definitionId == "pistol_ammo").size()
+	lines.append("Запас патронов: %d" % reserve)
 	$HUD/Inventory.text = "Инвентарь (%d/8), слот %d\n%s" % [inventory.size(), selected_slot + 1, "\n".join(lines) if not lines.is_empty() else "Пусто"]
 
 func _interact() -> void:
@@ -169,7 +181,7 @@ func _draw_grid() -> void:
 		line.width = 1.0; $Grid.add_child(line)
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed and not event.echo:
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 		mouse_attack_requested = true
 
 func _start_game() -> void:
@@ -200,6 +212,18 @@ func _show_attack(origin: Vector2, aim: Vector2, melee: bool) -> void:
 	$Effects.add_child(effect)
 	var distance := 50.0 if melee else 260.0
 	effect.setup(origin, origin + aim.normalized() * distance, melee)
+
+func _on_attack_confirmed(event: Dictionary) -> void:
+	var player = players.get(event.get("player_id", ""))
+	if player == null:
+		return
+	_show_attack(player.position, Vector2(event.get("aim_x", 0.0), event.get("aim_y", 0.0)), event.get("weapon", "") == "baseball_bat")
+
+func _on_reload_confirmed(event: Dictionary) -> void:
+	if event.get("player_id", "") == Network.player_id:
+		selected_slot = int(event.get("weapon_slot", selected_slot))
+		_update_inventory_label()
+		$HUD/Status.text = "Перезаряжено: %d, в магазине: %d/6" % [event.get("loaded", 0), event.get("magazine_ammo", 0)]
 
 func _on_damage(event: Dictionary) -> void:
 	var target_id: String = event.get("target_id", "")

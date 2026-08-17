@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createZombies, simulateZombie, Zombie, ZombieTarget } from "../src/zombies";
+import { createZombies, separateZombies, simulateZombie, Zombie, ZombieTarget } from "../src/zombies";
 
-const zombie = (): Zombie => ({ id: "zombie:test", x: 0, y: 0, vx: 0, vy: 0, hp: 30, state: "IDLE", targetId: "", nextAttackTick: 0, spawnX: 0, spawnY: 0, respawnAtTick: 0 });
+const zombie = (): Zombie => ({ id: "zombie:test", x: 0, y: 0, vx: 0, vy: 0, hp: 30, state: "IDLE", targetId: "", nextAttackTick: 0, spawnX: 0, spawnY: 0 });
 const player = (id: string, x: number): ZombieTarget => ({ id, x, y: 0, health: 100 });
 
 test("creates stable world zombie IDs", () => {
@@ -58,4 +58,13 @@ test("synchronizes terminal dead state from authoritative HP", () => {
   subject.hp = 0;
   simulateZombie(subject, [player("player:near", 10)], 1, 1 / 15);
   assert.deepEqual({ hp: subject.hp, state: subject.state, target: subject.targetId }, { hp: 0, state: "DEAD", target: "" });
+});
+
+test("separates overlapping living zombies without spawning new ones", () => {
+  const left = zombie(); left.id = "zombie:left";
+  const right = zombie(); right.id = "zombie:right";
+  const zombies = { [left.id]: left, [right.id]: right };
+  separateZombies(zombies);
+  assert.equal(Object.keys(zombies).length, 2);
+  assert.ok(Math.hypot(left.x - right.x, left.y - right.y) >= 30);
 });

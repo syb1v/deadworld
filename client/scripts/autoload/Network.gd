@@ -5,11 +5,16 @@ signal snapshot_received(snapshot: Dictionary)
 signal inventory_received(items: Array)
 signal server_error(code: String)
 signal damage_received(event: Dictionary)
+signal attack_confirmed(event: Dictionary)
+signal reload_confirmed(event: Dictionary)
 
 const INPUT_MOVE := 1
 const INPUT_ATTACK := 3
+const INPUT_RELOAD := 5
 const PLAYER_SNAPSHOT := 10
 const DAMAGE_EVENT := 20
+const ATTACK_EVENT := 23
+const RELOAD_EVENT := 24
 const ITEM_PICKUP := 30
 const ITEM_DROP := 31
 const INVENTORY_SNAPSHOT := 33
@@ -25,6 +30,7 @@ var match_id := ""
 var player_id := ""
 var sequence := 0
 var attack_sequence := 0
+var reload_sequence := 0
 var reconnecting := false
 
 func connect_to_world() -> void:
@@ -74,6 +80,10 @@ func attack(weapon_slot: int, aim: Vector2) -> void:
 	attack_sequence += 1
 	_send_intention(INPUT_ATTACK, {"weapon_slot": weapon_slot, "aim_x": aim.x, "aim_y": aim.y, "sequence": attack_sequence})
 
+func reload(weapon_slot: int) -> void:
+	reload_sequence += 1
+	_send_intention(INPUT_RELOAD, {"weapon_slot": weapon_slot, "sequence": reload_sequence})
+
 func take_from_container(container_id: String, item_id: String, version: int) -> void:
 	_send_intention(CONTAINER_MUTATE, {"container_id": container_id, "item_instance_id": item_id, "expected_version": version, "operation": "take"})
 
@@ -91,6 +101,10 @@ func _on_match_state(state) -> void:
 		inventory_received.emit(snapshot.get("items", []))
 	elif state.op_code == DAMAGE_EVENT:
 		damage_received.emit(snapshot)
+	elif state.op_code == ATTACK_EVENT:
+		attack_confirmed.emit(snapshot)
+	elif state.op_code == RELOAD_EVENT:
+		reload_confirmed.emit(snapshot)
 	elif state.op_code == ERROR_EVENT:
 		server_error.emit(snapshot.get("code", "UNKNOWN_ERROR"))
 

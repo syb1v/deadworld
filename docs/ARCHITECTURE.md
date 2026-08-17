@@ -302,10 +302,11 @@ Post-MVP:
 
 - Client attack messages contain only inventory slot, aim and increasing sequence; target, hit and damage are server decisions.
 - The server validates alive state, weapon ownership, cooldown, ammo, range and aim against authoritative positions.
-- Ammo is represented by owned item instances and is removed only by the server.
+- Loose ammo is represented by owned item instances. Reload transfers those instances into a six-round magazine value on the server-owned pistol instance.
 - Zombie and player HP transitions happen in the match loop. A zero-HP entity cannot act or be selected as a living target.
 - Player death atomically moves all inventory instances to world state, increments `world_version`, stops movement and schedules respawn.
 - Player respawn restores 100 HP and a server-owned spawn position after 3 seconds; it does not restore dropped inventory.
-- Dead zombies remain shared `DEAD` state and respawn at their original server spawn after 5 seconds.
+- The world contains three fixed zombies. Dead zombies remain shared `DEAD` state and are not respawned, so the population is finite and visible in the HUD.
+- Living zombies receive deterministic server-side pair separation after movement, preventing identical positions without client physics authority.
 - Combat/death state remains match-lifetime state until Day 5 persistence.
 - Match-lifetime player state is keyed by stable Nakama user ID; reconnect only replaces presence and preserves HP, position, cooldown, death deadline and inventory. A second simultaneous presence for the same user is rejected.
