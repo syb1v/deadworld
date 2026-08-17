@@ -31,12 +31,23 @@ async function main() {
   const snapshot = b.snapshots[b.snapshots.length - 1];
   const player = snapshot?.players.find((p: any) => p.id === `player:${a.session.user_id}`);
   if (!player || Math.hypot(player.vx, player.vy) > 180.001) throw new Error("authoritative speed validation failed");
+  const zombiesA = a.snapshots[a.snapshots.length - 1]?.zombies;
+  const zombiesB = b.snapshots[b.snapshots.length - 1]?.zombies;
+  if (!zombiesA || JSON.stringify(zombiesA) !== JSON.stringify(zombiesB)) throw new Error("clients did not receive identical zombie state");
+  if (!zombiesA.some((zombie: any) => zombie.target_id === `player:${a.session.user_id}` || zombie.target_id === `player:${b.session.user_id}`)) throw new Error("server did not select a zombie target");
+  if (!zombiesA.some((zombie: any) => zombie.state === "DEAD" && zombie.hp === 0)) throw new Error("dead zombie state was not synchronized");
   await a.socket.disconnect(false);
   await wait(500);
   const afterLeave = b.snapshots[b.snapshots.length - 1];
   if (afterLeave.players.some((p: any) => p.id === `player:${a.session.user_id}`)) throw new Error("disconnect cleanup failed");
+  const reconnect = await connect(`deadworld-integration-reconnect-${Date.now()}`);
+  reconnect.socket.onmatchdata = (data) => { if (data.op_code === 10) reconnect.snapshots.push(JSON.parse(new TextDecoder().decode(data.data))); };
+  await wait(300);
+  const reconnectZombies = reconnect.snapshots[reconnect.snapshots.length - 1]?.zombies;
+  if (!reconnectZombies || reconnectZombies.length !== zombiesB.length) throw new Error("reconnect did not restore zombie state");
+  await reconnect.socket.disconnect(false);
   await b.socket.disconnect(false);
-  console.log(JSON.stringify({ auth: true, socket: true, shared_world: true, unique_players: true, speed_validation: true, disconnect_cleanup: true }));
+  console.log(JSON.stringify({ auth: true, socket: true, shared_world: true, unique_players: true, speed_validation: true, disconnect_cleanup: true, shared_zombies: true, server_targeting: true, dead_state_sync: true, reconnect_zombies: true }));
 }
 
 main().catch((error) => { console.error(error); process.exit(1); });

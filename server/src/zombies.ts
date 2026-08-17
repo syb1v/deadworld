@@ -1,0 +1,107 @@
+import {
+  ZOMBIE_ATTACK_COOLDOWN_TICKS,
+  ZOMBIE_ATTACK_DAMAGE,
+  ZOMBIE_ATTACK_RANGE,
+  ZOMBIE_DETECTION_RANGE,
+  ZOMBIE_SPEED
+} from "./protocol";
+
+export type ZombieMode = "IDLE" | "CHASE" | "ATTACK" | "DEAD";
+
+export interface ZombieTarget {
+  id: string;
+  x: number;
+  y: number;
+  health: number;
+}
+
+export interface Zombie {
+  id: string;
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  hp: number;
+  state: ZombieMode;
+  targetId: string;
+  nextAttackTick: number;
+}
+
+export function createZombies(): Record<string, Zombie> {
+  const spawns = [[420, 360], [820, 260], [760, 520]];
+  const zombies: Record<string, Zombie> = {};
+  for (let index = 0; index < spawns.length; index += 1) {
+    const id = `zombie:main-${index + 1}`;
+    zombies[id] = { id, x: spawns[index][0], y: spawns[index][1], vx: 0, vy: 0, hp: 30, state: "IDLE", targetId: "", nextAttackTick: 0 };
+  }
+  // A corpse fixture proves DEAD replication before player combat exists on Day 4.
+  zombies["zombie:main-3"].hp = 0;
+  zombies["zombie:main-3"].state = "DEAD";
+  return zombies;
+}
+
+export function simulateZombie(zombie: Zombie, players: ZombieTarget[], tick: number, dt: number): void {
+  if (zombie.hp <= 0) {
+    zombie.hp = 0;
+    zombie.vx = 0;
+    zombie.vy = 0;
+    zombie.state = "DEAD";
+    zombie.targetId = "";
+    return;
+  }
+
+  const target = nearestLivingPlayer(zombie, players);
+  if (!target) {
+    zombie.vx = 0;
+    zombie.vy = 0;
+    zombie.state = "IDLE";
+    zombie.targetId = "";
+    return;
+  }
+
+  const dx = target.x - zombie.x;
+  const dy = target.y - zombie.y;
+  const distance = Math.sqrt(dx * dx + dy * dy);
+  if (distance > ZOMBIE_DETECTION_RANGE) {
+    zombie.vx = 0;
+    zombie.vy = 0;
+    zombie.state = "IDLE";
+    zombie.targetId = "";
+    return;
+  }
+
+  zombie.targetId = target.id;
+  if (distance <= ZOMBIE_ATTACK_RANGE) {
+    zombie.vx = 0;
+    zombie.vy = 0;
+    zombie.state = "ATTACK";
+    if (tick >= zombie.nextAttackTick) {
+      target.health = Math.max(0, target.health - ZOMBIE_ATTACK_DAMAGE);
+      zombie.nextAttackTick = tick + ZOMBIE_ATTACK_COOLDOWN_TICKS;
+    }
+    return;
+  }
+
+  zombie.state = "CHASE";
+  zombie.vx = dx / distance * ZOMBIE_SPEED;
+  zombie.vy = dy / distance * ZOMBIE_SPEED;
+  const step = Math.min(distance - ZOMBIE_ATTACK_RANGE, ZOMBIE_SPEED * dt);
+  zombie.x += dx / distance * step;
+  zombie.y += dy / distance * step;
+}
+
+function nearestLivingPlayer(zombie: Zombie, players: ZombieTarget[]): ZombieTarget | null {
+  let nearest: ZombieTarget | null = null;
+  let nearestDistanceSquared = Number.POSITIVE_INFINITY;
+  for (const player of players) {
+    if (player.health <= 0) continue;
+    const dx = player.x - zombie.x;
+    const dy = player.y - zombie.y;
+    const distanceSquared = dx * dx + dy * dy;
+    if (distanceSquared < nearestDistanceSquared || (distanceSquared === nearestDistanceSquared && player.id < (nearest?.id || ""))) {
+      nearest = player;
+      nearestDistanceSquared = distanceSquared;
+    }
+  }
+  return nearest;
+}

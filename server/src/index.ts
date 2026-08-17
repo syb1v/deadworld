@@ -1,22 +1,24 @@
 import { INPUT_MOVE, MAX_INPUTS_PER_SECOND, PLAYER_SNAPSHOT, PLAYER_SPEED, PROTOCOL_VERSION, TICK_RATE } from "./protocol";
 import { parseMoveInput } from "./movement";
+import { createZombies, simulateZombie, Zombie } from "./zombies";
 
 interface Player {
   id: string; presence: nkruntime.Presence; x: number; y: number; vx: number; vy: number;
   inputX: number; inputY: number; lastSequence: number; rateWindow: number; rateCount: number;
+  health: number;
 }
-interface WorldState extends nkruntime.MatchState { players: Record<string, Player>; }
+interface WorldState extends nkruntime.MatchState { players: Record<string, Player>; zombies: Record<string, Zombie>; }
 
 export const worldMatch: nkruntime.MatchHandler = {
   matchInit(_ctx, logger, _nk, _params) {
     logger.info(JSON.stringify({ event: "world_created", protocol: PROTOCOL_VERSION }));
-    return { state: { players: {} } as WorldState, tickRate: TICK_RATE, label: JSON.stringify({ world: "main", protocol: PROTOCOL_VERSION }) };
+    return { state: { players: {}, zombies: createZombies() } as WorldState, tickRate: TICK_RATE, label: JSON.stringify({ world: "main", protocol: PROTOCOL_VERSION }) };
   },
   matchJoinAttempt(_ctx, _logger, _nk, _dispatcher, _tick, state) { return { state, accept: true }; },
   matchJoin(_ctx, logger, _nk, dispatcher, _tick, rawState, presences) {
     const state = rawState as WorldState;
     for (const presence of presences) {
-      state.players[presence.sessionId] = { id: `player:${presence.userId}`, presence, x: 640, y: 360, vx: 0, vy: 0, inputX: 0, inputY: 0, lastSequence: -1, rateWindow: 0, rateCount: 0 };
+      state.players[presence.sessionId] = { id: `player:${presence.userId}`, presence, x: 640, y: 360, vx: 0, vy: 0, inputX: 0, inputY: 0, lastSequence: -1, rateWindow: 0, rateCount: 0, health: 100 };
       logger.info(JSON.stringify({ event: "player_join", player_id: `player:${presence.userId}` }));
     }
     dispatcher.matchLabelUpdate(JSON.stringify({ world: "main", protocol: PROTOCOL_VERSION, players: Object.keys(state.players).length }));
@@ -53,9 +55,15 @@ export const worldMatch: nkruntime.MatchHandler = {
       const player = state.players[sessionId];
       player.vx = player.inputX * PLAYER_SPEED; player.vy = player.inputY * PLAYER_SPEED;
       player.x += player.vx * dt; player.y += player.vy * dt;
-      return { id: player.id, x: player.x, y: player.y, vx: player.vx, vy: player.vy, state: player.vx || player.vy ? "move" : "idle" };
+      return { id: player.id, x: player.x, y: player.y, vx: player.vx, vy: player.vy, health: player.health, state: player.vx || player.vy ? "move" : "idle" };
     });
-    dispatcher.broadcastMessage(PLAYER_SNAPSHOT, JSON.stringify({ protocol: PROTOCOL_VERSION, tick, players }), null, null, false);
+    const targets = Object.keys(state.players).map((sessionId) => state.players[sessionId]);
+    for (const id of Object.keys(state.zombies)) simulateZombie(state.zombies[id], targets, tick, dt);
+    const zombies = Object.keys(state.zombies).sort().map((id) => {
+      const zombie = state.zombies[id];
+      return { id: zombie.id, x: zombie.x, y: zombie.y, vx: zombie.vx, vy: zombie.vy, hp: zombie.hp, state: zombie.state, target_id: zombie.targetId };
+    });
+    dispatcher.broadcastMessage(PLAYER_SNAPSHOT, JSON.stringify({ protocol: PROTOCOL_VERSION, tick, players, zombies }), null, null, false);
     return { state };
   },
   matchTerminate(_ctx, _logger, _nk, _dispatcher, _tick, state, _grace) { return { state }; },

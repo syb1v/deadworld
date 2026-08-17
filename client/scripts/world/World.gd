@@ -1,7 +1,9 @@
 extends Node2D
 
 const PlayerScript = preload("res://scripts/entities/Player.gd")
+const ZombieScript = preload("res://scripts/entities/Zombie.gd")
 var players: Dictionary = {}
+var zombies: Dictionary = {}
 var send_accumulator := 0.0
 
 func _ready() -> void:
@@ -32,6 +34,20 @@ func _on_snapshot(snapshot: Dictionary) -> void:
 		if not seen.has(id):
 			players[id].queue_free()
 			players.erase(id)
+	var seen_zombies := {}
+	for state in snapshot.get("zombies", []):
+		var id: String = state.id
+		seen_zombies[id] = true
+		if not zombies.has(id):
+			var zombie := Node2D.new()
+			zombie.set_script(ZombieScript)
+			$Zombies.add_child(zombie)
+			zombies[id] = zombie
+		zombies[id].apply_snapshot(state)
+	for id in zombies.keys():
+		if not seen_zombies.has(id):
+			zombies[id].queue_free()
+			zombies.erase(id)
 
 func _draw_grid() -> void:
 	for x in range(0, 1281, 64):
