@@ -20,7 +20,14 @@ export function createItemState(): ItemState {
       "item:world-bat": { id: "item:world-bat", definitionId: "baseball_bat", x: 575, y: 360 },
       "item:world-pistol": { id: "item:world-pistol", definitionId: "pistol", x: 590, y: 360 },
       "item:world-ammo-1": { id: "item:world-ammo-1", definitionId: "pistol_ammo", x: 605, y: 360 },
-      "item:world-ammo-2": { id: "item:world-ammo-2", definitionId: "pistol_ammo", x: 620, y: 360 }
+      "item:world-ammo-2": { id: "item:world-ammo-2", definitionId: "pistol_ammo", x: 620, y: 360 },
+      "item:world-ammo-3": { id: "item:world-ammo-3", definitionId: "pistol_ammo", x: 635, y: 360 },
+      "item:world-ammo-4": { id: "item:world-ammo-4", definitionId: "pistol_ammo", x: 650, y: 360 },
+      "item:world-ammo-5": { id: "item:world-ammo-5", definitionId: "pistol_ammo", x: 665, y: 360 },
+      "item:world-ammo-6": { id: "item:world-ammo-6", definitionId: "pistol_ammo", x: 680, y: 360 },
+      "item:world-ammo-7": { id: "item:world-ammo-7", definitionId: "pistol_ammo", x: 695, y: 360 },
+      "item:world-ammo-8": { id: "item:world-ammo-8", definitionId: "pistol_ammo", x: 710, y: 360 },
+      "item:world-bat-2": { id: "item:world-bat-2", definitionId: "baseball_bat", x: 705, y: 390 }
     },
     containers: {
       "container:clinic": {
