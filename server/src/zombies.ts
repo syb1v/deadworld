@@ -4,6 +4,7 @@ import {
   ZOMBIE_ATTACK_RANGE,
   ZOMBIE_ATTACK_RELEASE_RANGE,
   ZOMBIE_DETECTION_RANGE,
+  ZOMBIE_RESPAWN_TICKS,
   ZOMBIE_SPEED,
   ZOMBIE_TARGET_RELEASE_RANGE
 } from "./protocol";
@@ -27,6 +28,9 @@ export interface Zombie {
   state: ZombieMode;
   targetId: string;
   nextAttackTick: number;
+  spawnX: number;
+  spawnY: number;
+  respawnAtTick: number;
 }
 
 export function createZombies(): Record<string, Zombie> {
@@ -34,16 +38,17 @@ export function createZombies(): Record<string, Zombie> {
   const zombies: Record<string, Zombie> = {};
   for (let index = 0; index < spawns.length; index += 1) {
     const id = `zombie:main-${index + 1}`;
-    zombies[id] = { id, x: spawns[index][0], y: spawns[index][1], vx: 0, vy: 0, hp: 30, state: "IDLE", targetId: "", nextAttackTick: 0 };
+    zombies[id] = { id, x: spawns[index][0], y: spawns[index][1], vx: 0, vy: 0, hp: 30, state: "IDLE", targetId: "", nextAttackTick: 0, spawnX: spawns[index][0], spawnY: spawns[index][1], respawnAtTick: 0 };
   }
-  // A corpse fixture proves DEAD replication before player combat exists on Day 4.
-  zombies["zombie:main-3"].hp = 0;
-  zombies["zombie:main-3"].state = "DEAD";
   return zombies;
 }
 
 export function simulateZombie(zombie: Zombie, players: ZombieTarget[], tick: number, dt: number): void {
   if (zombie.hp <= 0) {
+    if (zombie.respawnAtTick > 0 && tick >= zombie.respawnAtTick) {
+      zombie.x = zombie.spawnX; zombie.y = zombie.spawnY; zombie.hp = 30; zombie.state = "IDLE"; zombie.respawnAtTick = 0;
+      return;
+    }
     zombie.hp = 0;
     zombie.vx = 0;
     zombie.vy = 0;
@@ -79,8 +84,7 @@ export function simulateZombie(zombie: Zombie, players: ZombieTarget[], tick: nu
     zombie.vy = 0;
     zombie.state = "ATTACK";
     if (tick >= zombie.nextAttackTick) {
-      // Player death/respawn is Day 4. Keep the target alive until that transition exists.
-      target.health = Math.max(1, target.health - ZOMBIE_ATTACK_DAMAGE);
+      target.health = Math.max(0, target.health - ZOMBIE_ATTACK_DAMAGE);
       zombie.nextAttackTick = tick + ZOMBIE_ATTACK_COOLDOWN_TICKS;
     }
     return;
@@ -92,6 +96,11 @@ export function simulateZombie(zombie: Zombie, players: ZombieTarget[], tick: nu
   const step = Math.min(distance - ZOMBIE_ATTACK_RANGE, ZOMBIE_SPEED * dt);
   zombie.x += dx / distance * step;
   zombie.y += dy / distance * step;
+}
+
+export function killZombie(zombie: Zombie, tick: number): void {
+  zombie.hp = 0; zombie.vx = 0; zombie.vy = 0; zombie.state = "DEAD"; zombie.targetId = "";
+  zombie.respawnAtTick = tick + ZOMBIE_RESPAWN_TICKS;
 }
 
 function selectTarget(zombie: Zombie, players: ZombieTarget[]): ZombieTarget | null {

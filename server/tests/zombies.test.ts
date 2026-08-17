@@ -2,13 +2,13 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { createZombies, simulateZombie, Zombie, ZombieTarget } from "../src/zombies";
 
-const zombie = (): Zombie => ({ id: "zombie:test", x: 0, y: 0, vx: 0, vy: 0, hp: 30, state: "IDLE", targetId: "", nextAttackTick: 0 });
+const zombie = (): Zombie => ({ id: "zombie:test", x: 0, y: 0, vx: 0, vy: 0, hp: 30, state: "IDLE", targetId: "", nextAttackTick: 0, spawnX: 0, spawnY: 0, respawnAtTick: 0 });
 const player = (id: string, x: number): ZombieTarget => ({ id, x, y: 0, health: 100 });
 
 test("creates stable world zombie IDs", () => {
   const zombies = createZombies();
   assert.deepEqual(Object.keys(zombies), ["zombie:main-1", "zombie:main-2", "zombie:main-3"]);
-  assert.deepEqual({ hp: zombies["zombie:main-3"].hp, state: zombies["zombie:main-3"].state }, { hp: 0, state: "DEAD" });
+  assert.ok(Object.values(zombies).every((entity) => entity.hp === 30 && entity.state === "IDLE"));
 });
 
 test("selects nearest player and chases server-side", () => {
@@ -46,13 +46,11 @@ test("uses hysteresis instead of flickering out of attack", () => {
   assert.equal(subject.state, "ATTACK");
 });
 
-test("does not lose its only target before Day 4 death exists", () => {
+test("kills its target with authoritative damage", () => {
   const subject = zombie();
   const target = player("player:near", 10);
   for (let tick = 0; tick < 400; tick += 15) simulateZombie(subject, [target], tick, 1 / 15);
-  assert.equal(target.health, 1);
-  assert.equal(subject.state, "ATTACK");
-  assert.equal(subject.targetId, target.id);
+  assert.equal(target.health, 0);
 });
 
 test("synchronizes terminal dead state from authoritative HP", () => {

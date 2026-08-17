@@ -16,7 +16,11 @@ export function createItemState(): ItemState {
     worldVersion: 1,
     worldItems: {
       "item:world-bandage": { id: "item:world-bandage", definitionId: "bandage", x: 640, y: 360 },
-      "item:world-water": { id: "item:world-water", definitionId: "water_bottle", x: 690, y: 360 }
+      "item:world-water": { id: "item:world-water", definitionId: "water_bottle", x: 690, y: 360 },
+      "item:world-bat": { id: "item:world-bat", definitionId: "baseball_bat", x: 575, y: 360 },
+      "item:world-pistol": { id: "item:world-pistol", definitionId: "pistol", x: 590, y: 360 },
+      "item:world-ammo-1": { id: "item:world-ammo-1", definitionId: "pistol_ammo", x: 605, y: 360 },
+      "item:world-ammo-2": { id: "item:world-ammo-2", definitionId: "pistol_ammo", x: 620, y: 360 }
     },
     containers: {
       "container:clinic": {

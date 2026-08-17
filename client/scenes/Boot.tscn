@@ -37,7 +37,7 @@ offset_top = 674.0
 offset_right = 500.0
 offset_bottom = 704.0
 theme_override_colors/font_color = Color(0.5, 0.62, 0.57, 1)
-text = "WASD move  |  E pickup/take  |  Q drop  |  yellow: item/container"
+text = "WASD move | E pickup/take | Q drop | 1-8 slot | Space attack toward cursor"
 
 [node name="Inventory" type="Label" parent="."]
 offset_left = 900.0
