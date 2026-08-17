@@ -17,7 +17,7 @@ var sequence := 0
 
 func connect_to_world() -> void:
 	status_changed.emit("Authenticating device...")
-	client = Nakama.create_client(SERVER_KEY, "127.0.0.1", 7350, "http")
+	client = Nakama.create_client(SERVER_KEY, "127.0.0.1", 7350, "http", 3, NakamaLogger.LOG_LEVEL.INFO)
 	var auth = await client.authenticate_device_async(_device_id())
 	if auth.is_exception():
 		status_changed.emit("Authentication failed: %s" % auth)
