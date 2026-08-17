@@ -296,6 +296,7 @@ Post-MVP:
 - A successful mutation changes ownership and increments the relevant version in the same synchronous handler.
 - Inventory snapshots are private to the owner; world items and containers are shared authoritative state.
 - Inventories remain keyed by stable Nakama user ID for reconnects to the same running match, independent of socket presence.
+- Consumables, ammo and materials are quantity stacks of at most 64 per slot. Stack merge/split decisions are server-owned and preserve total quantity across ownership transitions.
 - Persistence across server restart remains Day 5 scope.
 
 ## 19. Day 4 combat and death

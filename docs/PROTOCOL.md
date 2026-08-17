@@ -170,6 +170,8 @@ Implemented operations are `take` and `deposit`. Exactly one mutation can consum
 
 `INVENTORY_SNAPSHOT` (`33`) is sent only to its owning presence. Public world snapshots include `world_version`, `world_items`, and generic `containers`, but never another player's inventory.
 
+Stackable item definitions use authoritative `quantity` with a maximum of 64 per slot. Pickup and container take merge compatible stacks before consuming a free slot; the whole mutation is rejected if all incoming quantity cannot fit. Weapons remain non-stackable. Drop moves the complete selected stack to the world.
+
 ## 8. INPUT_ATTACK — Day 4
 
 Client сообщает input:

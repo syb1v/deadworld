@@ -47,5 +47,23 @@ test("validates proximity for item and container mutations", () => {
 test("world fixture provides melee weapons and practical pistol ammo", () => {
   const items = Object.values(createItemState().worldItems);
   assert.ok(items.filter((item) => item.definitionId === "baseball_bat").length >= 2);
-  assert.ok(items.filter((item) => item.definitionId === "pistol_ammo").length >= 8);
+  assert.ok(items.filter((item) => item.definitionId === "pistol_ammo").reduce((total, item) => total + (item.quantity || 1), 0) >= 24);
+});
+
+test("merges quantity items into authoritative stacks up to 64", () => {
+  const state = createItemState();
+  const owner = player("player:owner");
+  owner.inventory.push({ id: "item:owned-ammo", definitionId: "pistol_ammo", quantity: 40 });
+  assert.equal(pickupItem(state, owner, "item:world-ammo-1", 1).ok, true);
+  assert.deepEqual(owner.inventory, [{ id: "item:owned-ammo", definitionId: "pistol_ammo", quantity: 64 }]);
+});
+
+test("rejects an entire stack when no quantity can fit", () => {
+  const state = createItemState();
+  const owner = player("player:full");
+  owner.inventory.push({ id: "item:owned-ammo", definitionId: "pistol_ammo", quantity: 64 });
+  for (let index = 0; index < 7; index += 1) owner.inventory.push({ id: `item:bat-${index}`, definitionId: "baseball_bat" });
+  assert.equal(pickupItem(state, owner, "item:world-ammo-1", 1).code, "INVENTORY_FULL");
+  assert.equal(owner.inventory[0].quantity, 64);
+  assert.equal(state.worldItems["item:world-ammo-1"].quantity, 24);
 });

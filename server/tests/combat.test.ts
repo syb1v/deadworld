@@ -35,10 +35,10 @@ test("rejects firing an empty magazine without accepting an attack", () => {
 });
 
 test("reload consumes loose ammo up to magazine capacity", () => {
-  const subject = player([{ id: "item:a", definitionId: "pistol_ammo" }, { id: "item:b", definitionId: "pistol_ammo" }, { id: "item:pistol", definitionId: "pistol", magazineAmmo: 4 }, { id: "item:c", definitionId: "pistol_ammo" }]);
-  assert.deepEqual(reload(subject, { weapon_slot: 2, sequence: 1 }), { ok: true, loaded: 2, magazineAmmo: 6, weaponSlot: 0 });
-  assert.equal(subject.inventory.filter((item) => item.definitionId === "pistol_ammo").length, 1);
-  assert.equal(reload(subject, { weapon_slot: 0, sequence: 1 }).code, "STALE_RELOAD_SEQUENCE");
+  const subject = player([{ id: "item:ammo", definitionId: "pistol_ammo", quantity: 10 }, { id: "item:pistol", definitionId: "pistol", magazineAmmo: 4 }]);
+  assert.deepEqual(reload(subject, { weapon_slot: 1, sequence: 1 }), { ok: true, loaded: 2, magazineAmmo: 6, weaponSlot: 1 });
+  assert.equal(subject.inventory[0].quantity, 8);
+  assert.equal(reload(subject, { weapon_slot: 1, sequence: 1 }).code, "STALE_RELOAD_SEQUENCE");
 });
 
 test("rejects unowned weapon slots and dead attackers", () => {

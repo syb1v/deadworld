@@ -30,6 +30,7 @@ var containers: Dictionary = {}
 var inventory: Array = []
 var world_version := 0
 var selected_slot := 0
+var selected_item_id := ""
 var send_accumulator := 0.0
 var game_started := false
 var game_paused := false
@@ -67,20 +68,22 @@ func _process(delta: float) -> void:
 		Network.send_move(Input.get_vector("move_left", "move_right", "move_up", "move_down"))
 	if Input.is_action_just_pressed("interact"):
 		_interact()
-	if Input.is_action_just_pressed("drop_item") and selected_slot < inventory.size():
-		Network.drop(inventory[selected_slot].id)
-	if Input.is_action_just_pressed("reload"):
-		Network.reload(selected_slot)
+	if Input.is_action_just_pressed("drop_item") and _selected_slot() >= 0:
+		Network.drop(inventory[_selected_slot()].id)
+	if Input.is_action_just_pressed("reload") and _selected_slot() >= 0:
+		Network.reload(_selected_slot())
 	for slot in range(8):
 		if Input.is_key_pressed(KEY_1 + slot) and selected_slot != slot:
 			selected_slot = slot
+			selected_item_id = inventory[slot].id if slot < inventory.size() else ""
 			_update_inventory_label()
 	if Input.is_action_just_pressed("attack") or mouse_attack_requested:
 		mouse_attack_requested = false
 		var local_player = players.get(Network.player_id)
-		if local_player != null and selected_slot < inventory.size():
+		var weapon_slot := _selected_slot()
+		if local_player != null and weapon_slot >= 0:
 			var aim: Vector2 = local_player.get_global_mouse_position() - local_player.global_position
-			Network.attack(selected_slot, aim)
+			Network.attack(weapon_slot, aim)
 
 func _on_snapshot(snapshot: Dictionary) -> void:
 	var seen := {}
@@ -95,6 +98,9 @@ func _on_snapshot(snapshot: Dictionary) -> void:
 			players[id] = player
 		players[id].set_authoritative_position(Vector2(state.x, state.y))
 		players[id].set_authoritative_state(state)
+		if id == Network.player_id:
+			$HUD/PlayerPanel/HealthBar.value = state.health
+			$HUD/PlayerPanel/HealthText.text = "Здоровье %d/100" % state.health
 	for id in players.keys():
 		if not seen.has(id):
 			players[id].queue_free()
@@ -143,17 +149,29 @@ func _sync_containers(states: Array) -> void:
 
 func _on_inventory(items: Array) -> void:
 	inventory = items
+	if _selected_slot() < 0:
+		selected_item_id = inventory[mini(selected_slot, inventory.size() - 1)].id if not inventory.is_empty() else ""
+	selected_slot = maxi(0, _selected_slot())
 	_update_inventory_label()
 
 func _update_inventory_label() -> void:
 	var lines: Array[String] = []
 	for index in range(inventory.size()):
 		var item = inventory[index]
-		var ammo := " [%d/6]" % int(item.get("magazineAmmo", 0)) if item.definitionId == "pistol" else ""
-		lines.append("%s%d. %s%s" % ["> " if index == selected_slot else "  ", index + 1, _item_name(item.definitionId), ammo])
-	var reserve := inventory.filter(func(item): return item.definitionId == "pistol_ammo").size()
+		var item_quantity = item.get("quantity") if item.get("quantity") != null else 1
+		var magazine_ammo = item.get("magazineAmmo") if item.get("magazineAmmo") != null else 0
+		var quantity := " x%d" % item_quantity if item_quantity > 1 else ""
+		var ammo := " [%d/6]" % magazine_ammo if item.definitionId == "pistol" else ""
+		lines.append("%s[%d] %s%s%s" % ["> " if item.id == selected_item_id else "  ", index + 1, _item_name(item.definitionId), quantity, ammo])
+	var reserve := 0
+	for item in inventory:
+		if item.definitionId == "pistol_ammo": reserve += item.get("quantity") if item.get("quantity") != null else 1
 	lines.append("Запас патронов: %d" % reserve)
 	$HUD/Inventory.text = "Инвентарь (%d/8), слот %d\n%s" % [inventory.size(), selected_slot + 1, "\n".join(lines) if not lines.is_empty() else "Пусто"]
+	var selected = inventory[_selected_slot()] if _selected_slot() >= 0 else null
+	$HUD/WeaponPanel/Weapon.text = "Выбрано: %s" % _item_name(selected.definitionId) if selected != null else "Оружие не выбрано"
+	var selected_magazine = selected.get("magazineAmmo") if selected != null and selected.get("magazineAmmo") != null else 0
+	$HUD/WeaponPanel/Ammo.text = "Магазин: %d/6 | Запас: %d | R: перезарядить" % [selected_magazine, reserve] if selected != null and selected.definitionId == "pistol" else ""
 
 func _interact() -> void:
 	var local_player = players.get(Network.player_id)
@@ -221,8 +239,6 @@ func _on_attack_confirmed(event: Dictionary) -> void:
 
 func _on_reload_confirmed(event: Dictionary) -> void:
 	if event.get("player_id", "") == Network.player_id:
-		selected_slot = int(event.get("weapon_slot", selected_slot))
-		_update_inventory_label()
 		$HUD/Status.text = "Перезаряжено: %d, в магазине: %d/6" % [event.get("loaded", 0), event.get("magazine_ammo", 0)]
 
 func _on_damage(event: Dictionary) -> void:
@@ -237,3 +253,9 @@ func _on_damage(event: Dictionary) -> void:
 
 func _item_name(definition_id: String) -> String:
 	return ITEM_NAMES.get(definition_id, definition_id)
+
+func _selected_slot() -> int:
+	for index in range(inventory.size()):
+		if inventory[index].id == selected_item_id:
+			return index
+	return -1
