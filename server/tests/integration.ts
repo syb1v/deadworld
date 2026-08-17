@@ -30,7 +30,9 @@ async function main() {
   await wait(600);
   const snapshot = b.snapshots[b.snapshots.length - 1];
   const player = snapshot?.players.find((p: any) => p.id === `player:${a.session.user_id}`);
+  const secondPlayer = snapshot?.players.find((p: any) => p.id === `player:${b.session.user_id}`);
   if (!player || Math.hypot(player.vx, player.vy) > 180.001) throw new Error("authoritative speed validation failed");
+  if (!secondPlayer || (player.x === secondPlayer.x && player.y === secondPlayer.y)) throw new Error("players spawned on top of each other");
   const zombiesA = a.snapshots[a.snapshots.length - 1]?.zombies;
   const zombiesB = b.snapshots[b.snapshots.length - 1]?.zombies;
   if (!zombiesA || JSON.stringify(zombiesA) !== JSON.stringify(zombiesB)) throw new Error("clients did not receive identical zombie state");
@@ -47,7 +49,7 @@ async function main() {
   if (!reconnectZombies || reconnectZombies.length !== zombiesB.length) throw new Error("reconnect did not restore zombie state");
   await reconnect.socket.disconnect(false);
   await b.socket.disconnect(false);
-  console.log(JSON.stringify({ auth: true, socket: true, shared_world: true, unique_players: true, speed_validation: true, disconnect_cleanup: true, shared_zombies: true, server_targeting: true, dead_state_sync: true, reconnect_zombies: true }));
+  console.log(JSON.stringify({ auth: true, socket: true, shared_world: true, unique_players: true, separated_spawns: true, speed_validation: true, disconnect_cleanup: true, shared_zombies: true, server_targeting: true, dead_state_sync: true, reconnect_zombies: true }));
 }
 
 main().catch((error) => { console.error(error); process.exit(1); });

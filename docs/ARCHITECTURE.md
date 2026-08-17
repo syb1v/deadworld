@@ -279,7 +279,10 @@ Post-MVP:
 
 - The world creates three stable server-owned zombie IDs.
 - At each 15 Hz tick, each living zombie selects the nearest living player in detection range.
+- A zombie keeps its current valid target until that target leaves an expanded release range; attack range also uses hysteresis to prevent state flicker.
+- Concurrent players use separated spawn points instead of stacking at the world center.
 - The server owns `IDLE`, `CHASE`, `ATTACK`, `DEAD`, position, target, HP, damage and attack cooldown.
 - Zombie state is included in the authoritative world snapshot, so join and reconnect receive current state without client reconstruction.
 - One deterministic corpse fixture verifies `DEAD` replication until server-validated combat is introduced on Day 4.
 - Day 2 does not add client damage requests, inventory, loot or weapons.
+- Until Day 4 adds player death/respawn, zombie damage cannot reduce player health below 1.
