@@ -4,7 +4,7 @@ import { movementPayloadText } from "./movement";
 
 export const ITEM_DEFINITIONS = definitions;
 
-export interface ItemInstance { id: string; definitionId: keyof typeof definitions; magazineAmmo?: number; }
+export interface ItemInstance { id: string; definitionId: keyof typeof definitions; quantity?: number; magazineAmmo?: number; }
 export interface WorldItem extends ItemInstance { x: number; y: number; }
 export interface Container { id: string; x: number; y: number; version: number; items: ItemInstance[]; }
 export interface ItemPlayer { id: string; x: number; y: number; inventory: ItemInstance[]; }
@@ -15,18 +15,11 @@ export function createItemState(): ItemState {
   return {
     worldVersion: 1,
     worldItems: {
-      "item:world-bandage": { id: "item:world-bandage", definitionId: "bandage", x: 640, y: 360 },
+      "item:world-bandage": { id: "item:world-bandage", definitionId: "bandage", quantity: 3, x: 640, y: 360 },
       "item:world-water": { id: "item:world-water", definitionId: "water_bottle", x: 690, y: 360 },
       "item:world-bat": { id: "item:world-bat", definitionId: "baseball_bat", x: 575, y: 360 },
       "item:world-pistol": { id: "item:world-pistol", definitionId: "pistol", magazineAmmo: 0, x: 590, y: 360 },
-      "item:world-ammo-1": { id: "item:world-ammo-1", definitionId: "pistol_ammo", x: 605, y: 360 },
-      "item:world-ammo-2": { id: "item:world-ammo-2", definitionId: "pistol_ammo", x: 620, y: 360 },
-      "item:world-ammo-3": { id: "item:world-ammo-3", definitionId: "pistol_ammo", x: 635, y: 360 },
-      "item:world-ammo-4": { id: "item:world-ammo-4", definitionId: "pistol_ammo", x: 650, y: 360 },
-      "item:world-ammo-5": { id: "item:world-ammo-5", definitionId: "pistol_ammo", x: 665, y: 360 },
-      "item:world-ammo-6": { id: "item:world-ammo-6", definitionId: "pistol_ammo", x: 680, y: 360 },
-      "item:world-ammo-7": { id: "item:world-ammo-7", definitionId: "pistol_ammo", x: 695, y: 360 },
-      "item:world-ammo-8": { id: "item:world-ammo-8", definitionId: "pistol_ammo", x: 710, y: 360 },
+      "item:world-ammo-1": { id: "item:world-ammo-1", definitionId: "pistol_ammo", quantity: 24, x: 605, y: 360 },
       "item:world-bat-2": { id: "item:world-bat-2", definitionId: "baseball_bat", x: 705, y: 390 }
     },
     containers: {
@@ -56,9 +49,9 @@ export function pickupItem(state: ItemState, player: ItemPlayer, itemId: unknown
   const item = state.worldItems[itemId];
   if (!item) return fail("ITEM_NOT_AVAILABLE");
   if (!withinRange(player, item)) return fail("OUT_OF_RANGE");
-  if (player.inventory.length >= INVENTORY_CAPACITY) return fail("INVENTORY_FULL");
+  if (!canAdd(player.inventory, item)) return fail("INVENTORY_FULL");
   delete state.worldItems[itemId];
-  player.inventory.push({ id: item.id, definitionId: item.definitionId });
+  addToInventory(player.inventory, item);
   state.worldVersion += 1;
   return { ok: true };
 }
@@ -84,10 +77,12 @@ export function mutateContainer(state: ItemState, player: ItemPlayer, payload: R
   if (!withinRange(player, container)) return fail("OUT_OF_RANGE");
   if (expectedVersion !== container.version) return fail("STALE_CONTAINER_VERSION");
   if (operation === "take") {
-    if (player.inventory.length >= INVENTORY_CAPACITY) return fail("INVENTORY_FULL");
     const index = container.items.findIndex((item) => item.id === itemId);
     if (index < 0) return fail("ITEM_NOT_AVAILABLE");
-    player.inventory.push(container.items.splice(index, 1)[0]);
+    const item = container.items[index];
+    if (!canAdd(player.inventory, item)) return fail("INVENTORY_FULL");
+    container.items.splice(index, 1);
+    addToInventory(player.inventory, item);
   } else if (operation === "deposit") {
     const index = player.inventory.findIndex((item) => item.id === itemId);
     if (index < 0) return fail("ITEM_NOT_OWNED");
@@ -95,6 +90,37 @@ export function mutateContainer(state: ItemState, player: ItemPlayer, payload: R
   } else return fail("BAD_OPERATION");
   container.version += 1;
   return { ok: true };
+}
+
+export function itemQuantity(item: ItemInstance): number { return item.quantity || 1; }
+
+function canAdd(inventory: ItemInstance[], item: ItemInstance): boolean {
+  let remaining = itemQuantity(item);
+  const limit = definitions[item.definitionId].stack_size;
+  for (const existing of inventory) {
+    if (existing.definitionId === item.definitionId && limit > 1) remaining -= Math.max(0, limit - itemQuantity(existing));
+  }
+  return remaining <= 0 || Math.ceil(remaining / limit) <= INVENTORY_CAPACITY - inventory.length;
+}
+
+function addToInventory(inventory: ItemInstance[], item: ItemInstance): void {
+  let remaining = itemQuantity(item);
+  const limit = definitions[item.definitionId].stack_size;
+  if (limit > 1) {
+    for (const existing of inventory) {
+      if (existing.definitionId !== item.definitionId) continue;
+      const moved = Math.min(remaining, limit - itemQuantity(existing));
+      if (moved <= 0) continue;
+      existing.quantity = itemQuantity(existing) + moved;
+      remaining -= moved;
+      if (remaining === 0) return;
+    }
+  }
+  while (remaining > 0) {
+    const moved = Math.min(remaining, limit);
+    inventory.push({ id: item.id, definitionId: item.definitionId, quantity: limit > 1 ? moved : undefined, magazineAmmo: item.magazineAmmo });
+    remaining -= moved;
+  }
 }
 
 function withinRange(a: { x: number; y: number }, b: { x: number; y: number }): boolean {

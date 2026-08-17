@@ -1,12 +1,12 @@
 {
-  "bandage": { "name": "Bandage", "category": "medicine", "weight": 0.1, "stack_size": 4 },
-  "canned_beans": { "name": "Canned Beans", "category": "food", "weight": 0.45, "stack_size": 4 },
-  "water_bottle": { "name": "Water Bottle", "category": "drink", "weight": 0.6, "stack_size": 2 },
-  "scrap_metal": { "name": "Scrap Metal", "category": "material", "weight": 0.8, "stack_size": 3 },
+  "bandage": { "name": "Bandage", "category": "medicine", "weight": 0.1, "stack_size": 64 },
+  "canned_beans": { "name": "Canned Beans", "category": "food", "weight": 0.45, "stack_size": 64 },
+  "water_bottle": { "name": "Water Bottle", "category": "drink", "weight": 0.6, "stack_size": 64 },
+  "scrap_metal": { "name": "Scrap Metal", "category": "material", "weight": 0.8, "stack_size": 64 },
   "baseball_bat": { "name": "Baseball Bat", "category": "melee", "weight": 1.2, "stack_size": 1 },
   "pistol": { "name": "Pistol", "category": "weapon", "weight": 0.9, "stack_size": 1 },
-  "pistol_ammo": { "name": "Pistol Ammo", "category": "ammo", "weight": 0.05, "stack_size": 12 },
-  "painkillers": { "name": "Painkillers", "category": "medicine", "weight": 0.1, "stack_size": 4 },
-  "cloth": { "name": "Cloth", "category": "material", "weight": 0.2, "stack_size": 6 },
-  "wood": { "name": "Wood", "category": "material", "weight": 0.7, "stack_size": 4 }
+  "pistol_ammo": { "name": "Pistol Ammo", "category": "ammo", "weight": 0.05, "stack_size": 64 },
+  "painkillers": { "name": "Painkillers", "category": "medicine", "weight": 0.1, "stack_size": 64 },
+  "cloth": { "name": "Cloth", "category": "material", "weight": 0.2, "stack_size": 64 },
+  "wood": { "name": "Wood", "category": "material", "weight": 0.7, "stack_size": 64 }
 }

@@ -50,14 +50,60 @@ theme_override_colors/font_color = Color(0.5, 0.62, 0.57, 1)
 text = "WASD: движение | E: взять | Q: выбросить | 1-8: слот | ЛКМ/Пробел: атака | R: перезарядка | Esc: пауза"
 
 [node name="Inventory" type="Label" parent="HUD"]
-offset_left = 900.0
-offset_top = 20.0
-offset_right = 1250.0
-offset_bottom = 180.0
+offset_left = 930.0
+offset_top = 72.0
+offset_right = 1255.0
+offset_bottom = 300.0
 theme_override_colors/font_color = Color(0.92, 0.83, 0.52, 1)
 theme_override_font_sizes/font_size = 16
 text = "Инвентарь пуст"
 horizontal_alignment = 2
+
+[node name="PlayerPanel" type="ColorRect" parent="HUD"]
+offset_left = 24.0
+offset_top = 604.0
+offset_right = 374.0
+offset_bottom = 666.0
+color = Color(0.025, 0.045, 0.04, 0.88)
+
+[node name="HealthText" type="Label" parent="HUD/PlayerPanel"]
+offset_left = 14.0
+offset_top = 8.0
+offset_right = 120.0
+offset_bottom = 32.0
+theme_override_colors/font_color = Color(0.76, 0.95, 0.78, 1)
+text = "Здоровье 100"
+
+[node name="HealthBar" type="ProgressBar" parent="HUD/PlayerPanel"]
+offset_left = 14.0
+offset_top = 35.0
+offset_right = 336.0
+offset_bottom = 52.0
+value = 100.0
+show_percentage = false
+
+[node name="WeaponPanel" type="ColorRect" parent="HUD"]
+offset_left = 390.0
+offset_top = 604.0
+offset_right = 735.0
+offset_bottom = 666.0
+color = Color(0.025, 0.045, 0.04, 0.88)
+
+[node name="Weapon" type="Label" parent="HUD/WeaponPanel"]
+offset_left = 14.0
+offset_top = 8.0
+offset_right = 330.0
+offset_bottom = 32.0
+theme_override_colors/font_color = Color(0.95, 0.83, 0.5, 1)
+text = "Оружие не выбрано"
+
+[node name="Ammo" type="Label" parent="HUD/WeaponPanel"]
+offset_left = 14.0
+offset_top = 34.0
+offset_right = 330.0
+offset_bottom = 56.0
+theme_override_colors/font_color = Color(0.72, 0.8, 0.74, 1)
+text = ""
 
 [node name="Crosshair" type="Control" parent="HUD"]
 mouse_filter = 2

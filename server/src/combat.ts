@@ -1,5 +1,5 @@
 import { ATTACK_AIM_COSINE, MELEE_COOLDOWN_TICKS, MELEE_DAMAGE, MELEE_RANGE, PISTOL_COOLDOWN_TICKS, PISTOL_DAMAGE, PISTOL_MAGAZINE_CAPACITY, PISTOL_RANGE } from "./protocol";
-import { ItemInstance } from "./items";
+import { ItemInstance, itemQuantity } from "./items";
 import { killZombie, Zombie } from "./zombies";
 
 export interface CombatPlayer {
@@ -67,14 +67,21 @@ export function reload(player: CombatPlayer, payload: ReloadPayload): ReloadResu
   if (!weapon || weapon.definitionId !== "pistol") return fail("PISTOL_NOT_SELECTED");
   const current = weapon.magazineAmmo || 0;
   if (current >= PISTOL_MAGAZINE_CAPACITY) return fail("MAGAZINE_FULL");
-  const ammoIndexes: number[] = [];
-  for (let index = 0; index < player.inventory.length && ammoIndexes.length < PISTOL_MAGAZINE_CAPACITY - current; index += 1) {
-    if (player.inventory[index].definitionId === "pistol_ammo") ammoIndexes.push(index);
+  let needed = PISTOL_MAGAZINE_CAPACITY - current;
+  let loaded = 0;
+  for (let index = player.inventory.length - 1; index >= 0 && needed > 0; index -= 1) {
+    const ammo = player.inventory[index];
+    if (ammo.definitionId !== "pistol_ammo") continue;
+    const consumed = Math.min(needed, itemQuantity(ammo));
+    const remaining = itemQuantity(ammo) - consumed;
+    loaded += consumed;
+    needed -= consumed;
+    if (remaining === 0) player.inventory.splice(index, 1);
+    else ammo.quantity = remaining;
   }
-  if (ammoIndexes.length === 0) return fail("NO_AMMO");
-  for (let index = ammoIndexes.length - 1; index >= 0; index -= 1) player.inventory.splice(ammoIndexes[index], 1);
-  weapon.magazineAmmo = current + ammoIndexes.length;
-  return { ok: true, loaded: ammoIndexes.length, magazineAmmo: weapon.magazineAmmo, weaponSlot: player.inventory.indexOf(weapon) };
+  if (loaded === 0) return fail("NO_AMMO");
+  weapon.magazineAmmo = current + loaded;
+  return { ok: true, loaded, magazineAmmo: weapon.magazineAmmo, weaponSlot: player.inventory.indexOf(weapon) };
 }
 
 function selectHit(player: CombatPlayer, zombies: Record<string, Zombie>, payload: AttackPayload, range: number): Zombie | null {

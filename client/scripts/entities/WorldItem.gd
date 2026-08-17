@@ -1,10 +1,13 @@
 extends Node2D
 
 var definition_id := "item"
+var quantity: int = 1
 const ITEM_NAMES: Dictionary = preload("res://data/item_names_ru.json").data
 
 func setup(state: Dictionary) -> void:
 	definition_id = state.definitionId
+	var state_quantity = state.get("quantity")
+	quantity = state_quantity if state_quantity != null else 1
 	position = Vector2(state.x, state.y)
 	queue_redraw()
 
@@ -18,4 +21,5 @@ func _draw() -> void:
 		draw_rect(Rect2(-3, -9, 6, 18), Color("e7c95b"), true)
 	else:
 		draw_circle(Vector2.ZERO, 10.0, Color("e7c95b"))
-	draw_string(ThemeDB.fallback_font, Vector2(-55, -18), ITEM_NAMES.get(definition_id, definition_id), HORIZONTAL_ALIGNMENT_CENTER, 110, 11, Color("f8e9a6"))
+	var quantity_text := " x%d" % quantity if quantity > 1 else ""
+	draw_string(ThemeDB.fallback_font, Vector2(-55, -18), "%s%s" % [ITEM_NAMES.get(definition_id, definition_id), quantity_text], HORIZONTAL_ALIGNMENT_CENTER, 110, 11, Color("f8e9a6"))

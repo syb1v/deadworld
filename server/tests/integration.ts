@@ -141,8 +141,8 @@ async function main() {
   await waitFor(() => a.errors.includes("MAGAZINE_EMPTY"), "empty magazine was not rejected");
   if (a.attacks.length !== attacksBeforeEmptyShot) throw new Error("empty magazine emitted an accepted attack event");
   await a.socket.sendMatchState(a.matchId, 5, JSON.stringify({ weapon_slot: pistolSlot, sequence: 1 }));
-  await waitFor(() => a.reloads.some((event) => event.player_id === `player:${a.session.user_id}` && event.magazine_ammo === 1), "server reload confirmation was not delivered");
-  await waitFor(() => a.inventory[pistolSlot]?.magazineAmmo === 1 && !a.inventory.some((item: any) => item.definitionId === "pistol_ammo"), "reload did not transfer loose ammo into magazine");
+  await waitFor(() => a.reloads.some((event) => event.player_id === `player:${a.session.user_id}` && event.magazine_ammo === 6), "server reload confirmation was not delivered");
+  await waitFor(() => a.inventory.find((item: any) => item.definitionId === "pistol")?.magazineAmmo === 6 && a.inventory.find((item: any) => item.definitionId === "pistol_ammo")?.quantity === 18, "reload did not transfer stack quantity into magazine");
   await a.socket.sendMatchState(a.matchId, 3, JSON.stringify({ weapon_slot: pistolSlot, aim_x: 0, aim_y: -1, sequence: 2 }));
   await waitFor(() => a.attacks.length === attacksBeforeEmptyShot + 1, "loaded pistol attack was not confirmed");
   await wait(400);

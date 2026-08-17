@@ -216,7 +216,7 @@ godot --path client -- --profile=one
 godot --path client --position 1300,100 -- --profile=two
 ```
 
-Automated auth/socket/shared-world/movement/zombie/item and combat lifecycle coverage runs with `make test`. The client includes a Russian main menu, pause screen, localized item names, crosshair, aim line, server-confirmed attack effects, authoritative floating damage and a finite zombie counter. Press `E` to pick up/take, `Q` to drop the selected slot, `1`-`8` to select a slot, `Space` or left mouse to attack toward the crosshair, `R` to reload the selected pistol, and `Esc` to pause. The server owns weapon validation, magazine/ammo, hit selection, damage, zombie separation, death drops and respawn.
+Automated auth/socket/shared-world/movement/zombie/item and combat lifecycle coverage runs with `make test`. The Russian HUD shows health, selected weapon, six-round pistol magazine, reserve ammo, eight inventory slots and the finite zombie population. Consumables, materials and loose ammo stack to 64 per slot. Press `E` to pick up/take, `Q` to drop the selected stack, `1`-`8` to select a slot, `Space` or left mouse to attack, `R` to reload the selected pistol, and `Esc` to pause. Zombies do not respawn yet; the server owns weapon validation, stacks, magazine/ammo, damage, zombie separation, death drops and player respawn.
 
 ```bash
 make logs
