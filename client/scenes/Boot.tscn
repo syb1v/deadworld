@@ -1,22 +1,34 @@
-[gd_scene load_steps=1 format=3]
+[gd_scene load_steps=2 format=3]
 
-[node name="Boot" type="Control"]
-layout_mode = 3
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
+[ext_resource path="res://scripts/world/World.gd" type="Script" id="1"]
 
-[node name="CenterContainer" type="CenterContainer" parent="."]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
+[node name="World" type="Node2D"]
+script = ExtResource("1")
 
-[node name="Label" type="Label" parent="CenterContainer"]
-layout_mode = 2
-text = "Project Deadworld\nBootstrap project ready — Day 1 networking next"
-horizontal_alignment = 1
+[node name="Background" type="ColorRect" parent="."]
+offset_right = 1280.0
+offset_bottom = 720.0
+color = Color(0.035, 0.055, 0.05, 1)
+mouse_filter = 2
+show_behind_parent = true
+
+[node name="Grid" type="Node2D" parent="."]
+
+[node name="Players" type="Node2D" parent="."]
+
+[node name="Status" type="Label" parent="."]
+offset_left = 24.0
+offset_top = 20.0
+offset_right = 900.0
+offset_bottom = 50.0
+theme_override_colors/font_color = Color(0.72, 0.9, 0.79, 1)
+theme_override_font_sizes/font_size = 18
+text = "Connecting..."
+
+[node name="Hint" type="Label" parent="."]
+offset_left = 24.0
+offset_top = 674.0
+offset_right = 500.0
+offset_bottom = 704.0
+theme_override_colors/font_color = Color(0.5, 0.62, 0.57, 1)
+text = "WASD  |  blue: you  |  amber: remote"

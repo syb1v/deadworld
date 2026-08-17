@@ -200,23 +200,41 @@ deadworld/
 
 Если функция не нужна для текущего Definition of Done — она идёт в backlog.
 
-## Основные команды
+## Day 1: authoritative multiplayer
 
-Пока код ещё не создан, Makefile содержит безопасные helpers:
+Pinned dependencies: Godot `4.7.1`, Nakama `3.40.0`, Nakama Godot SDK `3.4.0`, PostgreSQL `17.6`.
+
+```bash
+make up
+make client
+```
+
+Launch two independent guests without editing sources:
+
+```bash
+godot --path client -- --profile=one
+godot --path client --position 1300,100 -- --profile=two
+```
+
+Automated auth/socket/shared-world/movement/disconnect coverage runs with `make test`.
+
+```bash
+make logs
+make test
+make down
+```
+
+## Основные команды
 
 ```bash
 make help
 make env-check
 make repo-tree
-```
-
-После появления `infra/docker-compose.yml` coding-agent должен добавить:
-
-```bash
 make up
 make down
 make logs
 make test
+make client
 ```
 
 ## Документ истины

@@ -230,4 +230,11 @@ CONTENT_VERSION
 - timeout;
 - malformed packet strategy.
 
-Точные числа устанавливаются после первой реализации и нагрузочного теста.
+Day 1 limits:
+
+- max movement payload: 256 bytes;
+- max accepted movement messages: 30/sec/player;
+- client input send target: 20 Hz;
+- server simulation/snapshot tick: 15 Hz;
+- authoritative speed: 180 world units/sec;
+- malformed, unknown, non-finite and stale-sequence movement is ignored safely.
