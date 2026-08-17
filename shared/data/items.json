@@ -1,0 +1,6 @@
+{
+  "bandage": { "name": "Bandage", "category": "medicine", "weight": 0.1, "stack_size": 4 },
+  "canned_beans": { "name": "Canned Beans", "category": "food", "weight": 0.45, "stack_size": 4 },
+  "water_bottle": { "name": "Water Bottle", "category": "drink", "weight": 0.6, "stack_size": 2 },
+  "scrap_metal": { "name": "Scrap Metal", "category": "material", "weight": 0.8, "stack_size": 3 }
+}

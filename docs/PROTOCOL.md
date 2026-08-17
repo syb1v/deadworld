@@ -108,7 +108,7 @@ Server -> Client
 
 Optimization приходит после корректности.
 
-## 6. ITEM_PICKUP — planned Day 3
+## 6. ITEM_PICKUP — Day 3
 
 Client:
 
@@ -135,7 +135,18 @@ WORLD -> PLAYER inventory
 
 ровно один раз.
 
-## 7. CONTAINER_MUTATE — planned Day 3
+Implemented limits and result:
+
+- payload <= 512 bytes;
+- max 10 interaction messages/sec/player;
+- interaction distance <= 96 world units;
+- inventory capacity: 8 instances;
+- successful pickup increments `world_version`;
+- rejection is sent only to the requester as opcode `50`.
+
+`ITEM_DROP` (`31`) contains `item_instance_id`. The server verifies inventory ownership, removes the instance from inventory and creates it at the authoritative player position.
+
+## 7. CONTAINER_MUTATE — Day 3
 
 ```json
 {
@@ -154,6 +165,10 @@ Server:
 4. apply atomic mutation;
 5. increment container version;
 6. broadcast/return updated state.
+
+Implemented operations are `take` and `deposit`. Exactly one mutation can consume a given container version; success increments `container.version`.
+
+`INVENTORY_SNAPSHOT` (`33`) is sent only to its owning presence. Public world snapshots include `world_version`, `world_items`, and generic `containers`, but never another player's inventory.
 
 ## 8. INPUT_ATTACK — planned Day 4
 

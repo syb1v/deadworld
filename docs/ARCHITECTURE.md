@@ -286,3 +286,14 @@ Post-MVP:
 - One deterministic corpse fixture verifies `DEAD` replication until server-validated combat is introduced on Day 4.
 - Day 2 does not add client damage requests, inventory, loot or weapons.
 - Until Day 4 adds player death/respawn, zombie damage cannot reduce player health below 1.
+
+## 18. Day 3 item ownership
+
+- `shared/data/items.json` is the single source of truth for item definitions.
+- Each item instance has one location: world, one container, or one player inventory.
+- Nakama match-loop ordering is the atomic boundary for Day 3 pickup/drop/container mutations.
+- World pickup uses `expected_world_version`; container take/deposit uses `expected_version`.
+- A successful mutation changes ownership and increments the relevant version in the same synchronous handler.
+- Inventory snapshots are private to the owner; world items and containers are shared authoritative state.
+- Inventories remain keyed by stable Nakama user ID for reconnects to the same running match, independent of socket presence.
+- Persistence across server restart remains Day 5 scope.

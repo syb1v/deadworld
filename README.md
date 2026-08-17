@@ -200,7 +200,7 @@ deadworld/
 
 Если функция не нужна для текущего Definition of Done — она идёт в backlog.
 
-## Day 2: shared authoritative zombies
+## Day 3: shared items and containers
 
 Pinned dependencies: Godot `4.7.1`, Nakama `3.40.0`, Nakama Godot SDK `3.4.0`, PostgreSQL `17.6`.
 
@@ -216,7 +216,7 @@ godot --path client -- --profile=one
 godot --path client --position 1300,100 -- --profile=two
 ```
 
-Automated auth/socket/shared-world/movement/disconnect and shared-zombie coverage runs with `make test`. Red entities are server-owned zombies; their state and HP labels come from authoritative snapshots.
+Automated auth/socket/shared-world/movement/zombie and concurrent item mutation coverage runs with `make test`. Red entities are server-owned zombies. Yellow circles are world items and the yellow box is a versioned container. Press `E` to pick up the nearest item or take from the nearby container; press `Q` to drop the first inventory item.
 
 ```bash
 make logs
