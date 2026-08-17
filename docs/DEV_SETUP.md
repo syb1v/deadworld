@@ -178,3 +178,13 @@ https://github.com/syb1v/deadworld
 ```
 
 Существующий `LICENSE` сохраняется.
+
+## Day 1 local backend
+
+```bash
+make up
+make test
+make client
+```
+
+Nakama API is on `http://127.0.0.1:7350`; local console is on `http://127.0.0.1:7351`. Configuration comes from ignored `.env`.

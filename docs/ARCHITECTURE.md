@@ -267,3 +267,10 @@ Post-MVP:
 ## 15. Architecture rule
 
 > Не добавлять компонент, пока нельзя назвать конкретную текущую проблему, которую он решает.
+
+## 16. Day 1 implementation
+
+- Nakama `3.40.0` authoritative match, fixed at 15 Hz.
+- PostgreSQL `17.6` stores Nakama accounts and active main-world lookup state.
+- Godot `4.7.1` with Nakama Godot SDK `3.4.0` handles device auth, realtime input and interpolation.
+- The client sends movement intent; the runtime owns velocity and position.

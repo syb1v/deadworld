@@ -1,0 +1,55 @@
+services:
+  postgres:
+    image: postgres:17.6-alpine
+    container_name: deadworld-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-deadworld}
+      POSTGRES_USER: ${POSTGRES_USER:-deadworld}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-deadworld-local-password}
+    volumes:
+      - deadworld-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-deadworld} -d ${POSTGRES_DB:-deadworld}"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  nakama-migrate:
+    image: heroiclabs/nakama:3.40.0
+    container_name: deadworld-nakama-migrate
+    depends_on:
+      postgres:
+        condition: service_healthy
+    entrypoint: ["/nakama/nakama", "migrate", "up", "--database.address", "${POSTGRES_USER:-deadworld}:${POSTGRES_PASSWORD:-deadworld-local-password}@postgres:5432/${POSTGRES_DB:-deadworld}"]
+    restart: "no"
+
+  nakama:
+    image: heroiclabs/nakama:3.40.0
+    container_name: deadworld-nakama
+    depends_on:
+      nakama-migrate:
+        condition: service_completed_successfully
+    entrypoint:
+      - /nakama/nakama
+      - --name=deadworld
+      - --database.address=${POSTGRES_USER:-deadworld}:${POSTGRES_PASSWORD:-deadworld-local-password}@postgres:5432/${POSTGRES_DB:-deadworld}
+      - --logger.level=INFO
+      - --runtime.path=/nakama/data/modules
+      - --socket.server_key=${NAKAMA_SERVER_KEY:-deadworld-local-key}
+      - --session.token_expiry_sec=3600
+      - --session.refresh_token_expiry_sec=604800
+      - --console.username=${NAKAMA_CONSOLE_USERNAME:-admin}
+      - --console.password=${NAKAMA_CONSOLE_PASSWORD:-deadworld-local-console}
+    ports:
+      - "${GAME_PORT:-7350}:7350"
+      - "7351:7351"
+    volumes:
+      - ../server/build:/nakama/data/modules:ro
+    healthcheck:
+      test: ["CMD", "/nakama/nakama", "healthcheck"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  deadworld-postgres:

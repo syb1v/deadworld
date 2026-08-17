@@ -2,12 +2,20 @@
   "name": "@deadworld/server",
   "version": "0.1.0",
   "private": true,
-  "description": "Project Deadworld Nakama authoritative runtime scaffold",
+  "description": "Project Deadworld Nakama authoritative runtime",
   "scripts": {
     "check": "tsc --noEmit",
-    "build": "tsc"
+    "build": "esbuild src/index.ts --bundle --format=iife --global-name=DeadworldRuntime --target=es2019 --footer:js='function MatchInit(){return DeadworldRuntime.worldMatch.matchInit.apply(null,arguments)} function MatchJoinAttempt(){return DeadworldRuntime.worldMatch.matchJoinAttempt.apply(null,arguments)} function MatchJoin(){return DeadworldRuntime.worldMatch.matchJoin.apply(null,arguments)} function MatchLeave(){return DeadworldRuntime.worldMatch.matchLeave.apply(null,arguments)} function MatchLoop(){return DeadworldRuntime.worldMatch.matchLoop.apply(null,arguments)} function MatchTerminate(){return DeadworldRuntime.worldMatch.matchTerminate.apply(null,arguments)} function MatchSignal(){return DeadworldRuntime.worldMatch.matchSignal.apply(null,arguments)} function FindWorld(){return DeadworldRuntime.findWorld.apply(null,arguments)} function InitModule(ctx,logger,nk,initializer){initializer.registerMatch(\"world\",{matchInit:MatchInit,matchJoinAttempt:MatchJoinAttempt,matchJoin:MatchJoin,matchLeave:MatchLeave,matchLoop:MatchLoop,matchTerminate:MatchTerminate,matchSignal:MatchSignal});initializer.registerRpc(\"find_world\",FindWorld);logger.info(JSON.stringify({event:\"runtime_loaded\",protocol:1}))}' --outfile=build/index.js",
+    "test": "tsx --test tests/*.test.ts",
+    "test:integration": "tsx tests/integration.ts"
   },
   "devDependencies": {
-    "typescript": "^5.9.0"
+    "@heroiclabs/nakama-js": "2.8.0",
+    "@types/node": "24.3.0",
+    "@types/ws": "8.18.1",
+    "esbuild": "0.25.9",
+    "tsx": "4.20.5",
+    "typescript": "5.9.2",
+    "ws": "8.18.3"
   }
 }
