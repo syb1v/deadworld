@@ -1,0 +1,51 @@
+# Secrets / local env
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.keystore
+*.jks
+service-account*.json
+
+# Godot generated
+.godot/
+.import/
+export.cfg
+export_presets.cfg.bak
+
+# Build output
+build/
+dist/
+exports/
+*.apk
+*.aab
+*.exe
+*.pck
+
+# Node / TS
+node_modules/
+coverage/
+*.tsbuildinfo
+npm-debug.log*
+pnpm-debug.log*
+yarn-error.log*
+
+# IDE / OS
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+*.swp
+*~
+.DS_Store
+
+# Runtime / backups
+logs/
+tmp/
+.cache/
+backups/
+*.sql
+*.dump
