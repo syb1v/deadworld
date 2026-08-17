@@ -274,3 +274,12 @@ Post-MVP:
 - PostgreSQL `17.6` stores Nakama accounts and active main-world lookup state.
 - Godot `4.7.1` with Nakama Godot SDK `3.4.0` handles device auth, realtime input and interpolation.
 - The client sends movement intent; the runtime owns velocity and position.
+
+## 17. Day 2 zombie simulation
+
+- The world creates three stable server-owned zombie IDs.
+- At each 15 Hz tick, each living zombie selects the nearest living player in detection range.
+- The server owns `IDLE`, `CHASE`, `ATTACK`, `DEAD`, position, target, HP, damage and attack cooldown.
+- Zombie state is included in the authoritative world snapshot, so join and reconnect receive current state without client reconstruction.
+- One deterministic corpse fixture verifies `DEAD` replication until server-validated combat is introduced on Day 4.
+- Day 2 does not add client damage requests, inventory, loot or weapons.

@@ -238,3 +238,26 @@ Day 1 limits:
 - server simulation/snapshot tick: 15 Hz;
 - authoritative speed: 180 world units/sec;
 - malformed, unknown, non-finite and stale-sequence movement is ignored safely.
+
+## 12. Day 2 zombie snapshot
+
+`PLAYER_SNAPSHOT` now also includes server-owned zombies:
+
+```json
+{
+  "zombies": [
+    {
+      "id": "zombie:main-1",
+      "x": 420,
+      "y": 360,
+      "vx": 0,
+      "vy": 0,
+      "hp": 30,
+      "state": "IDLE",
+      "target_id": ""
+    }
+  ]
+}
+```
+
+Valid states are `IDLE`, `CHASE`, `ATTACK`, and `DEAD`. Clients cannot set zombie target, position, HP, state, attack damage, or cooldown. This is an additive protocol v1 change.

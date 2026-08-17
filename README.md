@@ -200,7 +200,7 @@ deadworld/
 
 Если функция не нужна для текущего Definition of Done — она идёт в backlog.
 
-## Day 1: authoritative multiplayer
+## Day 2: shared authoritative zombies
 
 Pinned dependencies: Godot `4.7.1`, Nakama `3.40.0`, Nakama Godot SDK `3.4.0`, PostgreSQL `17.6`.
 
@@ -216,7 +216,7 @@ godot --path client -- --profile=one
 godot --path client --position 1300,100 -- --profile=two
 ```
 
-Automated auth/socket/shared-world/movement/disconnect coverage runs with `make test`.
+Automated auth/socket/shared-world/movement/disconnect and shared-zombie coverage runs with `make test`. Red entities are server-owned zombies; their state and HP labels come from authoritative snapshots.
 
 ```bash
 make logs
