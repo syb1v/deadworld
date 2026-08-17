@@ -5,7 +5,7 @@ declare namespace nkruntime {
   interface Initializer { registerMatch(name: string, handler: MatchHandler): void; registerRpc(name: string, fn: RpcFunction): void; }
   interface Match { matchId: string; }
   interface Presence { userId: string; sessionId: string; username: string; }
-  interface MatchMessage { opCode: number; data: Uint8Array; sender: Presence; }
+  interface MatchMessage { opCode: number; data: string | ArrayBuffer | Uint8Array; sender: Presence; }
   interface MatchDispatcher { broadcastMessage(opCode: number, data: string, presences?: Presence[] | null, sender?: Presence | null, reliable?: boolean): void; matchLabelUpdate(label: string): void; }
   interface MatchState { [key: string]: unknown; }
   interface MatchHandler {

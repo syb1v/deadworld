@@ -9,6 +9,15 @@ test("normalizes forged movement vectors", () => {
   assert.ok(Math.hypot(input.x, input.y) <= 1.000001);
 });
 
+test("accepts string payloads", () => {
+  assert.deepEqual(parseMoveInput('{"x":-1,"y":0,"sequence":100}'), { x: -1, y: 0, sequence: 100 });
+});
+
+test("accepts the ArrayBuffer delivered by the Nakama runtime", () => {
+  const encoded = bytes('{"x":0,"y":1,"sequence":101}');
+  assert.deepEqual(parseMoveInput(encoded.buffer), { x: 0, y: 1, sequence: 101 });
+});
+
 test("rejects malformed and non-finite movement", () => {
   assert.equal(parseMoveInput(bytes("not-json")), null);
   assert.equal(parseMoveInput(bytes('{"x":1,"sequence":1}')), null);
