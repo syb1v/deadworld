@@ -170,7 +170,7 @@ Implemented operations are `take` and `deposit`. Exactly one mutation can consum
 
 `INVENTORY_SNAPSHOT` (`33`) is sent only to its owning presence. Public world snapshots include `world_version`, `world_items`, and generic `containers`, but never another player's inventory.
 
-## 8. INPUT_ATTACK — planned Day 4
+## 8. INPUT_ATTACK — Day 4
 
 Client сообщает input:
 
@@ -201,6 +201,19 @@ Server проверяет:
 ```
 
 как доверенный результат.
+
+Implemented semantics:
+
+- `weapon_slot` is a zero-based authoritative inventory slot;
+- aim is finite, non-zero and normalized by the server;
+- sequence must increase;
+- baseball bat: 15 damage, 54 range, 8-tick cooldown;
+- pistol: 20 damage, 260 range, 5-tick cooldown;
+- each pistol attack consumes one `pistol_ammo` item instance, including a valid miss;
+- hit selection uses authoritative player/zombie positions and an aim cone;
+- `DAMAGE_EVENT` (`20`) reports the applied result; `DEATH_EVENT` (`21`) and `RESPAWN_EVENT` (`22`) report lifecycle transitions.
+
+Zombie attacks can now reduce player HP to zero. A dead player cannot move, attack or mutate inventory, drops every inventory instance at the death position, and respawns after 45 ticks (3 seconds) with 100 HP at its server-owned spawn. Dead zombies respawn after 75 ticks (5 seconds).
 
 ## 9. Errors
 

@@ -10,6 +10,7 @@ var world_items: Dictionary = {}
 var containers: Dictionary = {}
 var inventory: Array = []
 var world_version := 0
+var selected_slot := 0
 var send_accumulator := 0.0
 
 func _ready() -> void:
@@ -29,6 +30,12 @@ func _process(delta: float) -> void:
 		_interact()
 	if Input.is_action_just_pressed("drop_item") and not inventory.is_empty():
 		Network.drop(inventory[0].id)
+	for slot in range(8):
+		if Input.is_key_pressed(KEY_1 + slot): selected_slot = slot
+	if Input.is_action_just_pressed("attack"):
+		var local_player = players.get(Network.player_id)
+		if local_player != null:
+			Network.attack(selected_slot, local_player.get_global_mouse_position() - local_player.global_position)
 
 func _on_snapshot(snapshot: Dictionary) -> void:
 	var seen := {}
@@ -42,6 +49,7 @@ func _on_snapshot(snapshot: Dictionary) -> void:
 			player.setup(id == Network.player_id)
 			players[id] = player
 		players[id].set_authoritative_position(Vector2(state.x, state.y))
+		players[id].set_authoritative_state(state)
 	for id in players.keys():
 		if not seen.has(id):
 			players[id].queue_free()
@@ -88,7 +96,7 @@ func _sync_containers(states: Array) -> void:
 
 func _on_inventory(items: Array) -> void:
 	inventory = items
-	$Inventory.text = "Inventory (%d/8)\n%s" % [items.size(), "\n".join(items.map(func(item): return item.definitionId))]
+	$Inventory.text = "Inventory (%d/8), slot %d\n%s" % [items.size(), selected_slot + 1, "\n".join(items.map(func(item): return item.definitionId))]
 
 func _interact() -> void:
 	var local_player = players.get(Network.player_id)

@@ -297,3 +297,15 @@ Post-MVP:
 - Inventory snapshots are private to the owner; world items and containers are shared authoritative state.
 - Inventories remain keyed by stable Nakama user ID for reconnects to the same running match, independent of socket presence.
 - Persistence across server restart remains Day 5 scope.
+
+## 19. Day 4 combat and death
+
+- Client attack messages contain only inventory slot, aim and increasing sequence; target, hit and damage are server decisions.
+- The server validates alive state, weapon ownership, cooldown, ammo, range and aim against authoritative positions.
+- Ammo is represented by owned item instances and is removed only by the server.
+- Zombie and player HP transitions happen in the match loop. A zero-HP entity cannot act or be selected as a living target.
+- Player death atomically moves all inventory instances to world state, increments `world_version`, stops movement and schedules respawn.
+- Player respawn restores 100 HP and a server-owned spawn position after 3 seconds; it does not restore dropped inventory.
+- Dead zombies remain shared `DEAD` state and respawn at their original server spawn after 5 seconds.
+- Combat/death state remains match-lifetime state until Day 5 persistence.
+- Match-lifetime player state is keyed by stable Nakama user ID; reconnect only replaces presence and preserves HP, position, cooldown, death deadline and inventory. A second simultaneous presence for the same user is rejected.
