@@ -9,6 +9,8 @@ interface Player {
 }
 interface WorldState extends nkruntime.MatchState { players: Record<string, Player>; zombies: Record<string, Zombie>; }
 
+const PLAYER_SPAWNS = [[560, 360], [720, 360], [640, 280], [640, 440]];
+
 export const worldMatch: nkruntime.MatchHandler = {
   matchInit(_ctx, logger, _nk, _params) {
     logger.info(JSON.stringify({ event: "world_created", protocol: PROTOCOL_VERSION }));
@@ -18,7 +20,8 @@ export const worldMatch: nkruntime.MatchHandler = {
   matchJoin(_ctx, logger, _nk, dispatcher, _tick, rawState, presences) {
     const state = rawState as WorldState;
     for (const presence of presences) {
-      state.players[presence.sessionId] = { id: `player:${presence.userId}`, presence, x: 640, y: 360, vx: 0, vy: 0, inputX: 0, inputY: 0, lastSequence: -1, rateWindow: 0, rateCount: 0, health: 100 };
+      const spawn = PLAYER_SPAWNS[Object.keys(state.players).length % PLAYER_SPAWNS.length];
+      state.players[presence.sessionId] = { id: `player:${presence.userId}`, presence, x: spawn[0], y: spawn[1], vx: 0, vy: 0, inputX: 0, inputY: 0, lastSequence: -1, rateWindow: 0, rateCount: 0, health: 100 };
       logger.info(JSON.stringify({ event: "player_join", player_id: `player:${presence.userId}` }));
     }
     dispatcher.matchLabelUpdate(JSON.stringify({ world: "main", protocol: PROTOCOL_VERSION, players: Object.keys(state.players).length }));

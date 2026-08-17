@@ -28,6 +28,33 @@ test("attacks with a server cooldown", () => {
   assert.equal(target.health, 95);
 });
 
+test("keeps its current target when a second nearby player joins", () => {
+  const subject = zombie();
+  const original = player("player:original", 100);
+  simulateZombie(subject, [original], 1, 1 / 15);
+  const newcomer = player("player:newcomer", 90);
+  simulateZombie(subject, [original, newcomer], 2, 1 / 15);
+  assert.equal(subject.targetId, "player:original");
+});
+
+test("uses hysteresis instead of flickering out of attack", () => {
+  const subject = zombie();
+  const target = player("player:near", 27);
+  simulateZombie(subject, [target], 1, 1 / 15);
+  target.x = 33;
+  simulateZombie(subject, [target], 2, 1 / 15);
+  assert.equal(subject.state, "ATTACK");
+});
+
+test("does not lose its only target before Day 4 death exists", () => {
+  const subject = zombie();
+  const target = player("player:near", 10);
+  for (let tick = 0; tick < 400; tick += 15) simulateZombie(subject, [target], tick, 1 / 15);
+  assert.equal(target.health, 1);
+  assert.equal(subject.state, "ATTACK");
+  assert.equal(subject.targetId, target.id);
+});
+
 test("synchronizes terminal dead state from authoritative HP", () => {
   const subject = zombie();
   subject.hp = 0;

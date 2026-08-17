@@ -2,8 +2,10 @@ import {
   ZOMBIE_ATTACK_COOLDOWN_TICKS,
   ZOMBIE_ATTACK_DAMAGE,
   ZOMBIE_ATTACK_RANGE,
+  ZOMBIE_ATTACK_RELEASE_RANGE,
   ZOMBIE_DETECTION_RANGE,
-  ZOMBIE_SPEED
+  ZOMBIE_SPEED,
+  ZOMBIE_TARGET_RELEASE_RANGE
 } from "./protocol";
 
 export type ZombieMode = "IDLE" | "CHASE" | "ATTACK" | "DEAD";
@@ -50,7 +52,7 @@ export function simulateZombie(zombie: Zombie, players: ZombieTarget[], tick: nu
     return;
   }
 
-  const target = nearestLivingPlayer(zombie, players);
+  const target = selectTarget(zombie, players);
   if (!target) {
     zombie.vx = 0;
     zombie.vy = 0;
@@ -71,12 +73,14 @@ export function simulateZombie(zombie: Zombie, players: ZombieTarget[], tick: nu
   }
 
   zombie.targetId = target.id;
-  if (distance <= ZOMBIE_ATTACK_RANGE) {
+  const attackRange = zombie.state === "ATTACK" ? ZOMBIE_ATTACK_RELEASE_RANGE : ZOMBIE_ATTACK_RANGE;
+  if (distance <= attackRange) {
     zombie.vx = 0;
     zombie.vy = 0;
     zombie.state = "ATTACK";
     if (tick >= zombie.nextAttackTick) {
-      target.health = Math.max(0, target.health - ZOMBIE_ATTACK_DAMAGE);
+      // Player death/respawn is Day 4. Keep the target alive until that transition exists.
+      target.health = Math.max(1, target.health - ZOMBIE_ATTACK_DAMAGE);
       zombie.nextAttackTick = tick + ZOMBIE_ATTACK_COOLDOWN_TICKS;
     }
     return;
@@ -90,18 +94,25 @@ export function simulateZombie(zombie: Zombie, players: ZombieTarget[], tick: nu
   zombie.y += dy / distance * step;
 }
 
-function nearestLivingPlayer(zombie: Zombie, players: ZombieTarget[]): ZombieTarget | null {
+function selectTarget(zombie: Zombie, players: ZombieTarget[]): ZombieTarget | null {
+  const current = players.find((player) => player.id === zombie.targetId && player.health > 0);
+  if (current && distanceSquared(zombie, current) <= ZOMBIE_TARGET_RELEASE_RANGE * ZOMBIE_TARGET_RELEASE_RANGE) return current;
+
   let nearest: ZombieTarget | null = null;
   let nearestDistanceSquared = Number.POSITIVE_INFINITY;
   for (const player of players) {
     if (player.health <= 0) continue;
-    const dx = player.x - zombie.x;
-    const dy = player.y - zombie.y;
-    const distanceSquared = dx * dx + dy * dy;
-    if (distanceSquared < nearestDistanceSquared || (distanceSquared === nearestDistanceSquared && player.id < (nearest?.id || ""))) {
+    const candidateDistanceSquared = distanceSquared(zombie, player);
+    if (candidateDistanceSquared < nearestDistanceSquared || (candidateDistanceSquared === nearestDistanceSquared && player.id < (nearest?.id || ""))) {
       nearest = player;
-      nearestDistanceSquared = distanceSquared;
+      nearestDistanceSquared = candidateDistanceSquared;
     }
   }
   return nearest;
+}
+
+function distanceSquared(zombie: Zombie, player: ZombieTarget): number {
+  const dx = player.x - zombie.x;
+  const dy = player.y - zombie.y;
+  return dx * dx + dy * dy;
 }
