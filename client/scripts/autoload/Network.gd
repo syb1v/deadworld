@@ -2,9 +2,16 @@ extends Node
 
 signal status_changed(text: String)
 signal snapshot_received(snapshot: Dictionary)
+signal inventory_received(items: Array)
+signal server_error(code: String)
 
 const INPUT_MOVE := 1
 const PLAYER_SNAPSHOT := 10
+const ITEM_PICKUP := 30
+const ITEM_DROP := 31
+const INVENTORY_SNAPSHOT := 33
+const CONTAINER_MUTATE := 41
+const ERROR_EVENT := 50
 const PROTOCOL_VERSION := 1
 const SERVER_KEY := "CHANGE_ME_LOCAL_ONLY"
 
@@ -52,12 +59,29 @@ func send_move(direction: Vector2) -> void:
 	sequence += 1
 	socket.send_match_state_async(match_id, INPUT_MOVE, JSON.stringify({"x": direction.x, "y": direction.y, "sequence": sequence}))
 
+func pickup(item_id: String, world_version: int) -> void:
+	_send_intention(ITEM_PICKUP, {"item_instance_id": item_id, "expected_world_version": world_version})
+
+func drop(item_id: String) -> void:
+	_send_intention(ITEM_DROP, {"item_instance_id": item_id})
+
+func take_from_container(container_id: String, item_id: String, version: int) -> void:
+	_send_intention(CONTAINER_MUTATE, {"container_id": container_id, "item_instance_id": item_id, "expected_version": version, "operation": "take"})
+
+func _send_intention(opcode: int, payload: Dictionary) -> void:
+	if not match_id.is_empty():
+		socket.send_match_state_async(match_id, opcode, JSON.stringify(payload))
+
 func _on_match_state(state) -> void:
-	if state.op_code != PLAYER_SNAPSHOT:
-		return
 	var snapshot = JSON.parse_string(state.data)
-	if typeof(snapshot) == TYPE_DICTIONARY and snapshot.get("protocol") == PROTOCOL_VERSION:
+	if typeof(snapshot) != TYPE_DICTIONARY:
+		return
+	if state.op_code == PLAYER_SNAPSHOT and snapshot.get("protocol") == PROTOCOL_VERSION:
 		snapshot_received.emit(snapshot)
+	elif state.op_code == INVENTORY_SNAPSHOT:
+		inventory_received.emit(snapshot.get("items", []))
+	elif state.op_code == ERROR_EVENT:
+		server_error.emit(snapshot.get("code", "UNKNOWN_ERROR"))
 
 func _on_socket_closed() -> void:
 	match_id = ""
