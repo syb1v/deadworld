@@ -1,0 +1,6 @@
+PROJECT_NAME=Project Deadworld
+REPOSITORY=https://github.com/syb1v/deadworld
+DEFAULT_BRANCH=main
+MVP_TAG=v0.1.0-mvp
+GODOT_PIN=4.7.1
+PROTOCOL_VERSION=1

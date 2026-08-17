@@ -1,0 +1,13 @@
+{
+  "name": "@deadworld/server",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Project Deadworld Nakama authoritative runtime scaffold",
+  "scripts": {
+    "check": "tsc --noEmit",
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.0"
+  }
+}
