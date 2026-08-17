@@ -172,6 +172,8 @@ Implemented operations are `take` and `deposit`. Exactly one mutation can consum
 
 Stackable item definitions use authoritative `quantity` with a maximum of 64 per slot. Pickup and container take merge compatible stacks before consuming a free slot; the whole mutation is rejected if all incoming quantity cannot fit. Weapons remain non-stackable. Drop moves the complete selected stack to the world.
 
+Day 5 persistence is server-side and does not change the wire version. Ownership/container/combat mutations are acknowledged to clients only after versioned storage CAS succeeds. On write conflict the mutation is rolled back, opcode `50` carries `PERSISTENCE_CONFLICT`, and the stale match stops instead of continuing from divergent state.
+
 ## 8. INPUT_ATTACK — Day 4
 
 Client сообщает input:

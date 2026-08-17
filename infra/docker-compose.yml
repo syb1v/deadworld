@@ -36,13 +36,14 @@ services:
       - --logger.level=INFO
       - --runtime.path=/nakama/data/modules
       - --socket.server_key=${NAKAMA_SERVER_KEY:-deadworld-local-key}
+      - --runtime.http_key=${NAKAMA_HTTP_KEY:-deadworld-local-http-key}
       - --session.token_expiry_sec=3600
       - --session.refresh_token_expiry_sec=604800
       - --console.username=${NAKAMA_CONSOLE_USERNAME:-admin}
       - --console.password=${NAKAMA_CONSOLE_PASSWORD:-deadworld-local-console}
     ports:
-      - "${GAME_PORT:-7350}:7350"
-      - "7351:7351"
+      - "127.0.0.1:${GAME_PORT:-7350}:7350"
+      - "127.0.0.1:7351:7351"
     volumes:
       - ../server/build:/nakama/data/modules:ro
     healthcheck:

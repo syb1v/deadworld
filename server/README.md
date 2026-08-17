@@ -1,14 +1,21 @@
 # Server
 
-TypeScript Nakama authoritative runtime scaffold.
+TypeScript runtime for the Nakama `world` authoritative match.
 
-Day 1 must select/lock versions compatible with the chosen Nakama image/runtime, then add:
+Implemented through Day 5:
 
-- authoritative `world` match;
-- player join/leave;
-- fixed tick;
-- movement validation;
-- state replication;
-- tests/checks.
+- authoritative movement and shared zombie simulation;
+- server-validated combat, magazines, ammo, death and respawn;
+- quantity inventory stacks, world loot and versioned containers;
+- private versioned Nakama Storage aggregate for player/world persistence;
+- rollback on ownership persistence conflicts;
+- isolated integration worlds and a full Docker restart test.
 
-Do not pretend unimplemented handlers already work.
+Run from the repository root:
+
+```bash
+make test
+make test-restart
+```
+
+`make test-restart` performs two complete Docker Compose teardown/startup cycles and verifies the same account after restart.

@@ -58,7 +58,7 @@ func connect_to_world() -> void:
 		status_changed.emit("Несовместимая версия протокола")
 		return
 	match_id = world.match_id
-	var joined = await socket.join_match_async(match_id)
+	var joined = await _join_loaded_world(socket, match_id)
 	if joined.is_exception():
 		status_changed.emit("Не удалось войти в мир: %s" % joined)
 		return
@@ -134,7 +134,7 @@ func _on_socket_closed(closed_socket) -> void:
 			candidate.close()
 			break
 		var candidate_match_id: String = world.match_id
-		var joined = await candidate.join_match_async(candidate_match_id)
+		var joined = await _join_loaded_world(candidate, candidate_match_id)
 		if not joined.is_exception():
 			socket = candidate
 			match_id = candidate_match_id
@@ -144,6 +144,15 @@ func _on_socket_closed(closed_socket) -> void:
 		candidate.close()
 	reconnecting = false
 	status_changed.emit("Не удалось переподключиться")
+
+func _join_loaded_world(target_socket, target_match_id: String):
+	var result = await target_socket.join_match_async(target_match_id)
+	for attempt in range(9):
+		if not result.is_exception():
+			return result
+		await get_tree().create_timer(0.15).timeout
+		result = await target_socket.join_match_async(target_match_id)
+	return result
 
 func _device_id() -> String:
 	var profile := "default"

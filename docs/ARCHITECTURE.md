@@ -311,3 +311,16 @@ Post-MVP:
 - Living zombies receive deterministic server-side pair separation after movement, preventing identical positions without client physics authority.
 - Combat/death state remains match-lifetime state until Day 5 persistence.
 - Match-lifetime player state is keyed by stable Nakama user ID; reconnect only replaces presence and preserves HP, position, cooldown, death deadline and inventory. A second simultaneous presence for the same user is rejected.
+
+## 20. Day 5 persistence
+
+- Nakama Storage contains one private schema-versioned ownership aggregate for the main world.
+- It includes player position/HP, inventories, stack quantity, pistol magazine ammo, world items, containers with versions and zombie HP/dead state.
+- Missing aggregates use create-only CAS (`version="*"`); later writes use the acknowledged storage version. A stale writer terminates instead of serving divergent state.
+- Main-world candidates cannot load/write persistence until their match ID wins the versioned world-pointer CAS.
+- Ownership mutations and player death/respawn transitions emit success events only after storage acknowledgement.
+- A failed/conflicting write restores a detached pre-mutation snapshot and returns `PERSISTENCE_CONFLICT`.
+- State loads on the first match tick before joins are accepted; clients retry the short `WORLD_LOADING` window.
+- Ordinary integration tests use persistence-disabled isolated matches and cannot mutate the main world.
+- `make test-restart` verifies a private persistent fixture across full PostgreSQL/Nakama container teardown and startup.
+- Continuous movement and nonfatal HP snapshots flush once per second, so abrupt process failure can lose at most the latest snapshot interval; ownership transitions are synchronous.

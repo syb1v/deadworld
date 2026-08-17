@@ -14,15 +14,15 @@
 
 ### Networking
 
-- [ ] device/guest authentication;
-- [ ] realtime connection;
-- [ ] authoritative world session;
-- [ ] уникальные player IDs;
-- [ ] player join/leave;
-- [ ] authoritative movement;
-- [ ] remote interpolation;
-- [ ] reconnect;
-- [ ] protocol version.
+- [x] device/guest authentication;
+- [x] realtime connection;
+- [x] authoritative world session;
+- [x] уникальные player IDs;
+- [x] player join/leave;
+- [x] authoritative movement;
+- [x] remote interpolation;
+- [x] reconnect;
+- [x] protocol version.
 
 ### World
 
@@ -33,50 +33,50 @@
 
 ### Zombies
 
-- [ ] один тип зомби;
-- [ ] server spawn;
-- [ ] idle;
-- [ ] detect;
-- [ ] chase;
-- [ ] attack;
-- [ ] death;
-- [ ] shared state.
+- [x] один тип зомби;
+- [x] server spawn;
+- [x] idle;
+- [x] detect;
+- [x] chase;
+- [x] attack;
+- [x] death;
+- [x] shared state.
 
 ### Combat
 
-- [ ] melee;
-- [ ] pistol;
-- [ ] ammo;
-- [ ] server damage validation.
+- [x] melee;
+- [x] pistol;
+- [x] ammo;
+- [x] server damage validation.
 
 ### Items
 
-- [ ] 10–15 definitions;
-- [ ] world item;
-- [ ] pickup;
-- [ ] drop;
-- [ ] simple slot inventory.
+- [x] 10–15 definitions;
+- [x] world item;
+- [x] pickup;
+- [x] drop;
+- [x] simple slot inventory.
 
 ### Containers
 
-- [ ] один generic container;
-- [ ] open;
-- [ ] shared contents;
-- [ ] versioned mutation;
-- [ ] duplicate pickup prevention.
+- [x] один generic container;
+- [x] open;
+- [x] shared contents;
+- [x] versioned mutation;
+- [x] duplicate pickup prevention.
 
 ### Death
 
-- [ ] player death;
-- [ ] respawn;
-- [ ] server-owned state reset/drop policy.
+- [x] player death;
+- [x] respawn;
+- [x] server-owned state reset/drop policy.
 
 ### Persistence
 
-- [ ] save/load player;
-- [ ] inventory persists;
-- [ ] important world mutations persist;
-- [ ] restart does not respawn already-taken unique loot.
+- [x] save/load player;
+- [x] inventory persists;
+- [x] important world mutations persist;
+- [x] restart does not respawn already-taken unique loot.
 
 ### Platforms
 
