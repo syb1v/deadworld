@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource path="res://scripts/world/World.gd" type="Script" id="1"]
+[ext_resource path="res://scripts/ui/Crosshair.gd" type="Script" id="2"]
 
 [node name="World" type="Node2D"]
 script = ExtResource("1")
@@ -22,29 +23,122 @@ show_behind_parent = true
 
 [node name="Containers" type="Node2D" parent="."]
 
-[node name="Status" type="Label" parent="."]
+[node name="Effects" type="Node2D" parent="."]
+
+[node name="AimLine" type="Line2D" parent="."]
+default_color = Color(0.82, 0.93, 0.72, 0.48)
+width = 1.5
+
+[node name="HUD" type="CanvasLayer" parent="."]
+visible = false
+
+[node name="Status" type="Label" parent="HUD"]
 offset_left = 24.0
 offset_top = 20.0
 offset_right = 900.0
 offset_bottom = 50.0
 theme_override_colors/font_color = Color(0.72, 0.9, 0.79, 1)
 theme_override_font_sizes/font_size = 18
-text = "Connecting..."
+text = "Нажмите «Играть»"
 
-[node name="Hint" type="Label" parent="."]
+[node name="Hint" type="Label" parent="HUD"]
 offset_left = 24.0
 offset_top = 674.0
-offset_right = 500.0
+offset_right = 800.0
 offset_bottom = 704.0
 theme_override_colors/font_color = Color(0.5, 0.62, 0.57, 1)
-text = "WASD move | E pickup/take | Q drop | 1-8 slot | Space attack toward cursor"
+text = "WASD: движение | E: взять | Q: выбросить | 1-8: слот | ЛКМ/Пробел: атака | Esc: пауза"
 
-[node name="Inventory" type="Label" parent="."]
+[node name="Inventory" type="Label" parent="HUD"]
 offset_left = 900.0
 offset_top = 20.0
 offset_right = 1250.0
 offset_bottom = 180.0
 theme_override_colors/font_color = Color(0.92, 0.83, 0.52, 1)
 theme_override_font_sizes/font_size = 16
-text = "Inventory: empty"
+text = "Инвентарь пуст"
 horizontal_alignment = 2
+
+[node name="Crosshair" type="Control" parent="HUD"]
+mouse_filter = 2
+script = ExtResource("2")
+
+[node name="Menus" type="CanvasLayer" parent="."]
+layer = 10
+
+[node name="MainMenu" type="ColorRect" parent="Menus"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.018, 0.03, 0.027, 0.96)
+
+[node name="Title" type="Label" parent="Menus/MainMenu"]
+offset_left = 390.0
+offset_top = 180.0
+offset_right = 890.0
+offset_bottom = 245.0
+theme_override_colors/font_color = Color(0.78, 0.9, 0.68, 1)
+theme_override_font_sizes/font_size = 42
+text = "МЁРТВЫЙ МИР"
+horizontal_alignment = 1
+
+[node name="Subtitle" type="Label" parent="Menus/MainMenu"]
+offset_left = 390.0
+offset_top = 245.0
+offset_right = 890.0
+offset_bottom = 280.0
+theme_override_colors/font_color = Color(0.43, 0.56, 0.48, 1)
+text = "СЕТЕВОЙ SURVIVAL-ТЕСТ"
+horizontal_alignment = 1
+
+[node name="Play" type="Button" parent="Menus/MainMenu"]
+offset_left = 490.0
+offset_top = 340.0
+offset_right = 790.0
+offset_bottom = 400.0
+theme_override_font_sizes/font_size = 22
+text = "ИГРАТЬ"
+
+[node name="Quit" type="Button" parent="Menus/MainMenu"]
+offset_left = 490.0
+offset_top = 420.0
+offset_right = 790.0
+offset_bottom = 480.0
+theme_override_font_sizes/font_size = 22
+text = "ВЫХОД"
+
+[node name="PauseMenu" type="ColorRect" parent="Menus"]
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.018, 0.03, 0.027, 0.88)
+
+[node name="Title" type="Label" parent="Menus/PauseMenu"]
+offset_left = 490.0
+offset_top = 220.0
+offset_right = 790.0
+offset_bottom = 275.0
+theme_override_font_sizes/font_size = 34
+text = "ПАУЗА"
+horizontal_alignment = 1
+
+[node name="Resume" type="Button" parent="Menus/PauseMenu"]
+offset_left = 490.0
+offset_top = 320.0
+offset_right = 790.0
+offset_bottom = 380.0
+theme_override_font_sizes/font_size = 20
+text = "ПРОДОЛЖИТЬ"
+
+[node name="Quit" type="Button" parent="Menus/PauseMenu"]
+offset_left = 490.0
+offset_top = 400.0
+offset_right = 790.0
+offset_bottom = 460.0
+theme_override_font_sizes/font_size = 20
+text = "ВЫХОД В ОС"

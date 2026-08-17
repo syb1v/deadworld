@@ -43,3 +43,9 @@ test("validates proximity for item and container mutations", () => {
   assert.equal(pickupItem(state, far, "item:world-bandage", 1).code, "OUT_OF_RANGE");
   assert.equal(mutateContainer(state, far, { container_id: "container:clinic", expected_version: 1, operation: "take", item_instance_id: "item:clinic-beans" }).code, "OUT_OF_RANGE");
 });
+
+test("world fixture provides melee weapons and practical pistol ammo", () => {
+  const items = Object.values(createItemState().worldItems);
+  assert.ok(items.filter((item) => item.definitionId === "baseball_bat").length >= 2);
+  assert.ok(items.filter((item) => item.definitionId === "pistol_ammo").length >= 8);
+});

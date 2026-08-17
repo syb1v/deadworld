@@ -4,10 +4,12 @@ signal status_changed(text: String)
 signal snapshot_received(snapshot: Dictionary)
 signal inventory_received(items: Array)
 signal server_error(code: String)
+signal damage_received(event: Dictionary)
 
 const INPUT_MOVE := 1
 const INPUT_ATTACK := 3
 const PLAYER_SNAPSHOT := 10
+const DAMAGE_EVENT := 20
 const ITEM_PICKUP := 30
 const ITEM_DROP := 31
 const INVENTORY_SNAPSHOT := 33
@@ -26,11 +28,11 @@ var attack_sequence := 0
 var reconnecting := false
 
 func connect_to_world() -> void:
-	status_changed.emit("Authenticating device...")
+	status_changed.emit("Авторизация устройства...")
 	client = Nakama.create_client(SERVER_KEY, "127.0.0.1", 7350, "http", 3, NakamaLogger.LOG_LEVEL.INFO)
 	var auth = await client.authenticate_device_async(_device_id())
 	if auth.is_exception():
-		status_changed.emit("Authentication failed: %s" % auth)
+		status_changed.emit("Ошибка авторизации: %s" % auth)
 		return
 	session = auth
 	player_id = "player:%s" % session.user_id
@@ -39,22 +41,22 @@ func connect_to_world() -> void:
 	socket.closed.connect(_on_socket_closed.bind(socket))
 	var connected = await socket.connect_async(session, true)
 	if connected.is_exception():
-		status_changed.emit("Socket failed: %s" % connected)
+		status_changed.emit("Ошибка подключения: %s" % connected)
 		return
 	var rpc = await client.rpc_async(session, "find_world", "{}")
 	if rpc.is_exception():
-		status_changed.emit("World lookup failed: %s" % rpc)
+		status_changed.emit("Мир недоступен: %s" % rpc)
 		return
 	var world = JSON.parse_string(rpc.payload)
 	if typeof(world) != TYPE_DICTIONARY or world.get("protocol") != PROTOCOL_VERSION:
-		status_changed.emit("Protocol mismatch")
+		status_changed.emit("Несовместимая версия протокола")
 		return
 	match_id = world.match_id
 	var joined = await socket.join_match_async(match_id)
 	if joined.is_exception():
-		status_changed.emit("Join failed: %s" % joined)
+		status_changed.emit("Не удалось войти в мир: %s" % joined)
 		return
-	status_changed.emit("Online  |  %s" % player_id)
+	status_changed.emit("В сети  |  %s" % player_id)
 
 func send_move(direction: Vector2) -> void:
 	if match_id.is_empty() or socket == null:
@@ -87,6 +89,8 @@ func _on_match_state(state) -> void:
 		snapshot_received.emit(snapshot)
 	elif state.op_code == INVENTORY_SNAPSHOT:
 		inventory_received.emit(snapshot.get("items", []))
+	elif state.op_code == DAMAGE_EVENT:
+		damage_received.emit(snapshot)
 	elif state.op_code == ERROR_EVENT:
 		server_error.emit(snapshot.get("code", "UNKNOWN_ERROR"))
 
@@ -97,7 +101,7 @@ func _on_socket_closed(closed_socket) -> void:
 	if reconnecting or session == null:
 		return
 	reconnecting = true
-	status_changed.emit("Disconnected, reconnecting...")
+	status_changed.emit("Соединение потеряно, переподключение...")
 	for attempt in range(5):
 		await get_tree().create_timer(1.0 + attempt).timeout
 		var candidate = Nakama.create_socket_from(client)
@@ -121,11 +125,11 @@ func _on_socket_closed(closed_socket) -> void:
 			socket = candidate
 			match_id = candidate_match_id
 			reconnecting = false
-			status_changed.emit("Online  |  %s" % player_id)
+			status_changed.emit("В сети  |  %s" % player_id)
 			return
 		candidate.close()
 	reconnecting = false
-	status_changed.emit("Reconnect failed")
+	status_changed.emit("Не удалось переподключиться")
 
 func _device_id() -> String:
 	var profile := "default"

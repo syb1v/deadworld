@@ -20,6 +20,7 @@ move_down={"deadzone":0.2,"events":[Object(InputEventKey,"physical_keycode":83)]
 interact={"deadzone":0.2,"events":[Object(InputEventKey,"physical_keycode":69)]}
 drop_item={"deadzone":0.2,"events":[Object(InputEventKey,"physical_keycode":81)]}
 attack={"deadzone":0.2,"events":[Object(InputEventKey,"physical_keycode":32)]}
+pause={"deadzone":0.2,"events":[Object(InputEventKey,"physical_keycode":4194305)]}
 
 [display]
 

@@ -1,10 +1,10 @@
 extends Node2D
 
-var label := "Container"
+var label := "Контейнер"
 
 func setup(state: Dictionary) -> void:
 	position = Vector2(state.x, state.y)
-	label = "Container v%d (%d)" % [state.version, state.items.size()]
+	label = "Контейнер v%d (%d)" % [state.version, state.items.size()]
 	queue_redraw()
 
 func _draw() -> void:
