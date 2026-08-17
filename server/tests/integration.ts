@@ -15,7 +15,7 @@ async function connect(id: string) {
   const payload = typeof rpc.payload === "string" ? JSON.parse(rpc.payload) : rpc.payload;
   const matchId = (payload as { match_id: string }).match_id;
   await socket.joinMatch(matchId);
-  return { session, socket, matchId, snapshots: [] as any[], inventory: [] as any[], errors: [] as string[], deaths: [] as any[], respawns: [] as any[] };
+  return { session, socket, matchId, snapshots: [] as any[], inventory: [] as any[], errors: [] as string[], deaths: [] as any[], respawns: [] as any[], attacks: [] as any[], reloads: [] as any[] };
 }
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -47,6 +47,8 @@ async function main() {
     else if (data.op_code === 33) client.inventory = payload.items;
     else if (data.op_code === 21) client.deaths.push(payload);
     else if (data.op_code === 22) client.respawns.push(payload);
+    else if (data.op_code === 23) client.attacks.push(payload);
+    else if (data.op_code === 24) client.reloads.push(payload);
     else if (data.op_code === 50) client.errors.push(payload.code);
   };
   await a.socket.sendMatchState(a.matchId, 1, JSON.stringify({ x: 999, y: 999, sequence: 1 }));
@@ -58,10 +60,10 @@ async function main() {
   if (!player || Math.hypot(player.vx, player.vy) > 180.001) throw new Error("authoritative speed validation failed");
   if (!secondPlayer || (player.x === secondPlayer.x && player.y === secondPlayer.y)) throw new Error("players spawned on top of each other");
   await a.socket.sendMatchState(a.matchId, 1, JSON.stringify({ x: 0, y: 0, sequence: 2 }));
+  await waitFor(() => a.snapshots[a.snapshots.length - 1]?.zombies.some((zombie: any) => zombie.target_id), `server did not select a zombie target: ${JSON.stringify(a.snapshots[a.snapshots.length - 1])}`);
   const zombiesA = a.snapshots[a.snapshots.length - 1]?.zombies;
   const zombiesB = b.snapshots[b.snapshots.length - 1]?.zombies;
   if (!zombiesA || JSON.stringify(zombiesA) !== JSON.stringify(zombiesB)) throw new Error("clients did not receive identical zombie state");
-  if (!zombiesA.some((zombie: any) => zombie.target_id === `player:${a.session.user_id}` || zombie.target_id === `player:${b.session.user_id}`)) throw new Error("server did not select a zombie target");
   const itemSnapshot = b.snapshots[b.snapshots.length - 1];
   const itemPlayerA = itemSnapshot.players.find((entity: any) => entity.id === `player:${a.session.user_id}`);
   const itemPlayerB = itemSnapshot.players.find((entity: any) => entity.id === `player:${b.session.user_id}`);
@@ -82,11 +84,25 @@ async function main() {
   }
   const containerState = b.snapshots[b.snapshots.length - 1].containers[0];
   if (containerState?.items.length >= 2) {
+    await Promise.all([a, b].map(async (client, clientIndex) => {
+      let sequence = 100 + clientIndex * 100;
+      for (let attempt = 0; attempt < 30; attempt += 1) {
+        const latest = client.snapshots[client.snapshots.length - 1];
+        const local = latest.players.find((entity: any) => entity.id === `player:${client.session.user_id}`);
+        if (Math.hypot(containerState.x - local.x, containerState.y - local.y) <= 72) {
+          await client.socket.sendMatchState(client.matchId, 1, JSON.stringify({ x: 0, y: 0, sequence: sequence++ }));
+          return;
+        }
+        await client.socket.sendMatchState(client.matchId, 1, JSON.stringify({ x: containerState.x - local.x, y: containerState.y - local.y, sequence: sequence++ }));
+        await wait(150);
+      }
+      throw new Error(`player did not approach container: ${client.session.user_id}`);
+    }));
     await Promise.all([
       a.socket.sendMatchState(a.matchId, 41, JSON.stringify({ container_id: containerState.id, expected_version: containerState.version, operation: "take", item_instance_id: containerState.items[0].id })),
       b.socket.sendMatchState(b.matchId, 41, JSON.stringify({ container_id: containerState.id, expected_version: containerState.version, operation: "take", item_instance_id: containerState.items[1].id }))
     ]);
-    await waitFor(() => b.snapshots[b.snapshots.length - 1].containers[0].version > containerState.version, "container version did not advance");
+    await waitFor(() => b.snapshots[b.snapshots.length - 1].containers[0].version > containerState.version, `container version did not advance: ${JSON.stringify({ players: b.snapshots[b.snapshots.length - 1].players, container: b.snapshots[b.snapshots.length - 1].containers[0], errorsA: a.errors, errorsB: b.errors })}`);
     await waitFor(() => [a, b].some((client) => client.errors.includes("STALE_CONTAINER_VERSION")), `stale container error was not delivered: ${JSON.stringify({ a: a.errors, b: b.errors })}`);
     const latestContainer = b.snapshots[b.snapshots.length - 1].containers[0];
     if (latestContainer.version !== containerState.version + 1 || latestContainer.items.length !== containerState.items.length - 1) throw new Error("container race was not atomic");
@@ -102,16 +118,34 @@ async function main() {
   if (!bat) throw new Error("combat weapon was not present in world state");
   const combatPlayer = combatSnapshot.players.find((entity: any) => entity.id === `player:${a.session.user_id}`);
   const approach = { x: bat.x - combatPlayer.x, y: bat.y - combatPlayer.y };
-  await a.socket.sendMatchState(a.matchId, 1, JSON.stringify({ x: approach.x, y: approach.y, sequence: 3 }));
+  await a.socket.sendMatchState(a.matchId, 1, JSON.stringify({ x: approach.x, y: approach.y, sequence: 500 }));
   await waitFor(() => {
     const latest = a.snapshots[a.snapshots.length - 1];
     const local = latest.players.find((entity: any) => entity.id === `player:${a.session.user_id}`);
     return Math.hypot(bat.x - local.x, bat.y - local.y) <= 72;
   }, "player did not approach combat weapon");
-  await a.socket.sendMatchState(a.matchId, 1, JSON.stringify({ x: 0, y: 0, sequence: 4 }));
+  await a.socket.sendMatchState(a.matchId, 1, JSON.stringify({ x: 0, y: 0, sequence: 501 }));
   const pickupSnapshot = a.snapshots[a.snapshots.length - 1];
   await a.socket.sendMatchState(a.matchId, 30, JSON.stringify({ item_instance_id: bat.id, expected_world_version: pickupSnapshot.world_version }));
   await waitFor(() => a.inventory.some((item: any) => item.id === bat.id), "authoritative weapon pickup failed");
+  for (const definitionId of ["pistol", "pistol_ammo"]) {
+    const latest = a.snapshots[a.snapshots.length - 1];
+    const item = latest.world_items.find((candidate: any) => candidate.definitionId === definitionId);
+    if (!item) throw new Error(`${definitionId} was not present for reload coverage`);
+    await a.socket.sendMatchState(a.matchId, 30, JSON.stringify({ item_instance_id: item.id, expected_world_version: latest.world_version }));
+    await waitFor(() => a.inventory.some((candidate: any) => candidate.id === item.id), `${definitionId} pickup failed`);
+  }
+  const pistolSlot = a.inventory.findIndex((item: any) => item.definitionId === "pistol");
+  const attacksBeforeEmptyShot = a.attacks.length;
+  await a.socket.sendMatchState(a.matchId, 3, JSON.stringify({ weapon_slot: pistolSlot, aim_x: 0, aim_y: -1, sequence: 1 }));
+  await waitFor(() => a.errors.includes("MAGAZINE_EMPTY"), "empty magazine was not rejected");
+  if (a.attacks.length !== attacksBeforeEmptyShot) throw new Error("empty magazine emitted an accepted attack event");
+  await a.socket.sendMatchState(a.matchId, 5, JSON.stringify({ weapon_slot: pistolSlot, sequence: 1 }));
+  await waitFor(() => a.reloads.some((event) => event.player_id === `player:${a.session.user_id}` && event.magazine_ammo === 1), "server reload confirmation was not delivered");
+  await waitFor(() => a.inventory[pistolSlot]?.magazineAmmo === 1 && !a.inventory.some((item: any) => item.definitionId === "pistol_ammo"), "reload did not transfer loose ammo into magazine");
+  await a.socket.sendMatchState(a.matchId, 3, JSON.stringify({ weapon_slot: pistolSlot, aim_x: 0, aim_y: -1, sequence: 2 }));
+  await waitFor(() => a.attacks.length === attacksBeforeEmptyShot + 1, "loaded pistol attack was not confirmed");
+  await wait(400);
   const weaponSlot = a.inventory.findIndex((item: any) => item.id === bat.id);
   await waitFor(() => {
     const latest = a.snapshots[a.snapshots.length - 1];
@@ -122,13 +156,14 @@ async function main() {
   const localBeforeCombat = beforeCombat.players.find((entity: any) => entity.id === `player:${a.session.user_id}`);
   const combatTarget = beforeCombat.zombies.filter((entity: any) => entity.hp > 0).sort((left: any, right: any) => Math.hypot(left.x - localBeforeCombat.x, left.y - localBeforeCombat.y) - Math.hypot(right.x - localBeforeCombat.x, right.y - localBeforeCombat.y))[0];
   const aim = { x: combatTarget.x - localBeforeCombat.x, y: combatTarget.y - localBeforeCombat.y };
-  await a.socket.sendMatchState(a.matchId, 3, JSON.stringify({ weapon_slot: weaponSlot, aim_x: aim.x, aim_y: aim.y, sequence: 1 }));
+  await a.socket.sendMatchState(a.matchId, 3, JSON.stringify({ weapon_slot: weaponSlot, aim_x: aim.x, aim_y: aim.y, sequence: 3 }));
   await waitFor(() => a.snapshots[a.snapshots.length - 1].zombies.some((entity: any) => entity.id === combatTarget.id && entity.hp === 15), "first authoritative melee damage was not applied");
+  await waitFor(() => a.attacks.some((event) => event.weapon === "baseball_bat"), "accepted melee event was not broadcast");
   await wait(650);
   const secondCombat = a.snapshots[a.snapshots.length - 1];
   const localSecondCombat = secondCombat.players.find((entity: any) => entity.id === `player:${a.session.user_id}`);
   const targetSecondCombat = secondCombat.zombies.find((entity: any) => entity.id === combatTarget.id);
-  await a.socket.sendMatchState(a.matchId, 3, JSON.stringify({ weapon_slot: weaponSlot, aim_x: targetSecondCombat.x - localSecondCombat.x, aim_y: targetSecondCombat.y - localSecondCombat.y, sequence: 2, target_id: "forged", damage: 999999 }));
+  await a.socket.sendMatchState(a.matchId, 3, JSON.stringify({ weapon_slot: weaponSlot, aim_x: targetSecondCombat.x - localSecondCombat.x, aim_y: targetSecondCombat.y - localSecondCombat.y, sequence: 4, target_id: "forged", damage: 999999 }));
   await waitFor(() => a.snapshots[a.snapshots.length - 1].zombies.some((entity: any) => entity.id === combatTarget.id && entity.state === "DEAD" && entity.hp === 0), "server-validated melee did not kill zombie");
   const expectedInventoryIds = b.inventory.map((item: any) => item.id).sort();
   await b.socket.disconnect(false);
@@ -139,7 +174,7 @@ async function main() {
   await a.socket.disconnect(false);
   const reconnectClient = new Client(key, host, port, false);
   const reconnectSocket = reconnectClient.createSocket(false, false);
-  const reconnect = { session: b.session, socket: reconnectSocket, matchId: b.matchId, snapshots: [] as any[], inventory: [] as any[], errors: [] as string[], deaths: [] as any[], respawns: [] as any[] };
+  const reconnect = { session: b.session, socket: reconnectSocket, matchId: b.matchId, snapshots: [] as any[], inventory: [] as any[], errors: [] as string[], deaths: [] as any[], respawns: [] as any[], attacks: [] as any[], reloads: [] as any[] };
   let resolveInventory: ((items: any[]) => void) | undefined;
   const inventorySnapshot = new Promise<any[]>((resolve) => { resolveInventory = resolve; });
   reconnect.socket.onmatchdata = (data) => {
@@ -158,7 +193,7 @@ async function main() {
   const reconnectInventoryIds = reconnectInventory.map((item: any) => item.id).sort();
   if (JSON.stringify(reconnectInventoryIds) !== JSON.stringify(expectedInventoryIds)) throw new Error("stable user inventory was not restored on reconnect");
   await reconnect.socket.disconnect(false);
-  console.log(JSON.stringify({ auth: true, socket: true, shared_world: true, unique_players: true, separated_spawns: true, speed_validation: true, disconnect_cleanup: true, shared_zombies: true, server_targeting: true, combat_server_validated: true, zombie_death: true, player_death: true, inventory_death_drop: true, player_respawn: true, reconnect_zombies: true, pickup_single_owner: true, stale_container_rejected: true, reconnect_items: true, reconnect_inventory: true }));
+  console.log(JSON.stringify({ auth: true, socket: true, shared_world: true, unique_players: true, separated_spawns: true, speed_validation: true, disconnect_cleanup: true, shared_zombies: true, finite_zombies: true, zombie_separation: true, server_targeting: true, combat_server_validated: true, empty_magazine_rejected: true, authoritative_reload: true, attack_confirmation: true, zombie_death: true, player_death: true, inventory_death_drop: true, player_respawn: true, reconnect_zombies: true, pickup_single_owner: true, stale_container_rejected: true, reconnect_items: true, reconnect_inventory: true }));
 }
 
 main().catch((error) => { console.error(error); process.exit(1); });

@@ -4,7 +4,7 @@ import {
   ZOMBIE_ATTACK_RANGE,
   ZOMBIE_ATTACK_RELEASE_RANGE,
   ZOMBIE_DETECTION_RANGE,
-  ZOMBIE_RESPAWN_TICKS,
+  ZOMBIE_SEPARATION_DISTANCE,
   ZOMBIE_SPEED,
   ZOMBIE_TARGET_RELEASE_RANGE
 } from "./protocol";
@@ -30,7 +30,6 @@ export interface Zombie {
   nextAttackTick: number;
   spawnX: number;
   spawnY: number;
-  respawnAtTick: number;
 }
 
 export function createZombies(): Record<string, Zombie> {
@@ -38,17 +37,13 @@ export function createZombies(): Record<string, Zombie> {
   const zombies: Record<string, Zombie> = {};
   for (let index = 0; index < spawns.length; index += 1) {
     const id = `zombie:main-${index + 1}`;
-    zombies[id] = { id, x: spawns[index][0], y: spawns[index][1], vx: 0, vy: 0, hp: 30, state: "IDLE", targetId: "", nextAttackTick: 0, spawnX: spawns[index][0], spawnY: spawns[index][1], respawnAtTick: 0 };
+    zombies[id] = { id, x: spawns[index][0], y: spawns[index][1], vx: 0, vy: 0, hp: 30, state: "IDLE", targetId: "", nextAttackTick: 0, spawnX: spawns[index][0], spawnY: spawns[index][1] };
   }
   return zombies;
 }
 
 export function simulateZombie(zombie: Zombie, players: ZombieTarget[], tick: number, dt: number): void {
   if (zombie.hp <= 0) {
-    if (zombie.respawnAtTick > 0 && tick >= zombie.respawnAtTick) {
-      zombie.x = zombie.spawnX; zombie.y = zombie.spawnY; zombie.hp = 30; zombie.state = "IDLE"; zombie.respawnAtTick = 0;
-      return;
-    }
     zombie.hp = 0;
     zombie.vx = 0;
     zombie.vy = 0;
@@ -100,7 +95,25 @@ export function simulateZombie(zombie: Zombie, players: ZombieTarget[], tick: nu
 
 export function killZombie(zombie: Zombie, tick: number): void {
   zombie.hp = 0; zombie.vx = 0; zombie.vy = 0; zombie.state = "DEAD"; zombie.targetId = "";
-  zombie.respawnAtTick = tick + ZOMBIE_RESPAWN_TICKS;
+}
+
+export function separateZombies(zombies: Record<string, Zombie>): void {
+  const living = Object.keys(zombies).sort().map((id) => zombies[id]).filter((zombie) => zombie.hp > 0);
+  for (let leftIndex = 0; leftIndex < living.length; leftIndex += 1) {
+    for (let rightIndex = leftIndex + 1; rightIndex < living.length; rightIndex += 1) {
+      const left = living[leftIndex];
+      const right = living[rightIndex];
+      let dx = right.x - left.x;
+      let dy = right.y - left.y;
+      let distance = Math.hypot(dx, dy);
+      if (distance >= ZOMBIE_SEPARATION_DISTANCE) continue;
+      if (distance < 0.001) { dx = 1; dy = 0; distance = 0; }
+      const correction = (ZOMBIE_SEPARATION_DISTANCE - distance) / 2;
+      const directionLength = Math.hypot(dx, dy);
+      left.x -= dx / directionLength * correction; left.y -= dy / directionLength * correction;
+      right.x += dx / directionLength * correction; right.y += dy / directionLength * correction;
+    }
+  }
 }
 
 function selectTarget(zombie: Zombie, players: ZombieTarget[]): ZombieTarget | null {

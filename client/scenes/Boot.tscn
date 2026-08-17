@@ -47,7 +47,7 @@ offset_top = 674.0
 offset_right = 800.0
 offset_bottom = 704.0
 theme_override_colors/font_color = Color(0.5, 0.62, 0.57, 1)
-text = "WASD: движение | E: взять | Q: выбросить | 1-8: слот | ЛКМ/Пробел: атака | Esc: пауза"
+text = "WASD: движение | E: взять | Q: выбросить | 1-8: слот | ЛКМ/Пробел: атака | R: перезарядка | Esc: пауза"
 
 [node name="Inventory" type="Label" parent="HUD"]
 offset_left = 900.0
@@ -62,6 +62,15 @@ horizontal_alignment = 2
 [node name="Crosshair" type="Control" parent="HUD"]
 mouse_filter = 2
 script = ExtResource("2")
+
+[node name="ZombieCount" type="Label" parent="HUD"]
+offset_left = 24.0
+offset_top = 56.0
+offset_right = 300.0
+offset_bottom = 86.0
+theme_override_colors/font_color = Color(0.9, 0.4, 0.35, 1)
+theme_override_font_sizes/font_size = 17
+text = "Зомби: ожидание данных"
 
 [node name="Menus" type="CanvasLayer" parent="."]
 layer = 10

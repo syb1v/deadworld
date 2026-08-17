@@ -1,13 +1,13 @@
-import { CONTAINER_MUTATE, DAMAGE_EVENT, DEATH_EVENT, ERROR_EVENT, INPUT_ATTACK, INPUT_MOVE, INVENTORY_SNAPSHOT, ITEM_DROP, ITEM_PICKUP, MAX_INPUTS_PER_SECOND, MAX_INTERACTIONS_PER_SECOND, PLAYER_MAX_HEALTH, PLAYER_RESPAWN_TICKS, PLAYER_SNAPSHOT, PLAYER_SPEED, PROTOCOL_VERSION, RESPAWN_EVENT, TICK_RATE } from "./protocol";
+import { ATTACK_EVENT, CONTAINER_MUTATE, DAMAGE_EVENT, DEATH_EVENT, ERROR_EVENT, INPUT_ATTACK, INPUT_MOVE, INPUT_RELOAD, INVENTORY_SNAPSHOT, ITEM_DROP, ITEM_PICKUP, MAX_INPUTS_PER_SECOND, MAX_INTERACTIONS_PER_SECOND, PLAYER_MAX_HEALTH, PLAYER_RESPAWN_TICKS, PLAYER_SNAPSHOT, PLAYER_SPEED, PROTOCOL_VERSION, RELOAD_EVENT, RESPAWN_EVENT, TICK_RATE } from "./protocol";
 import { parseMoveInput } from "./movement";
-import { createZombies, simulateZombie, Zombie } from "./zombies";
+import { createZombies, separateZombies, simulateZombie, Zombie } from "./zombies";
 import { createItemState, dropItem, ItemInstance, ItemState, mutateContainer, parseInteraction, pickupItem } from "./items";
-import { attack, parseAttack } from "./combat";
+import { attack, parseAttack, parseReload, reload } from "./combat";
 
 interface Player {
   id: string; presence: nkruntime.Presence; x: number; y: number; vx: number; vy: number;
   inputX: number; inputY: number; lastSequence: number; rateWindow: number; rateCount: number;
-  health: number; spawnIndex: number; respawnAtTick: number; lastAttackSequence: number; nextAttackTick: number;
+  health: number; spawnIndex: number; respawnAtTick: number; lastAttackSequence: number; lastReloadSequence: number; nextAttackTick: number;
   inventory: ItemInstance[]; interactionWindow: number; interactionCount: number; inventoryDirty: boolean;
 }
 interface WorldState extends nkruntime.MatchState { players: Record<string, Player>; playerStates: Record<string, Player>; inventories: Record<string, ItemInstance[]>; zombies: Record<string, Zombie>; items: ItemState; }
@@ -39,12 +39,12 @@ export const worldMatch: nkruntime.MatchHandler = {
         const spawnIndex = PLAYER_SPAWNS.findIndex((_spawn, index) => !usedSpawns.has(index));
         const assignedSpawnIndex = spawnIndex >= 0 ? spawnIndex : Object.keys(state.playerStates).length % PLAYER_SPAWNS.length;
         const spawn = PLAYER_SPAWNS[assignedSpawnIndex];
-        player = { id: `player:${presence.userId}`, presence, x: spawn[0], y: spawn[1], vx: 0, vy: 0, inputX: 0, inputY: 0, lastSequence: -1, rateWindow: 0, rateCount: 0, health: PLAYER_MAX_HEALTH, spawnIndex: assignedSpawnIndex, respawnAtTick: 0, lastAttackSequence: -1, nextAttackTick: 0, inventory, interactionWindow: 0, interactionCount: 0, inventoryDirty: true };
+        player = { id: `player:${presence.userId}`, presence, x: spawn[0], y: spawn[1], vx: 0, vy: 0, inputX: 0, inputY: 0, lastSequence: -1, rateWindow: 0, rateCount: 0, health: PLAYER_MAX_HEALTH, spawnIndex: assignedSpawnIndex, respawnAtTick: 0, lastAttackSequence: -1, lastReloadSequence: -1, nextAttackTick: 0, inventory, interactionWindow: 0, interactionCount: 0, inventoryDirty: true };
         state.playerStates[presence.userId] = player;
       } else {
         player.presence = presence;
         player.inputX = 0; player.inputY = 0; player.vx = 0; player.vy = 0;
-        player.lastSequence = -1; player.lastAttackSequence = -1;
+        player.lastSequence = -1; player.lastAttackSequence = -1; player.lastReloadSequence = -1;
         player.inventoryDirty = true;
       }
       state.players[presence.userId] = player;
@@ -82,8 +82,17 @@ export const worldMatch: nkruntime.MatchHandler = {
           if (!input) { sendError(dispatcher, player, "BAD_PAYLOAD"); continue; }
           result = attack(player, state.zombies, input, tick);
           if (result.ok && result.inventoryChanged) player.inventoryDirty = true;
+          if (result.ok) dispatcher.broadcastMessage(ATTACK_EVENT, JSON.stringify({ player_id: player.id, weapon: result.weapon, aim_x: result.aimX, aim_y: result.aimY, magazine_ammo: result.magazineAmmo }), null, null, true);
           if (result.ok && result.targetId) dispatcher.broadcastMessage(DAMAGE_EVENT, JSON.stringify({ source_id: player.id, target_id: result.targetId, damage: result.damage }), null, null, true);
           if (result.ok && result.killed) dispatcher.broadcastMessage(DEATH_EVENT, JSON.stringify({ entity_id: result.targetId }), null, null, true);
+        } else if (message.opCode === INPUT_RELOAD) {
+          const input = parseReload(payload);
+          if (!input) { sendError(dispatcher, player, "BAD_PAYLOAD"); continue; }
+          result = reload(player, input);
+          if (result.ok) {
+            player.inventoryDirty = true;
+            dispatcher.broadcastMessage(RELOAD_EVENT, JSON.stringify({ player_id: player.id, magazine_ammo: result.magazineAmmo, loaded: result.loaded, weapon_slot: result.weaponSlot }), null, null, true);
+          }
         } else if (message.opCode === ITEM_PICKUP) result = pickupItem(state.items, player, payload.item_instance_id, payload.expected_world_version);
         else if (message.opCode === ITEM_DROP) result = dropItem(state.items, player, payload.item_instance_id);
         else if (message.opCode === CONTAINER_MUTATE) result = mutateContainer(state.items, player, payload);
@@ -117,6 +126,7 @@ export const worldMatch: nkruntime.MatchHandler = {
     const targets = Object.keys(state.players).map((sessionId) => state.players[sessionId]);
     const healthBefore = new Map(targets.map((player) => [player.id, player.health]));
     for (const id of Object.keys(state.zombies)) simulateZombie(state.zombies[id], targets, tick, dt);
+    separateZombies(state.zombies);
     for (const player of targets) {
       const previousHealth = healthBefore.get(player.id) || 0;
       if (player.health < previousHealth) dispatcher.broadcastMessage(DAMAGE_EVENT, JSON.stringify({ source_id: "zombie", target_id: player.id, damage: previousHealth - player.health }), null, null, true);
