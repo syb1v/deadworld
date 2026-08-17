@@ -5,16 +5,23 @@ Object.assign(globalThis, { WebSocket });
 const host = process.env.GAME_HOST || "127.0.0.1";
 const port = process.env.GAME_PORT || "7350";
 const key = process.env.NAKAMA_SERVER_KEY || "deadworld-local-key";
+const httpKey = process.env.NAKAMA_HTTP_KEY || "deadworld-local-http-key";
 
-async function connect(id: string) {
+async function connect(id: string, fixtureMatchId?: string) {
   const client = new Client(key, host, port, false);
   const session = await client.authenticateDevice(id, true);
   const socket = client.createSocket(false, false);
   await socket.connect(session, true);
-  const rpc = await client.rpc(session, "find_world", {});
-  const payload = typeof rpc.payload === "string" ? JSON.parse(rpc.payload) : rpc.payload;
-  const matchId = (payload as { match_id: string }).match_id;
-  await socket.joinMatch(matchId);
+  let matchId = fixtureMatchId || "";
+  if (!matchId) {
+    const rpc = await client.rpc(session, "find_world", {});
+    const payload = typeof rpc.payload === "string" ? JSON.parse(rpc.payload) : rpc.payload;
+    matchId = (payload as { match_id: string }).match_id;
+  }
+  let joined = false;
+  for (let attempt = 0; attempt < 10 && !joined; attempt += 1) {
+    try { await socket.joinMatch(matchId); joined = true; } catch (error) { if (attempt === 9) throw error; await wait(150); }
+  }
   return { session, socket, matchId, snapshots: [] as any[], inventory: [] as any[], errors: [] as string[], deaths: [] as any[], respawns: [] as any[], attacks: [] as any[], reloads: [] as any[] };
 }
 
@@ -29,9 +36,16 @@ async function waitFor(predicate: () => boolean, message: string, timeout = 2000
 }
 
 async function main() {
+  const adminClient = new Client(key, host, port, false);
+  const fixtureRpc = await adminClient.rpcHttpKey(httpKey, "create_test_world");
+  const fixturePayload = typeof fixtureRpc.payload === "string" ? JSON.parse(fixtureRpc.payload) : fixtureRpc.payload;
+  const fixtureMatchId = (fixturePayload as { match_id: string }).match_id;
   const aDeviceId = `deadworld-integration-a-${Date.now()}`;
-  const a = await connect(aDeviceId);
-  const b = await connect(`deadworld-integration-b-${Date.now()}`);
+  const a = await connect(aDeviceId, fixtureMatchId);
+  let testRpcRejected = false;
+  try { await adminClient.rpc(a.session, "create_test_world", {}); } catch (_error) { testRpcRejected = true; }
+  if (!testRpcRejected) throw new Error("authenticated session invoked server-only test RPC");
+  const b = await connect(`deadworld-integration-b-${Date.now()}`, fixtureMatchId);
   if (a.session.user_id === b.session.user_id || a.matchId !== b.matchId) throw new Error("clients are not unique or did not share a world");
   const duplicateClient = new Client(key, host, port, false);
   const duplicateSession = await duplicateClient.authenticateDevice(aDeviceId, true);

@@ -1,7 +1,10 @@
 declare namespace nkruntime {
   interface Context { userId?: string; }
   interface Logger { info(message: string, ...args: unknown[]): void; warn(message: string, ...args: unknown[]): void; }
-  interface Nakama { matchList(limit: number, authoritative: boolean, label?: string | null, minSize?: number, maxSize?: number, query?: string): Match[]; matchGet(matchId: string): Match | null; matchCreate(module: string, params?: Record<string, unknown>): string; storageRead(objects: { collection: string; key: string; userId: string }[]): { value: Record<string, unknown> }[]; storageWrite(objects: { collection: string; key: string; userId: string; value: Record<string, unknown>; permissionRead: number; permissionWrite: number }[]): void; }
+  interface StorageObject { value: Record<string, unknown>; version: string; }
+  interface StorageWriteRequest { collection: string; key: string; userId: string; value: Record<string, unknown>; version?: string; permissionRead: number; permissionWrite: number; }
+  interface StorageWriteAck { version: string; }
+  interface Nakama { matchList(limit: number, authoritative: boolean, label?: string | null, minSize?: number, maxSize?: number, query?: string): Match[]; matchGet(matchId: string): Match | null; matchCreate(module: string, params?: Record<string, unknown>): string; matchSignal(matchId: string, data: string): string; storageRead(objects: { collection: string; key: string; userId: string }[]): StorageObject[]; storageWrite(objects: StorageWriteRequest[]): StorageWriteAck[]; storageDelete(objects: { collection: string; key: string; userId: string; version?: string }[]): void; uuidv4(): string; }
   interface Initializer { registerMatch(name: string, handler: MatchHandler): void; registerRpc(name: string, fn: RpcFunction): void; }
   interface Match { matchId: string; }
   interface Presence { userId: string; sessionId: string; username: string; }

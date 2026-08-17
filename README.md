@@ -200,7 +200,7 @@ deadworld/
 
 Если функция не нужна для текущего Definition of Done — она идёт в backlog.
 
-## Day 4: combat and death
+## Day 5: persistent authoritative world
 
 Pinned dependencies: Godot `4.7.1`, Nakama `3.40.0`, Nakama Godot SDK `3.4.0`, PostgreSQL `17.6`.
 
@@ -216,11 +216,16 @@ godot --path client -- --profile=one
 godot --path client --position 1300,100 -- --profile=two
 ```
 
-Automated auth/socket/shared-world/movement/zombie/item and combat lifecycle coverage runs with `make test`. The Russian HUD shows health, selected weapon, six-round pistol magazine, reserve ammo, eight inventory slots and the finite zombie population. Consumables, materials and loose ammo stack to 64 per slot. Press `E` to pick up/take, `Q` to drop the selected stack, `1`-`8` to select a slot, `Space` or left mouse to attack, `R` to reload the selected pistol, and `Esc` to pause. Zombies do not respawn yet; the server owns weapon validation, stacks, magazine/ammo, damage, zombie separation, death drops and player respawn.
+Automated auth/socket/shared-world/movement/zombie/item and combat lifecycle coverage runs with `make test`. The Russian HUD shows health, selected weapon, magazine, reserve ammo, inventory slots and finite zombie population. Press `E` to pick up/take, `Q` to drop, `1`-`8` to select, `Space` or left mouse to attack, `R` to reload, and `Esc` to pause. Player state, inventory stacks, magazine ammo, world items, containers/versions and dead zombies persist in private versioned Nakama Storage.
+
+`make test-restart` is the Day 5 gate: it performs gameplay mutations, completely tears down PostgreSQL and Nakama containers, starts them again, reconnects the same account and verifies restored state with no duplicated/lost item instances.
+
+The local Compose profile binds Nakama API and console ports to loopback. Test-world RPCs require the private runtime HTTP key and reject normal user sessions.
 
 ```bash
 make logs
 make test
+make test-restart
 make down
 ```
 
@@ -234,6 +239,7 @@ make up
 make down
 make logs
 make test
+make test-restart
 make client
 ```
 
