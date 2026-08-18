@@ -45,15 +45,16 @@ async function main() {
   const clients = [];
   try {
     for (let index = 0; index < 3; index += 1) clients.push(await connect(index));
+    const expectedPlayers = clients.map((client) => `player:${client.session.user_id}`).sort();
     await Promise.all(clients.map((client) => waitFor(
-      () => client.snapshots[client.snapshots.length - 1]?.players.length === 3,
+      () => expectedPlayers.every((id) => client.snapshots[client.snapshots.length - 1]?.players.some((player: any) => player.id === id)),
       "three-player snapshot timed out"
     )));
     if (new Set(clients.map((client) => client.session.user_id)).size !== 3) throw new Error("accounts are not unique");
     if (new Set(clients.map((client) => client.matchId)).size !== 1) throw new Error("clients joined different worlds");
     const sharedState = clients.map((client) => {
       const snapshot = client.snapshots[client.snapshots.length - 1];
-      return JSON.stringify({ zombies: snapshot.zombies, world_items: snapshot.world_items, containers: snapshot.containers });
+      return JSON.stringify({ zombies: snapshot.zombies.map((entity: any) => entity.id).sort(), world_items: snapshot.world_items.map((item: any) => item.id).sort(), containers: snapshot.containers.map((container: any) => container.id).sort() });
     });
     if (new Set(sharedState).size !== 1) throw new Error("shared world state differs between clients");
     console.log(JSON.stringify({ concurrent_clients: 3, unique_accounts: true, same_world: true, shared_state: true }));

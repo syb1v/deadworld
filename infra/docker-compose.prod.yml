@@ -64,10 +64,38 @@ services:
       - backend
       - edge
 
+  admin:
+    image: node:24.6.0-alpine
+    depends_on:
+      nakama:
+        condition: service_healthy
+    environment:
+      ADMIN_PORT: 8080
+      ADMIN_USERNAME: ${ADMIN_USERNAME:?ADMIN_USERNAME is required}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?ADMIN_PASSWORD is required}
+      ADMIN_SESSION_KEY: ${ADMIN_SESSION_KEY:?ADMIN_SESSION_KEY is required}
+      NAKAMA_HTTP_KEY: ${NAKAMA_HTTP_KEY:?NAKAMA_HTTP_KEY is required}
+      NAKAMA_INTERNAL_URL: http://nakama:7350
+      RELEASE_TAG: ${RELEASE_TAG:-v0.1.0-prealpha.1}
+      GITHUB_REPOSITORY: ${GITHUB_REPOSITORY:-syb1v/deadworld}
+    command: ["node", "/app/server.mjs"]
+    volumes:
+      - ../admin:/app:ro
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8080/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+    networks:
+      - edge
+
   caddy:
     image: caddy:2.11.4-alpine
     depends_on:
       nakama:
+        condition: service_healthy
+      admin:
         condition: service_healthy
     environment:
       GAME_HOSTNAME: ${GAME_HOSTNAME:?GAME_HOSTNAME is required}

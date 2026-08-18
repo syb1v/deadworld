@@ -2,9 +2,13 @@
 
 > **Pre-alpha / vertical-slice stage**
 
-Current client metadata version: `0.1.0`; release label/tag: `v0.1.0-mvp`.
+Current client metadata version: `0.1.0`; public test label/tag: `v0.1.0-prealpha.1`. The final MVP tag `v0.1.0-mvp` remains gated by physical PC ↔ Android acceptance.
 
 Production pre-alpha backend: `https://game.staydev.org` (HTTPS/WSS). Physical Android crossplay and clean-install acceptance remain release gates.
+
+Temporary authenticated test operations are served at `https://game.staydev.org/admin/`. Credentials are production-host secrets; the panel exposes recent authoritative events and a persisted dead-zombie respawn action without exposing Nakama console or raw backend ports.
+
+The Russian landing page at `https://game.staydev.org/` shows live server/player status and links to the current GitHub prerelease builds.
 
 Project Deadworld — рабочее название кроссплатформенной persistent online survival RPG с изометрическим/2.5D представлением, server-authoritative сетевой моделью и постепенным развитием от небольшого multiplayer vertical slice до MMO-архитектуры.
 
@@ -231,6 +235,24 @@ The local Compose profile binds Nakama API and console ports to loopback. Test-w
 Day 6 now includes a shared 1280x720 map with seven named areas, server-authoritative player/zombie collision, touch intentions and Linux/Windows/Android export presets. The generated Android build is landscape arm64 with Internet permission. Physical PC-to-Android crossplay remains an acceptance gate because no Android device is currently connected; Android should use the HTTPS backend URL provided by Day 7.
 
 Desktop exports consist of the executable and its adjacent `.pck`; distribute both files together. Initial and reconnect world discovery retry short transient RPC failures before reporting an error.
+
+Create the same portable archives used by GitHub Releases:
+
+```bash
+make package-release
+```
+
+## Production deployment
+
+On a fresh Ubuntu 24.04 host, clone the repository and run the interactive idempotent deployment:
+
+```bash
+sudo scripts/deploy_prod.sh
+```
+
+The script asks for hostname, admin login, prerelease tag and edge mode; installs Docker/Compose, generates host-only secrets, builds the Nakama runtime, starts PostgreSQL/Nakama/portal/Caddy, configures UFW, creates the backup cron and validates HTTPS health. `shared-caddy` mode safely backs up, validates and reloads an existing Caddy configuration.
+
+CI runs from `.github/workflows/ci-release.yml`. Tags matching `v*-prealpha.*` build three platform artifacts and create a GitHub prerelease. `v0.1.0-mvp` must not be created until physical PC ↔ Android acceptance passes.
 
 ```bash
 make logs

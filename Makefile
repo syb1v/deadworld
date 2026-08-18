@@ -1,4 +1,4 @@
-.PHONY: help env-check preflight repo-tree up down logs test test-restart prod-config export-linux export-windows export-android export-all client
+.PHONY: help env-check preflight repo-tree up down logs test test-restart prod-config export-linux export-windows export-android export-all package-release client
 
 help:
 	@echo "Project Deadworld"
@@ -12,6 +12,7 @@ help:
 	@echo "  make test-restart - destructive isolated Day 5 full restart test"
 	@echo "  make prod-config  - validate the production Compose configuration"
 	@echo "  make export-all  - build Linux, Windows and Android clients"
+	@echo "  make package-release - create portable prerelease archives"
 	@echo "  make client      - run Godot client"
 
 env-check:
@@ -39,6 +40,7 @@ test:
 	npm --prefix server run check
 	npm --prefix server test
 	npm --prefix server run build
+	node --test admin/server.test.mjs
 	$(COMPOSE) config --quiet
 	NAKAMA_SERVER_KEY=$$(grep '^NAKAMA_SERVER_KEY=' .env | cut -d= -f2-) NAKAMA_HTTP_KEY=$$(grep '^NAKAMA_HTTP_KEY=' .env | cut -d= -f2-); NAKAMA_SERVER_KEY=$${NAKAMA_SERVER_KEY:-deadworld-local-key} NAKAMA_HTTP_KEY=$${NAKAMA_HTTP_KEY:-deadworld-local-http-key} npm --prefix server run test:integration
 	godot --headless --path client --editor --quit
@@ -71,6 +73,9 @@ export-android:
 	godot --headless --path client --export-debug Android ../dist/deadworld-android.apk
 
 export-all: export-linux export-windows export-android
+
+package-release: export-all
+	python3 scripts/package_release.py
 
 client:
 	@NAKAMA_SERVER_KEY=$$(grep '^NAKAMA_SERVER_KEY=' .env | cut -d= -f2-); godot --path client -- --server-host=127.0.0.1 --server-port=7350 --server-scheme=http --server-key=$${NAKAMA_SERVER_KEY:-deadworld-mvp-client-v1}

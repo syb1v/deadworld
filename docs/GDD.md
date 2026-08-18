@@ -2310,6 +2310,9 @@ MVP production:
 - [x] Caddy/TLS
 - [x] production env
 - [x] backup script
+- [x] automated production deploy
+- [x] Russian landing/status
+- [x] protected test admin
 
 ## Networking
 
@@ -2395,6 +2398,7 @@ MVP production:
 - [ ] Windows clean install
 - [ ] Android clean install
 - [x] version visible
+- [x] GitHub prerelease downloads
 
 ## Gameplay
 

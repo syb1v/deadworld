@@ -339,6 +339,23 @@ Post-MVP:
 - Secrets live only in the deployment host's mode-`600` `.env`.
 - Daily compressed PostgreSQL dumps are retained outside the repository and are restore-tested in a disposable database.
 - The MVP public endpoint is `https://game.staydev.org`; Caddy terminates Let's Encrypt TLS and proxies HTTPS/WebSocket traffic to private Nakama port `7350`.
+
+## 23. Temporary test administration
+
+- `/admin/` is routed by Caddy to a private Node service; it never exposes Nakama console or raw ports.
+- Login credentials, the signed session key and Nakama runtime HTTP key exist only in the production `.env`.
+- Admin sessions use signed `HttpOnly`, `Secure`, `SameSite=Strict` cookies; state-changing forms require CSRF tokens and login attempts are rate-limited.
+- The web service calls server-to-server RPCs authenticated by Nakama's private runtime HTTP key. Player sessions cannot invoke them.
+- Zombie respawn is executed inside the authoritative match, restores only dead zombies at server-owned spawn points, persists before success and emits an audit event.
+- The in-memory activity feed is deliberately limited to the latest 100 events and is not gameplay persistence.
+
+## 24. Public portal and delivery
+
+- Caddy routes only `/`, `/status` and `/admin/*` to the private portal service; Nakama API and WebSocket paths remain direct to Nakama.
+- `/status` returns aggregate world health and counts only. It contains no player identity or secret.
+- Landing download URLs use fixed GitHub prerelease asset names. Desktop archives always include executable plus `.pck`.
+- GitHub Actions is the reproducible build/release path for `v*-prealpha.*`; the production host does not build or serve client binaries.
+- `scripts/deploy_prod.sh` is the single production bootstrap source for Docker, secrets, Compose, Caddy, firewall and backup scheduling.
 - Player and zombie collision is server-authoritative. Inputs remain normalized intentions; clients never submit resolved positions.
 - Collision uses swept axis-separated circle/AABB movement, permitting wall sliding while preventing tunneling and leaving world bounds.
 - Persisted player, zombie, world-item and container positions are repaired deterministically when old coordinates overlap the new map.

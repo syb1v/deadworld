@@ -221,6 +221,16 @@ Nakama API is on `http://127.0.0.1:7350`; local console is on `http://127.0.0.1:
 
 The standard deployment path is `/opt/deadworld`. Copy `.env.example` to an ignored `.env`, replace every local credential with a random production value, set `GAME_HOSTNAME`, then keep the file at mode `600`.
 
+Preferred automated path on Ubuntu 24.04:
+
+```bash
+git clone https://github.com/syb1v/deadworld.git /opt/deadworld
+cd /opt/deadworld
+sudo scripts/deploy_prod.sh
+```
+
+The interactive script supports `standalone` Caddy and an existing `shared-caddy` Docker edge. It is idempotent: existing `.env` secrets and database volumes are preserved. On first deployment it prints the generated admin password once; store it in a password manager.
+
 ```bash
 npm --prefix server ci
 npm --prefix server run build
@@ -242,3 +252,11 @@ sudo DEADWORLD_DEPLOY_PATH=/opt/deadworld scripts/test_restore_prod.sh /var/back
 The restore test starts a temporary PostgreSQL container, restores the dump, checks that public tables exist, and removes the container. To restore after an actual incident, stop Nakama, create an additional safety dump, then feed the reviewed archive to `psql -v ON_ERROR_STOP=1` in the PostgreSQL container before restarting Nakama.
 
 The MVP endpoint is `https://game.staydev.org`. The current VPS shares an existing Caddy edge: Deadworld Nakama joins `perum_internal`, while the host-specific Caddy route proxies `game.staydev.org` to `nakama:7350`. Do not publish Nakama or PostgreSQL ports as a workaround.
+
+The temporary test admin is available at `https://game.staydev.org/admin/`. Production `ADMIN_USERNAME`, `ADMIN_PASSWORD` and `ADMIN_SESSION_KEY` are random host-only values in `/opt/deadworld/.env`; never place them in client builds or Git. Admin actions are visible in `docker compose logs admin nakama`. Zombie respawn is for MVP testing and should be removed or redesigned before a public operational release.
+
+The landing and public status endpoint are `https://game.staydev.org/` and `https://game.staydev.org/status`. Status contains aggregate availability/player/zombie counts only, never player IDs, credentials or storage contents.
+
+### GitHub prerelease
+
+Run `make package-release` for local archives. Tags matching `v*-prealpha.*` trigger GitHub Actions tests and all three platform exports, then publish desktop ZIPs, Android APK and `SHA256SUMS.txt` as a prerelease. Do not tag `v0.1.0-mvp` before physical crossplay acceptance.

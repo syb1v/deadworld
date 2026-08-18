@@ -176,6 +176,8 @@ Day 5 persistence is server-side and does not change the wire version. Ownership
 
 Day 6 keeps protocol version `1`. Keyboard, mouse and touch controls produce identical existing intentions. Map bounds, wall collision, sliding and persisted-position repair are server-owned simulation rules and do not add client-authoritative coordinates or platform-specific opcodes.
 
+Day 7's temporary `/admin/` control plane does not change protocol version `1`. `admin_status` and `admin_respawn_zombies` are private server-to-server RPCs requiring the runtime HTTP key; normal client sessions are rejected. Respawn remains a server-owned persisted world mutation and introduces no player opcode.
+
 ## 8. INPUT_ATTACK — Day 4
 
 Client сообщает input:
