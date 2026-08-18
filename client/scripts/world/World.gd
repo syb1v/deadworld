@@ -40,6 +40,7 @@ var mouse_attack_requested := false
 var touch_controls
 var touch_attack_requested := false
 var current_aim := Vector2.RIGHT
+var connecting := false
 
 func _ready() -> void:
 	var world_map := Node2D.new()
@@ -240,13 +241,23 @@ func _unhandled_input(event: InputEvent) -> void:
 		mouse_attack_requested = true
 
 func _start_game() -> void:
+	if connecting:
+		return
+	connecting = true
+	$Menus/MainMenu/Play.disabled = true
+	$Menus/MainMenu/Play.text = "ПОДКЛЮЧЕНИЕ..."
 	Network.set_server_url($Menus/MainMenu/ServerHost.text)
+	var connected := await Network.connect_to_world()
+	connecting = false
+	$Menus/MainMenu/Play.disabled = false
+	$Menus/MainMenu/Play.text = "ИГРАТЬ"
+	if not connected:
+		return
 	game_started = true
 	touch_controls.visible = OS.has_feature("mobile") or OS.get_cmdline_user_args().has("--touch-controls")
 	$Menus/MainMenu.hide()
 	$HUD.show()
 	Input.mouse_mode = Input.MOUSE_MODE_HIDDEN
-	Network.connect_to_world()
 
 func _toggle_pause() -> void:
 	game_paused = not game_paused

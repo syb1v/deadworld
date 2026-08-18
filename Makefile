@@ -25,20 +25,20 @@ repo-tree:
 up:
 	npm --prefix server install
 	npm --prefix server run build
-	docker compose --env-file .env -f infra/docker-compose.yml up -d --wait
+	$(COMPOSE) up -d --wait
 	sleep 6
 
 down:
-	docker compose --env-file .env -f infra/docker-compose.yml down
+	$(COMPOSE) down
 
 logs:
-	docker compose --env-file .env -f infra/docker-compose.yml logs -f
+	$(COMPOSE) logs -f
 
 test:
 	npm --prefix server run check
 	npm --prefix server test
 	npm --prefix server run build
-	docker compose --env-file .env -f infra/docker-compose.yml config --quiet
+	$(COMPOSE) config --quiet
 	NAKAMA_SERVER_KEY=$$(grep '^NAKAMA_SERVER_KEY=' .env | cut -d= -f2-) NAKAMA_HTTP_KEY=$$(grep '^NAKAMA_HTTP_KEY=' .env | cut -d= -f2-); NAKAMA_SERVER_KEY=$${NAKAMA_SERVER_KEY:-deadworld-local-key} NAKAMA_HTTP_KEY=$${NAKAMA_HTTP_KEY:-deadworld-local-http-key} npm --prefix server run test:integration
 	godot --headless --path client --editor --quit
 
@@ -46,13 +46,13 @@ test-restart:
 	npm --prefix server run check
 	npm --prefix server test
 	npm --prefix server run build
-	docker compose --env-file .env -f infra/docker-compose.yml down
-	docker compose --env-file .env -f infra/docker-compose.yml up -d --wait
+	$(COMPOSE) down
+	$(COMPOSE) up -d --wait
 	sleep 6
-	docker run --rm --network infra_default --env-file .env -v "$(CURDIR)/server:/work" -v "/tmp/opencode:/tmp/opencode" -w /work -e GAME_HOST=nakama node:24-alpine npm run test:restart:prepare
-	docker compose --env-file .env -f infra/docker-compose.yml down
-	docker compose --env-file .env -f infra/docker-compose.yml up -d --wait
-	docker run --rm --network infra_default --env-file .env -v "$(CURDIR)/server:/work" -v "/tmp/opencode:/tmp/opencode" -w /work -e GAME_HOST=nakama node:24-alpine npm run test:restart:verify
+	docker run --rm --network host --env-file .env -v "$(CURDIR)/server:/work" -v "/tmp/opencode:/tmp/opencode" -w /work -e GAME_HOST=127.0.0.1 node:24-alpine npm run test:restart:prepare
+	$(COMPOSE) down
+	$(COMPOSE) up -d --wait
+	docker run --rm --network host --env-file .env -v "$(CURDIR)/server:/work" -v "/tmp/opencode:/tmp/opencode" -w /work -e GAME_HOST=127.0.0.1 node:24-alpine npm run test:restart:verify
 
 export-linux:
 	mkdir -p dist
@@ -69,4 +69,5 @@ export-android:
 export-all: export-linux export-windows export-android
 
 client:
-	godot --path client
+	@NAKAMA_SERVER_KEY=$$(grep '^NAKAMA_SERVER_KEY=' .env | cut -d= -f2-); godot --path client -- --server-key=$${NAKAMA_SERVER_KEY:-deadworld-local-key}
+COMPOSE = docker compose --env-file .env -f infra/docker-compose.yml -f infra/docker-compose.host.yml

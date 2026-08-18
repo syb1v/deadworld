@@ -209,6 +209,8 @@ make up
 make client
 ```
 
+`make client` passes the local Nakama client key from ignored `.env`. If the backend is unavailable, the main menu now remains interactive and reports the endpoint after a bounded three-second connection attempt instead of showing an empty map indefinitely.
+
 Launch two independent guests without editing sources:
 
 ```bash

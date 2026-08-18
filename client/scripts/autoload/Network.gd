@@ -45,14 +45,15 @@ func saved_server_host() -> String:
 		return FileAccess.get_file_as_string("user://server_host.txt").strip_edges()
 	return str(ProjectSettings.get_setting("deadworld/network/host", "127.0.0.1"))
 
-func connect_to_world() -> void:
+func connect_to_world() -> bool:
 	status_changed.emit("Авторизация устройства...")
 	var endpoint := _endpoint()
+	Nakama.get_client_adapter().auto_retry = false
 	client = Nakama.create_client(endpoint.key, endpoint.host, endpoint.port, endpoint.scheme, 3, NakamaLogger.LOG_LEVEL.INFO)
 	var auth = await client.authenticate_device_async(_device_id())
 	if auth.is_exception():
-		status_changed.emit("Ошибка авторизации: %s" % auth)
-		return
+		status_changed.emit("Сервер %s://%s:%d не отвечает" % [endpoint.scheme, endpoint.host, endpoint.port])
+		return false
 	session = auth
 	player_id = "player:%s" % session.user_id
 	socket = Nakama.create_socket_from(client)
@@ -61,21 +62,22 @@ func connect_to_world() -> void:
 	var connected = await socket.connect_async(session, true)
 	if connected.is_exception():
 		status_changed.emit("Ошибка подключения: %s" % connected)
-		return
+		return false
 	var rpc = await client.rpc_async(session, "find_world", "{}")
 	if rpc.is_exception():
 		status_changed.emit("Мир недоступен: %s" % rpc)
-		return
+		return false
 	var world = JSON.parse_string(rpc.payload)
 	if typeof(world) != TYPE_DICTIONARY or world.get("protocol") != PROTOCOL_VERSION:
 		status_changed.emit("Несовместимая версия протокола")
-		return
+		return false
 	match_id = world.match_id
 	var joined = await _join_loaded_world(socket, match_id)
 	if joined.is_exception():
 		status_changed.emit("Не удалось войти в мир: %s" % joined)
-		return
+		return false
 	status_changed.emit("В сети  |  %s" % player_id)
+	return true
 
 func send_move(direction: Vector2) -> void:
 	if match_id.is_empty() or socket == null:
