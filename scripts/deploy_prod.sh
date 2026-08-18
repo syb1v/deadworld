@@ -111,8 +111,8 @@ text = path.read_text()
 block = f'''# BEGIN DEADWORLD (managed by deploy_prod.sh)
 {hostname} {{
     encode zstd gzip
-    handle / {{
-        rewrite * /landing
+    redir / /landing 302
+    handle /landing {{
         reverse_proxy admin:8080
     }}
     handle /status {{

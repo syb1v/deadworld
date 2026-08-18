@@ -38,6 +38,14 @@ test("attacks with a server cooldown", () => {
   assert.equal(target.health, 95);
 });
 
+test("attacks at practical collision contact distance", () => {
+  const subject = zombie();
+  const target = player("player:contact", 34);
+  simulateZombie(subject, [target], 1, 1 / 15);
+  assert.equal(subject.state, "ATTACK");
+  assert.equal(target.health, 95);
+});
+
 test("keeps its current target when a second nearby player joins", () => {
   const subject = zombie();
   const original = player("player:original", 100);

@@ -17,7 +17,9 @@ test("admin login, status and CSRF-protected respawn", async (context) => {
   context.after(() => { child.kill(); mock.close(); });
   await waitForServer("http://127.0.0.1:18182/health");
 
-  const landing = await (await fetch("http://127.0.0.1:18182/landing")).text();
+  const landingResponse = await fetch("http://127.0.0.1:18182/landing");
+  assert.match(landingResponse.headers.get("content-security-policy") ?? "", /connect-src 'self'/);
+  const landing = await landingResponse.text();
   assert.match(landing, /МЁРТВЫЙ/);
   assert.match(landing, /deadworld-linux-x86_64\.zip/);
   const status = await (await fetch("http://127.0.0.1:18182/status")).json();

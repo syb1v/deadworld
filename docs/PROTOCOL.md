@@ -228,6 +228,8 @@ Implemented semantics:
 
 Zombie attacks can now reduce player HP to zero. A dead player cannot move, attack, reload or mutate inventory, drops every inventory instance at the death position, and respawns after 45 ticks (3 seconds) with 100 HP at its server-owned spawn. The world contains three fixed zombies; dead zombies remain dead and are not replaced.
 
+The authoritative zombie attack enter/release distances are 38/46 world units. This includes the 25-unit combined player/zombie collision radii plus tolerance for wall sliding and separation, so visually touching zombies reliably enter attack without trusting client collision.
+
 ## 9. Errors
 
 Server error shape:

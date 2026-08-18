@@ -16,7 +16,8 @@
 Current release sequence:
 
 - `v0.1.0-prealpha.1`: public backend, landing/status, protected test admin and downloadable platform builds;
-- `v0.1.0-mvp`: only after physical PC ↔ Android crossplay and clean-install acceptance.
+- `v0.1.0-prealpha.2`: landing status fix, reliable zombie contact attacks, smoother snapshot presentation and primitive 2.5D visual/animation pass;
+- `v0.1.0-mvp`: only after physical PC ↔ Android crossplay and playtest acceptance of the updated client.
 
 ## v0.1.1 — MVP Polish Sprint
 

@@ -180,7 +180,7 @@ Current acceptance status:
 - [x] protected Russian test admin with authoritative event feed and persisted zombie respawn;
 - [x] automated interactive deployment and GitHub prerelease workflow;
 - [ ] physical PC ↔ Android crossplay;
-- [ ] clean installs on Windows and Android (Linux empty-profile smoke passed).
+- [x] clean installs on Windows and Android confirmed by the test operator (Linux empty-profile smoke also passed).
 
 ## Cut order
 
@@ -208,7 +208,7 @@ Current acceptance status:
 Current public test prerelease:
 
 ```text
-v0.1.0-prealpha.1
+v0.1.0-prealpha.2
 ```
 
 Final MVP tag after all mandatory acceptance gates:

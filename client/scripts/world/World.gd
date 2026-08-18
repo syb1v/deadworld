@@ -92,7 +92,11 @@ func _process(delta: float) -> void:
 		current_aim = touch_controls.aim
 	else:
 		var local_player = players.get(Network.player_id)
-		if local_player != null: current_aim = (local_player.get_global_mouse_position() - local_player.global_position).normalized()
+		if local_player != null:
+			var aim_delta: Vector2 = local_player.get_global_mouse_position() - local_player.global_position
+			if aim_delta.length_squared() > 1.0: current_aim = aim_delta.normalized()
+	var facing_player = players.get(Network.player_id)
+	if facing_player != null: facing_player.set_facing(current_aim)
 	$HUD/Crosshair.visible = touch_controls == null or not touch_controls.visible
 	$HUD/Crosshair.position = get_viewport().get_mouse_position()
 	_update_aim_line()
@@ -232,12 +236,12 @@ func _draw_grid() -> void:
 	for x in range(0, 1281, 64):
 		var line := Line2D.new()
 		line.add_point(Vector2(x, 0)); line.add_point(Vector2(x, 720))
-		line.default_color = Color(0.12, 0.18, 0.16, 0.45)
+		line.default_color = Color(0.12, 0.18, 0.16, 0.16)
 		line.width = 1.0; $Grid.add_child(line)
 	for y in range(0, 721, 64):
 		var line := Line2D.new()
 		line.add_point(Vector2(0, y)); line.add_point(Vector2(1280, y))
-		line.default_color = Color(0.12, 0.18, 0.16, 0.45)
+		line.default_color = Color(0.12, 0.18, 0.16, 0.16)
 		line.width = 1.0; $Grid.add_child(line)
 
 func _unhandled_input(event: InputEvent) -> void:
