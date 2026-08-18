@@ -63,7 +63,7 @@ func connect_to_world() -> bool:
 	if connected.is_exception():
 		status_changed.emit("Ошибка подключения: %s" % connected)
 		return false
-	var rpc = await client.rpc_async(session, "find_world", "{}")
+	var rpc = await _find_world()
 	if rpc.is_exception():
 		status_changed.emit("Мир недоступен: %s" % rpc)
 		return false
@@ -140,7 +140,7 @@ func _on_socket_closed(closed_socket) -> void:
 		if connected.is_exception():
 			candidate.close()
 			continue
-		var rpc = await client.rpc_async(session, "find_world", "{}")
+		var rpc = await _find_world()
 		if rpc.is_exception():
 			candidate.close()
 			continue
@@ -159,6 +159,15 @@ func _on_socket_closed(closed_socket) -> void:
 		candidate.close()
 	reconnecting = false
 	status_changed.emit("Не удалось переподключиться")
+
+func _find_world():
+	var result = await client.rpc_async(session, "find_world", "{}")
+	for attempt in range(3):
+		if not result.is_exception():
+			return result
+		await get_tree().create_timer(0.4 * (attempt + 1)).timeout
+		result = await client.rpc_async(session, "find_world", "{}")
+	return result
 
 func _join_loaded_world(target_socket, target_match_id: String):
 	var result = await target_socket.join_match_async(target_match_id)

@@ -230,6 +230,8 @@ The local Compose profile binds Nakama API and console ports to loopback. Test-w
 
 Day 6 now includes a shared 1280x720 map with seven named areas, server-authoritative player/zombie collision, touch intentions and Linux/Windows/Android export presets. The generated Android build is landscape arm64 with Internet permission. Physical PC-to-Android crossplay remains an acceptance gate because no Android device is currently connected; Android should use the HTTPS backend URL provided by Day 7.
 
+Desktop exports consist of the executable and its adjacent `.pck`; distribute both files together. Initial and reconnect world discovery retry short transient RPC failures before reporting an error.
+
 ```bash
 make logs
 make test
