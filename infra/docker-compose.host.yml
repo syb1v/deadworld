@@ -1,0 +1,25 @@
+services:
+  postgres:
+    network_mode: host
+    command: ["postgres", "-c", "listen_addresses=127.0.0.1"]
+    ports: !reset []
+
+  nakama-migrate:
+    network_mode: host
+    entrypoint: ["/nakama/nakama", "migrate", "up", "--database.address", "${POSTGRES_USER:-deadworld}:${POSTGRES_PASSWORD:-deadworld-local-password}@127.0.0.1:5432/${POSTGRES_DB:-deadworld}"]
+
+  nakama:
+    network_mode: host
+    ports: !reset []
+    entrypoint:
+      - /nakama/nakama
+      - --name=deadworld
+      - --database.address=${POSTGRES_USER:-deadworld}:${POSTGRES_PASSWORD:-deadworld-local-password}@127.0.0.1:5432/${POSTGRES_DB:-deadworld}
+      - --logger.level=INFO
+      - --runtime.path=/nakama/data/modules
+      - --socket.server_key=${NAKAMA_SERVER_KEY:-deadworld-local-key}
+      - --runtime.http_key=${NAKAMA_HTTP_KEY:-deadworld-local-http-key}
+      - --session.token_expiry_sec=3600
+      - --session.refresh_token_expiry_sec=604800
+      - --console.username=${NAKAMA_CONSOLE_USERNAME:-admin}
+      - --console.password=${NAKAMA_CONSOLE_PASSWORD:-deadworld-local-console}

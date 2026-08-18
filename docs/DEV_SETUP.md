@@ -112,6 +112,8 @@ Do not work around this with:
 sudo chmod 666 /var/run/docker.sock
 ```
 
+The local Linux Make targets merge `infra/docker-compose.host.yml`. Nakama and PostgreSQL bind directly to loopback through host networking, avoiding Docker published-port stalls observed on some local Docker installations. PostgreSQL is configured with `listen_addresses=127.0.0.1` and is not exposed externally.
+
 ## Android SDK licenses
 
 The script intentionally invokes official interactive license acceptance rather than silently accepting licenses.
