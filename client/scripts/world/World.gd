@@ -6,6 +6,8 @@ const WorldItemScript = preload("res://scripts/entities/WorldItem.gd")
 const ContainerScript = preload("res://scripts/entities/Container.gd")
 const CombatEffectScript = preload("res://scripts/ui/CombatEffect.gd")
 const FloatingDamageScript = preload("res://scripts/ui/FloatingDamage.gd")
+const WorldMapScript = preload("res://scripts/world/WorldMap.gd")
+const TouchControlsScript = preload("res://scripts/ui/TouchControls.gd")
 const ITEM_NAMES: Dictionary = preload("res://data/item_names_ru.json").data
 const ERROR_NAMES := {
 	"BAD_PAYLOAD": "Некорректный запрос",
@@ -35,8 +37,34 @@ var send_accumulator := 0.0
 var game_started := false
 var game_paused := false
 var mouse_attack_requested := false
+var touch_controls
+var touch_attack_requested := false
+var current_aim := Vector2.RIGHT
 
 func _ready() -> void:
+	var world_map := Node2D.new()
+	world_map.set_script(WorldMapScript)
+	add_child(world_map)
+	move_child(world_map, $Background.get_index() + 1)
+	var touch_layer := CanvasLayer.new()
+	touch_layer.layer = 5
+	add_child(touch_layer)
+	touch_controls = Control.new()
+	touch_controls.set_script(TouchControlsScript)
+	touch_layer.add_child(touch_controls)
+	touch_controls.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	touch_controls.visible = false
+	touch_controls.attack_pressed.connect(func():
+		if game_started and not game_paused: touch_attack_requested = true)
+	touch_controls.interact_pressed.connect(func():
+		if game_started and not game_paused: _interact())
+	touch_controls.reload_pressed.connect(func():
+		if game_started and not game_paused and _selected_slot() >= 0: Network.reload(_selected_slot()))
+	touch_controls.drop_pressed.connect(func():
+		if game_started and not game_paused and _selected_slot() >= 0: Network.drop(inventory[_selected_slot()].id))
+	touch_controls.pause_pressed.connect(_toggle_pause)
+	touch_controls.slot_pressed.connect(func():
+		if game_started and not game_paused: _select_next_slot())
 	Network.status_changed.connect(func(text: String): $HUD/Status.text = text)
 	Network.snapshot_received.connect(_on_snapshot)
 	Network.inventory_received.connect(_on_inventory)
@@ -45,6 +73,7 @@ func _ready() -> void:
 	Network.reload_confirmed.connect(_on_reload_confirmed)
 	Network.server_error.connect(func(code: String): $HUD/Status.text = ERROR_NAMES.get(code, "Действие отклонено: %s" % code))
 	$Menus/MainMenu/Play.pressed.connect(_start_game)
+	$Menus/MainMenu/ServerHost.text = Network.saved_server_url()
 	$Menus/MainMenu/Quit.pressed.connect(func(): get_tree().quit())
 	$Menus/PauseMenu/Resume.pressed.connect(_toggle_pause)
 	$Menus/PauseMenu/Quit.pressed.connect(func(): get_tree().quit())
@@ -54,6 +83,12 @@ func _ready() -> void:
 		_start_game()
 
 func _process(delta: float) -> void:
+	if touch_controls != null and touch_controls.visible:
+		current_aim = touch_controls.aim
+	else:
+		var local_player = players.get(Network.player_id)
+		if local_player != null: current_aim = (local_player.get_global_mouse_position() - local_player.global_position).normalized()
+	$HUD/Crosshair.visible = touch_controls == null or not touch_controls.visible
 	$HUD/Crosshair.position = get_viewport().get_mouse_position()
 	_update_aim_line()
 	if not game_started:
@@ -65,7 +100,9 @@ func _process(delta: float) -> void:
 	send_accumulator += delta
 	if send_accumulator >= 1.0 / 20.0:
 		send_accumulator = 0.0
-		Network.send_move(Input.get_vector("move_left", "move_right", "move_up", "move_down"))
+		var move_input := Input.get_vector("move_left", "move_right", "move_up", "move_down")
+		if touch_controls != null and touch_controls.visible: move_input = touch_controls.movement
+		Network.send_move(move_input)
 	if Input.is_action_just_pressed("interact"):
 		_interact()
 	if Input.is_action_just_pressed("drop_item") and _selected_slot() >= 0:
@@ -77,13 +114,13 @@ func _process(delta: float) -> void:
 			selected_slot = slot
 			selected_item_id = inventory[slot].id if slot < inventory.size() else ""
 			_update_inventory_label()
-	if Input.is_action_just_pressed("attack") or mouse_attack_requested:
+	if Input.is_action_just_pressed("attack") or mouse_attack_requested or touch_attack_requested:
 		mouse_attack_requested = false
+		touch_attack_requested = false
 		var local_player = players.get(Network.player_id)
 		var weapon_slot := _selected_slot()
 		if local_player != null and weapon_slot >= 0:
-			var aim: Vector2 = local_player.get_global_mouse_position() - local_player.global_position
-			Network.attack(weapon_slot, aim)
+			Network.attack(weapon_slot, current_aim)
 
 func _on_snapshot(snapshot: Dictionary) -> void:
 	var seen := {}
@@ -203,7 +240,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		mouse_attack_requested = true
 
 func _start_game() -> void:
+	Network.set_server_url($Menus/MainMenu/ServerHost.text)
 	game_started = true
+	touch_controls.visible = OS.has_feature("mobile") or OS.get_cmdline_user_args().has("--touch-controls")
 	$Menus/MainMenu.hide()
 	$HUD.show()
 	Input.mouse_mode = Input.MOUSE_MODE_HIDDEN
@@ -212,8 +251,10 @@ func _start_game() -> void:
 func _toggle_pause() -> void:
 	game_paused = not game_paused
 	$Menus/PauseMenu.visible = game_paused
+	if touch_controls != null: touch_controls.visible = (OS.has_feature("mobile") or OS.get_cmdline_user_args().has("--touch-controls")) and not game_paused
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if game_paused else Input.MOUSE_MODE_HIDDEN
 	if game_paused:
+		touch_controls.movement = Vector2.ZERO
 		Network.send_move(Vector2.ZERO)
 
 func _update_aim_line() -> void:
@@ -222,7 +263,7 @@ func _update_aim_line() -> void:
 	if local_player == null or not game_started or game_paused:
 		return
 	$AimLine.add_point(local_player.position)
-	$AimLine.add_point(get_global_mouse_position())
+	$AimLine.add_point(local_player.position + current_aim.normalized() * 180.0)
 
 func _show_attack(origin: Vector2, aim: Vector2, melee: bool) -> void:
 	var effect := Node2D.new()
@@ -259,3 +300,11 @@ func _selected_slot() -> int:
 		if inventory[index].id == selected_item_id:
 			return index
 	return -1
+
+func _select_next_slot() -> void:
+	if inventory.is_empty(): return
+	var current := _selected_slot()
+	var next := (current + 1) % inventory.size()
+	selected_slot = next
+	selected_item_id = inventory[next].id
+	_update_inventory_label()

@@ -26,10 +26,10 @@
 
 ### World
 
-- [ ] одна маленькая карта;
-- [ ] collision;
-- [ ] spawn zone;
-- [ ] 6–10 простых зданий/областей максимум.
+- [x] одна маленькая карта;
+- [x] collision;
+- [x] spawn zone;
+- [x] 6–10 простых зданий/областей максимум.
 
 ### Zombies
 
@@ -80,8 +80,8 @@
 
 ### Platforms
 
-- [ ] Windows build;
-- [ ] Android build;
+- [x] Windows build;
+- [x] Android build;
 - [ ] PC ↔ Android crossplay.
 
 ## Nice to Have
@@ -95,7 +95,7 @@
 - extra container types;
 - audio polish;
 - more buildings;
-- Linux package.
+- Linux package (Day 6 build готов).
 
 ## Explicitly Out of Scope
 
@@ -150,11 +150,11 @@ Definition of Done:
 
 > Client/server restart не уничтожает нужный state и не создаёт duplication.
 
-### Day 6 — Android crossplay
+### Day 6 — World + crossplatform
 
 Definition of Done:
 
-> Windows и Android играют в одном мире.
+> Маленькая authoritative collision map и Windows/Linux/Android builds готовы; Windows и Android играют в одном мире после device acceptance test.
 
 ### Day 7 — Internet playtest
 

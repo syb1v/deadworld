@@ -156,6 +156,20 @@ offset_bottom = 400.0
 theme_override_font_sizes/font_size = 22
 text = "ИГРАТЬ"
 
+[node name="ServerLabel" type="Label" parent="Menus/MainMenu"]
+offset_left = 490.0
+offset_top = 290.0
+offset_right = 610.0
+offset_bottom = 325.0
+text = "Сервер:"
+
+[node name="ServerHost" type="LineEdit" parent="Menus/MainMenu"]
+offset_left = 600.0
+offset_top = 284.0
+offset_right = 790.0
+offset_bottom = 328.0
+placeholder_text = "https://game.example.com"
+
 [node name="Quit" type="Button" parent="Menus/MainMenu"]
 offset_left = 490.0
 offset_top = 420.0

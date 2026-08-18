@@ -21,7 +21,6 @@ const INVENTORY_SNAPSHOT := 33
 const CONTAINER_MUTATE := 41
 const ERROR_EVENT := 50
 const PROTOCOL_VERSION := 1
-const SERVER_KEY := "CHANGE_ME_LOCAL_ONLY"
 
 var client
 var socket
@@ -32,10 +31,24 @@ var sequence := 0
 var attack_sequence := 0
 var reload_sequence := 0
 var reconnecting := false
+var server_host_override := ""
+
+func set_server_host(host: String) -> void:
+	server_host_override = host.strip_edges().trim_prefix("http://").trim_prefix("https://").split(":")[0]
+	if not server_host_override.is_empty():
+		var file := FileAccess.open("user://server_host.txt", FileAccess.WRITE)
+		file.store_string(server_host_override)
+
+func saved_server_host() -> String:
+	if not server_host_override.is_empty(): return server_host_override
+	if FileAccess.file_exists("user://server_host.txt"):
+		return FileAccess.get_file_as_string("user://server_host.txt").strip_edges()
+	return str(ProjectSettings.get_setting("deadworld/network/host", "127.0.0.1"))
 
 func connect_to_world() -> void:
 	status_changed.emit("Авторизация устройства...")
-	client = Nakama.create_client(SERVER_KEY, "127.0.0.1", 7350, "http", 3, NakamaLogger.LOG_LEVEL.INFO)
+	var endpoint := _endpoint()
+	client = Nakama.create_client(endpoint.key, endpoint.host, endpoint.port, endpoint.scheme, 3, NakamaLogger.LOG_LEVEL.INFO)
 	var auth = await client.authenticate_device_async(_device_id())
 	if auth.is_exception():
 		status_changed.emit("Ошибка авторизации: %s" % auth)
@@ -166,3 +179,39 @@ func _device_id() -> String:
 	var file := FileAccess.open(path, FileAccess.WRITE)
 	file.store_string(id)
 	return id
+
+func _endpoint() -> Dictionary:
+	var result := {
+		"key": str(ProjectSettings.get_setting("deadworld/network/server_key", "CHANGE_ME_LOCAL_ONLY")),
+		"host": saved_server_host(),
+		"port": int(ProjectSettings.get_setting("deadworld/network/port", 7350)),
+		"scheme": str(ProjectSettings.get_setting("deadworld/network/scheme", "http"))
+	}
+	var saved := FileAccess.get_file_as_string("user://server_url.txt").strip_edges() if FileAccess.file_exists("user://server_url.txt") else ""
+	if not saved.is_empty():
+		result.scheme = "https" if saved.begins_with("https://") else "http"
+		var authority := saved.trim_prefix("https://").trim_prefix("http://").split("/")[0]
+		if authority.contains(":"):
+			result.host = authority.get_slice(":", 0)
+			result.port = int(authority.get_slice(":", 1))
+		else:
+			result.host = authority
+			result.port = 443 if result.scheme == "https" else 7350
+	for argument in OS.get_cmdline_user_args():
+		if argument.begins_with("--server-host="): result.host = argument.trim_prefix("--server-host=")
+		elif argument.begins_with("--server-port="): result.port = int(argument.trim_prefix("--server-port="))
+		elif argument.begins_with("--server-scheme="): result.scheme = argument.trim_prefix("--server-scheme=")
+		elif argument.begins_with("--server-key="): result.key = argument.trim_prefix("--server-key=")
+	return result
+
+func set_server_url(url: String) -> void:
+	var value := url.strip_edges()
+	if value.is_empty(): return
+	if not value.begins_with("http://") and not value.begins_with("https://"): value = "http://%s" % value
+	var file := FileAccess.open("user://server_url.txt", FileAccess.WRITE)
+	file.store_string(value)
+	set_server_host(value)
+
+func saved_server_url() -> String:
+	if FileAccess.file_exists("user://server_url.txt"): return FileAccess.get_file_as_string("user://server_url.txt").strip_edges()
+	return "%s://%s:%d" % [ProjectSettings.get_setting("deadworld/network/scheme", "http"), saved_server_host(), ProjectSettings.get_setting("deadworld/network/port", 7350)]

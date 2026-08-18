@@ -222,10 +222,13 @@ Automated auth/socket/shared-world/movement/zombie/item and combat lifecycle cov
 
 The local Compose profile binds Nakama API and console ports to loopback. Test-world RPCs require the private runtime HTTP key and reject normal user sessions.
 
+Day 6 now includes a shared 1280x720 map with seven named areas, server-authoritative player/zombie collision, touch intentions and Linux/Windows/Android export presets. The generated Android build is landscape arm64 with Internet permission. Physical PC-to-Android crossplay remains an acceptance gate because no Android device is currently connected; Android should use the HTTPS backend URL provided by Day 7.
+
 ```bash
 make logs
 make test
 make test-restart
+make export-all
 make down
 ```
 

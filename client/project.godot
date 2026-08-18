@@ -6,6 +6,13 @@ config_version=5
 config/name="Project Deadworld"
 run/main_scene="res://scenes/Boot.tscn"
 
+[deadworld]
+
+network/host="127.0.0.1"
+network/port=7350
+network/scheme="http"
+network/server_key="deadworld-local-key"
+
 [autoload]
 
 Nakama="*res://addons/com.heroiclabs.nakama/Nakama.gd"
@@ -27,6 +34,7 @@ reload={"deadzone":0.2,"events":[Object(InputEventKey,"physical_keycode":82)]}
 
 window/size/viewport_width=1280
 window/size/viewport_height=720
+window/handheld/orientation=0
 window/size/window_width_override=1280
 window/size/window_height_override=720
 window/stretch/mode="canvas_items"
@@ -35,3 +43,4 @@ window/stretch/mode="canvas_items"
 
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
+textures/vram_compression/import_etc2_astc=true

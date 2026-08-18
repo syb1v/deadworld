@@ -1,4 +1,4 @@
-.PHONY: help env-check preflight repo-tree up down logs test test-restart client
+.PHONY: help env-check preflight repo-tree up down logs test test-restart export-linux export-windows export-android export-all client
 
 help:
 	@echo "Project Deadworld"
@@ -10,6 +10,7 @@ help:
 	@echo "  make logs        - follow backend logs"
 	@echo "  make test        - run Day 1 checks"
 	@echo "  make test-restart - destructive isolated Day 5 full restart test"
+	@echo "  make export-all  - build Linux, Windows and Android clients"
 	@echo "  make client      - run Godot client"
 
 env-check:
@@ -52,6 +53,20 @@ test-restart:
 	docker compose --env-file .env -f infra/docker-compose.yml down
 	docker compose --env-file .env -f infra/docker-compose.yml up -d --wait
 	docker run --rm --network infra_default --env-file .env -v "$(CURDIR)/server:/work" -v "/tmp/opencode:/tmp/opencode" -w /work -e GAME_HOST=nakama node:24-alpine npm run test:restart:verify
+
+export-linux:
+	mkdir -p dist
+	godot --headless --path client --export-release Linux ../dist/deadworld-linux.x86_64
+
+export-windows:
+	mkdir -p dist
+	godot --headless --path client --export-release Windows ../dist/deadworld-windows.exe
+
+export-android:
+	mkdir -p dist
+	godot --headless --path client --export-debug Android ../dist/deadworld-android.apk
+
+export-all: export-linux export-windows export-android
 
 client:
 	godot --path client

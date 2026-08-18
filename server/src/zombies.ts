@@ -8,6 +8,7 @@ import {
   ZOMBIE_SPEED,
   ZOMBIE_TARGET_RELEASE_RANGE
 } from "./protocol";
+import { moveWithCollision, repairPosition, ZOMBIE_RADIUS } from "./world";
 
 export type ZombieMode = "IDLE" | "CHASE" | "ATTACK" | "DEAD";
 
@@ -89,8 +90,9 @@ export function simulateZombie(zombie: Zombie, players: ZombieTarget[], tick: nu
   zombie.vx = dx / distance * ZOMBIE_SPEED;
   zombie.vy = dy / distance * ZOMBIE_SPEED;
   const step = Math.min(distance - ZOMBIE_ATTACK_RANGE, ZOMBIE_SPEED * dt);
-  zombie.x += dx / distance * step;
-  zombie.y += dy / distance * step;
+  const moved = moveWithCollision(zombie, { x: dx / distance * step, y: dy / distance * step }, ZOMBIE_RADIUS);
+  zombie.x = moved.x;
+  zombie.y = moved.y;
 }
 
 export function killZombie(zombie: Zombie, tick: number): void {
@@ -108,11 +110,23 @@ export function separateZombies(zombies: Record<string, Zombie>): void {
       let distance = Math.hypot(dx, dy);
       if (distance >= ZOMBIE_SEPARATION_DISTANCE) continue;
       if (distance < 0.001) { dx = 1; dy = 0; distance = 0; }
-      const correction = (ZOMBIE_SEPARATION_DISTANCE - distance) / 2;
-      const directionLength = Math.hypot(dx, dy);
-      left.x -= dx / directionLength * correction; left.y -= dy / directionLength * correction;
-      right.x += dx / directionLength * correction; right.y += dy / directionLength * correction;
+      for (let pass = 0; pass < 8 && distance < ZOMBIE_SEPARATION_DISTANCE; pass += 1) {
+        const correction = (ZOMBIE_SEPARATION_DISTANCE - distance) / 2;
+        const directionLength = Math.hypot(dx, dy) || 1;
+        const movedLeft = moveWithCollision(left, { x: -dx / directionLength * correction, y: -dy / directionLength * correction }, ZOMBIE_RADIUS);
+        const movedRight = moveWithCollision(right, { x: dx / directionLength * correction, y: dy / directionLength * correction }, ZOMBIE_RADIUS);
+        left.x = movedLeft.x; left.y = movedLeft.y;
+        right.x = movedRight.x; right.y = movedRight.y;
+        dx = right.x - left.x; dy = right.y - left.y; distance = Math.hypot(dx, dy);
+      }
     }
+  }
+}
+
+export function repairZombiePositions(zombies: Record<string, Zombie>): void {
+  for (const zombie of Object.values(zombies)) {
+    const repaired = repairPosition(zombie, { x: zombie.spawnX, y: zombie.spawnY }, ZOMBIE_RADIUS);
+    zombie.x = repaired.x; zombie.y = repaired.y;
   }
 }
 

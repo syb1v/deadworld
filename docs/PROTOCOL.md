@@ -174,6 +174,8 @@ Stackable item definitions use authoritative `quantity` with a maximum of 64 per
 
 Day 5 persistence is server-side and does not change the wire version. Ownership/container/combat mutations are acknowledged to clients only after versioned storage CAS succeeds. On write conflict the mutation is rolled back, opcode `50` carries `PERSISTENCE_CONFLICT`, and the stale match stops instead of continuing from divergent state.
 
+Day 6 keeps protocol version `1`. Keyboard, mouse and touch controls produce identical existing intentions. Map bounds, wall collision, sliding and persisted-position repair are server-owned simulation rules and do not add client-authoritative coordinates or platform-specific opcodes.
+
 ## 8. INPUT_ATTACK — Day 4
 
 Client сообщает input:

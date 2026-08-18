@@ -61,10 +61,17 @@ test("synchronizes terminal dead state from authoritative HP", () => {
 });
 
 test("separates overlapping living zombies without spawning new ones", () => {
-  const left = zombie(); left.id = "zombie:left";
-  const right = zombie(); right.id = "zombie:right";
+  const left = zombie(); left.id = "zombie:left"; left.x = 640; left.y = 360;
+  const right = zombie(); right.id = "zombie:right"; right.x = 640; right.y = 360;
   const zombies = { [left.id]: left, [right.id]: right };
   separateZombies(zombies);
   assert.equal(Object.keys(zombies).length, 2);
   assert.ok(Math.hypot(left.x - right.x, left.y - right.y) >= 30);
+});
+
+test("separates wall-adjacent zombies using remaining free space", () => {
+  const left = zombie(); left.id = "zombie:left"; left.x = 354; left.y = 150;
+  const right = zombie(); right.id = "zombie:right"; right.x = 354; right.y = 150;
+  separateZombies({ [left.id]: left, [right.id]: right });
+  assert.ok(Math.hypot(left.x - right.x, left.y - right.y) >= 29.8);
 });
