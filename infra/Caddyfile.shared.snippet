@@ -1,7 +1,7 @@
 {$GAME_HOSTNAME} {
 	encode zstd gzip
-	handle / {
-		rewrite * /landing
+	redir / /landing 302
+	handle /landing {
 		reverse_proxy admin:8080
 	}
 	handle /status {

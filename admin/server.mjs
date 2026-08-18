@@ -7,7 +7,7 @@ const password = required("ADMIN_PASSWORD");
 const sessionKey = required("ADMIN_SESSION_KEY");
 const nakamaHttpKey = required("NAKAMA_HTTP_KEY");
 const nakamaUrl = process.env.NAKAMA_INTERNAL_URL || "http://nakama:7350";
-const releaseTag = process.env.RELEASE_TAG || "v0.1.0-prealpha.1";
+const releaseTag = process.env.RELEASE_TAG || "v0.1.0-prealpha.2";
 const repository = process.env.GITHUB_REPOSITORY || "syb1v/deadworld";
 const sessions = new Map();
 const loginAttempts = new Map();
@@ -124,6 +124,6 @@ function sign(value) { return createHmac("sha256", sessionKey).update(value).dig
 function safeEqual(left, right) { const a = Buffer.from(left); const b = Buffer.from(right); return a.length === b.length && timingSafeEqual(a, b); }
 function parseCookies(value) { return Object.fromEntries(value.split(";").map((part) => part.trim().split(/=(.*)/s).slice(0, 2)).filter(([key]) => key)); }
 function escapeHtml(value) { return String(value).replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]); }
-function securityHeaders(response) { response.setHeader("Content-Security-Policy", "default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'"); response.setHeader("Referrer-Policy", "no-referrer"); response.setHeader("X-Content-Type-Options", "nosniff"); response.setHeader("Cache-Control", "no-store"); }
+function securityHeaders(response) { response.setHeader("Content-Security-Policy", "default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'"); response.setHeader("Referrer-Policy", "no-referrer"); response.setHeader("X-Content-Type-Options", "nosniff"); response.setHeader("Cache-Control", "no-store"); }
 function send(response, status, body, type = "text/html; charset=utf-8") { response.writeHead(status, { "Content-Type": type }); response.end(body); }
 function redirect(response, location) { response.writeHead(303, { Location: location }); response.end(); }
