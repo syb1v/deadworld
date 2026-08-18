@@ -5,7 +5,10 @@
 ```text
 Windows / Linux / Android
           │
-          │ HTTP + realtime socket
+          │ HTTPS + secure realtime socket
+          ▼
+       Caddy
+          │
           ▼
        Nakama
    ┌──────┴────────┐
@@ -327,7 +330,15 @@ Post-MVP:
 
 ## 21. Day 6 world and cross-platform client
 
-- `client/data/world_map.json` is the single static source for the 1280x720 map, six named areas, bounds and wall rectangles. Godot renders it and the server bundles the same data.
+- `client/data/world_map.json` is the single static source for the 1280x720 map, seven named areas, bounds and wall rectangles. Godot renders it and the server bundles the same data.
+
+## 22. Day 7 production edge
+
+- Public clients reach one hostname over HTTPS/WSS through Caddy; raw Nakama and PostgreSQL ports are not published.
+- Production Compose is separate from local development, uses pinned images, healthchecks and `unless-stopped` policies.
+- Secrets live only in the deployment host's mode-`600` `.env`.
+- Daily compressed PostgreSQL dumps are retained outside the repository and are restore-tested in a disposable database.
+- The MVP public endpoint is `https://game.staydev.org`; Caddy terminates Let's Encrypt TLS and proxies HTTPS/WebSocket traffic to private Nakama port `7350`.
 - Player and zombie collision is server-authoritative. Inputs remain normalized intentions; clients never submit resolved positions.
 - Collision uses swept axis-separated circle/AABB movement, permitting wall sliding while preventing tunneling and leaving world bounds.
 - Persisted player, zombie, world-item and container positions are repaired deterministically when old coordinates overlap the new map.

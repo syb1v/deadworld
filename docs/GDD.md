@@ -2304,73 +2304,73 @@ MVP production:
 
 ## Infrastructure
 
-- [ ] Docker Compose
-- [ ] PostgreSQL
-- [ ] Nakama
-- [ ] Caddy/TLS
-- [ ] production env
-- [ ] backup script
+- [x] Docker Compose
+- [x] PostgreSQL
+- [x] Nakama
+- [x] Caddy/TLS
+- [x] production env
+- [x] backup script
 
 ## Networking
 
-- [ ] Auth
-- [ ] Socket
-- [ ] Join world
-- [ ] Player spawn
-- [ ] Movement input
-- [ ] Remote interpolation
-- [ ] Reconnect
+- [x] Auth
+- [x] Socket
+- [x] Join world
+- [x] Player spawn
+- [x] Movement input
+- [x] Remote interpolation
+- [x] Reconnect
 
 ## World
 
-- [ ] Map
-- [ ] Collision
-- [ ] Spawn points
-- [ ] Interactions
+- [x] Map
+- [x] Collision
+- [x] Spawn points
+- [x] Interactions
 
 ## Zombies
 
-- [ ] Spawn
-- [ ] Detect
-- [ ] Chase
-- [ ] Attack
-- [ ] Damage
-- [ ] Death
+- [x] Spawn
+- [x] Detect
+- [x] Chase
+- [x] Attack
+- [x] Damage
+- [x] Death
 
 ## Items
 
-- [ ] Definitions
-- [ ] World items
-- [ ] Pickup
-- [ ] Drop
-- [ ] Inventory
+- [x] Definitions
+- [x] World items
+- [x] Pickup
+- [x] Drop
+- [x] Inventory
 
 ## Loot
 
-- [ ] Container
-- [ ] Open
-- [ ] Shared state
+- [x] Container
+- [x] Open
+- [x] Shared state
 - [ ] Loot table
 
 ## Combat
 
-- [ ] Melee
-- [ ] Pistol
-- [ ] Ammo
-- [ ] Server hit validation
+- [x] Melee
+- [x] Pistol
+- [x] Ammo
+- [x] Server hit validation
 
 ## Persistence
 
-- [ ] Save player
-- [ ] Load player
-- [ ] Save world
-- [ ] Restart test
+- [x] Save player
+- [x] Load player
+- [x] Save world
+- [x] Restart test
 
 ## Platforms
 
-- [ ] Windows export
-- [ ] Android export
-- [ ] Touch controls
+- [x] Windows export
+- [x] Android export
+- [x] Touch controls
 
 ---
 
@@ -2378,43 +2378,43 @@ MVP production:
 
 ## Server
 
-- [ ] secrets changed
-- [ ] TLS works
-- [ ] DB not public
-- [ ] backup works
-- [ ] restore tested
-- [ ] healthcheck
-- [ ] logs readable
-- [ ] restart safe
+- [x] secrets changed
+- [x] TLS works
+- [x] DB not public
+- [x] backup works
+- [x] restore tested
+- [x] healthcheck
+- [x] logs readable
+- [x] restart safe
 
 ## Client
 
-- [ ] production URL
-- [ ] no secrets
-- [ ] reconnect
+- [x] production URL
+- [x] no secrets
+- [x] reconnect
 - [ ] Windows clean install
 - [ ] Android clean install
-- [ ] version visible
+- [x] version visible
 
 ## Gameplay
 
-- [ ] movement
-- [ ] zombies
-- [ ] combat
-- [ ] loot
-- [ ] inventory
-- [ ] death
-- [ ] respawn
-- [ ] persistence
+- [x] movement
+- [x] zombies
+- [x] combat
+- [x] loot
+- [x] inventory
+- [x] death
+- [x] respawn
+- [x] persistence
 
 ## Multiplayer
 
-- [ ] 2 clients
-- [ ] 3+ clients
-- [ ] simultaneous pickup
-- [ ] disconnect
-- [ ] reconnect
-- [ ] server restart
+- [x] 2 clients
+- [x] 3+ clients
+- [x] simultaneous pickup
+- [x] disconnect
+- [x] reconnect
+- [x] server restart
 
 ---
 

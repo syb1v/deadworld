@@ -2,6 +2,10 @@
 
 > **Pre-alpha / vertical-slice stage**
 
+Current client metadata version: `0.1.0`; release label/tag: `v0.1.0-mvp`.
+
+Production pre-alpha backend: `https://game.staydev.org` (HTTPS/WSS). Physical Android crossplay and clean-install acceptance remain release gates.
+
 Project Deadworld — рабочее название кроссплатформенной persistent online survival RPG с изометрическим/2.5D представлением, server-authoritative сетевой моделью и постепенным развитием от небольшого multiplayer vertical slice до MMO-архитектуры.
 
 Главный принцип проекта:
@@ -209,7 +213,7 @@ make up
 make client
 ```
 
-`make client` passes the local Nakama client key from ignored `.env`. If the backend is unavailable, the main menu now remains interactive and reports the endpoint after a bounded three-second connection attempt instead of showing an empty map indefinitely.
+`make client` passes the local Nakama client key from ignored `.env` and overrides the production project default with `http://127.0.0.1:7350`. If the backend is unavailable, the main menu now remains interactive and reports the endpoint after a bounded three-second connection attempt instead of showing an empty map indefinitely.
 
 Launch two independent guests without editing sources:
 

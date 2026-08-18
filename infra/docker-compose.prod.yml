@@ -1,0 +1,101 @@
+name: deadworld
+
+services:
+  postgres:
+    image: postgres:17.6-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB is required}
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER is required}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+    volumes:
+      - deadworld-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+    networks:
+      - backend
+
+  nakama-migrate:
+    image: heroiclabs/nakama:3.40.0
+    depends_on:
+      postgres:
+        condition: service_healthy
+    entrypoint:
+      - /nakama/nakama
+      - migrate
+      - up
+      - --database.address=${POSTGRES_USER:?}:${POSTGRES_PASSWORD:?}@postgres:5432/${POSTGRES_DB:?}
+    restart: "no"
+    networks:
+      - backend
+
+  nakama:
+    image: heroiclabs/nakama:3.40.0
+    depends_on:
+      nakama-migrate:
+        condition: service_completed_successfully
+    entrypoint:
+      - /nakama/nakama
+      - --name=deadworld
+      - --database.address=${POSTGRES_USER:?}:${POSTGRES_PASSWORD:?}@postgres:5432/${POSTGRES_DB:?}
+      - --logger.level=INFO
+      - --runtime.path=/nakama/data/modules
+      - --socket.server_key=${NAKAMA_SERVER_KEY:?NAKAMA_SERVER_KEY is required}
+      - --runtime.http_key=${NAKAMA_HTTP_KEY:?NAKAMA_HTTP_KEY is required}
+      - --session.token_expiry_sec=3600
+      - --session.refresh_token_expiry_sec=604800
+      - --session.encryption_key=${NAKAMA_SESSION_ENCRYPTION_KEY:?NAKAMA_SESSION_ENCRYPTION_KEY is required}
+      - --session.refresh_encryption_key=${NAKAMA_SESSION_REFRESH_ENCRYPTION_KEY:?NAKAMA_SESSION_REFRESH_ENCRYPTION_KEY is required}
+      - --console.username=${NAKAMA_CONSOLE_USERNAME:?NAKAMA_CONSOLE_USERNAME is required}
+      - --console.password=${NAKAMA_CONSOLE_PASSWORD:?NAKAMA_CONSOLE_PASSWORD is required}
+      - --console.signing_key=${NAKAMA_CONSOLE_SIGNING_KEY:?NAKAMA_CONSOLE_SIGNING_KEY is required}
+    volumes:
+      - ../server/build:/nakama/data/modules:ro
+    healthcheck:
+      test: ["CMD", "/nakama/nakama", "healthcheck"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+    networks:
+      - backend
+      - edge
+
+  caddy:
+    image: caddy:2.11.4-alpine
+    depends_on:
+      nakama:
+        condition: service_healthy
+    environment:
+      GAME_HOSTNAME: ${GAME_HOSTNAME:?GAME_HOSTNAME is required}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile.prod:/etc/caddy/Caddyfile:ro
+      - deadworld-caddy-data:/data
+      - deadworld-caddy-config:/config
+      - deadworld-caddy-logs:/var/log/caddy
+    healthcheck:
+      test: ["CMD", "caddy", "version"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - edge
+
+networks:
+  backend:
+    internal: true
+  edge:
+
+volumes:
+  deadworld-postgres:
+  deadworld-caddy-data:
+  deadworld-caddy-config:
+  deadworld-caddy-logs:

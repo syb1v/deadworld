@@ -162,6 +162,23 @@ Definition of Done:
 
 > Чистый build можно дать 2–5 тестерам; они подключатся к production test VPS по инструкции.
 
+Current acceptance status:
+
+- [x] Ubuntu production host prepared at `/opt/deadworld`;
+- [x] PostgreSQL and raw Nakama ports are private;
+- [x] production secrets are host-only and default signing/session keys are replaced;
+- [x] healthchecks, restart policies, firewall and structured logs verified;
+- [x] daily compressed backup with retention;
+- [x] isolated restore test;
+- [x] remote full-stack restart preserves ownership and world state without duplication;
+- [x] three concurrent accounts share one authoritative world;
+- [x] Linux, Windows and Android artifacts built with visible `v0.1.0-mvp` label;
+- [x] exported Linux build connects from an empty user profile over production HTTPS/WSS;
+- [x] `game.staydev.org` DNS points to the production VPS;
+- [x] public Let's Encrypt TLS and HTTPS/WSS acceptance;
+- [ ] physical PC ↔ Android crossplay;
+- [ ] clean installs on Windows and Android (Linux empty-profile smoke passed).
+
 ## Cut order
 
 Если времени не хватает:
