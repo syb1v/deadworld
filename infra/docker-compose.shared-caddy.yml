@@ -1,0 +1,8 @@
+services:
+  caddy:
+    profiles: ["standalone-caddy"]
+
+networks:
+  edge:
+    external: true
+    name: ${CADDY_NETWORK:?CADDY_NETWORK is required}

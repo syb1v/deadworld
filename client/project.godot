@@ -4,14 +4,15 @@ config_version=5
 [application]
 
 config/name="Project Deadworld"
+config/version="0.1.0"
 run/main_scene="res://scenes/Boot.tscn"
 
 [deadworld]
 
-network/host="127.0.0.1"
-network/port=7350
-network/scheme="http"
-network/server_key="CHANGE_ME_LOCAL_ONLY"
+network/host="game.staydev.org"
+network/port=443
+network/scheme="https"
+network/server_key="deadworld-mvp-client-v1"
 
 [autoload]
 

@@ -216,3 +216,29 @@ make client
 ```
 
 Nakama API is on `http://127.0.0.1:7350`; local console is on `http://127.0.0.1:7351`. Configuration comes from ignored `.env`.
+
+## Day 7 production operations
+
+The standard deployment path is `/opt/deadworld`. Copy `.env.example` to an ignored `.env`, replace every local credential with a random production value, set `GAME_HOSTNAME`, then keep the file at mode `600`.
+
+```bash
+npm --prefix server ci
+npm --prefix server run build
+docker compose --env-file .env -f infra/docker-compose.prod.yml config --quiet
+docker compose --env-file .env -f infra/docker-compose.prod.yml up -d --wait
+```
+
+Only SSH and Caddy ports `80/443` are public. PostgreSQL and raw Nakama ports remain on Docker networks. On a shared host where another Caddy already owns `80/443`, set `CADDY_NETWORK` and add `-f infra/docker-compose.shared-caddy.yml`; this disables the bundled Caddy unless its explicit profile is selected and attaches Nakama to the existing proxy network. Add a validated hostname route to that proxy.
+
+The Nakama socket server key is a public application client key shipped in every build; it is not an administrative secret. Database, runtime HTTP, console, signing and session encryption credentials are never included in clients or Git.
+
+Back up and perform a non-destructive restore test:
+
+```bash
+sudo DEADWORLD_DEPLOY_PATH=/opt/deadworld scripts/backup_prod.sh
+sudo DEADWORLD_DEPLOY_PATH=/opt/deadworld scripts/test_restore_prod.sh /var/backups/deadworld/deadworld-TIMESTAMP.sql.gz
+```
+
+The restore test starts a temporary PostgreSQL container, restores the dump, checks that public tables exist, and removes the container. To restore after an actual incident, stop Nakama, create an additional safety dump, then feed the reviewed archive to `psql -v ON_ERROR_STOP=1` in the PostgreSQL container before restarting Nakama.
+
+The MVP endpoint is `https://game.staydev.org`. The current VPS shares an existing Caddy edge: Deadworld Nakama joins `perum_internal`, while the host-specific Caddy route proxies `game.staydev.org` to `nakama:7350`. Do not publish Nakama or PostgreSQL ports as a workaround.
