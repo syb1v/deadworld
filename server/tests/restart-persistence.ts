@@ -121,7 +121,7 @@ async function prepare() {
   console.log("prepare: persist player position and HP");
   moveSequence = await moveNear(harness, 700, 430, moveSequence);
   await waitFor(() => localPlayer(harness).health < 100, "player HP did not change before restart", 15000);
-  moveSequence = await moveNear(harness, 1100, 650, moveSequence);
+  moveSequence = await moveNear(harness, 640, 40, moveSequence);
   await harness.socket.sendMatchState(matchId, 1, JSON.stringify({ x: 0, y: 0, sequence: moveSequence }));
   await wait(1200);
   if (harness.errors.length > 0) throw new Error(`prepare received server errors: ${harness.errors.join(",")}`);

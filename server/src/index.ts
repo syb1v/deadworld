@@ -1,9 +1,10 @@
 import { ATTACK_EVENT, CONTAINER_MUTATE, DAMAGE_EVENT, DEATH_EVENT, ERROR_EVENT, INPUT_ATTACK, INPUT_MOVE, INPUT_RELOAD, INVENTORY_SNAPSHOT, ITEM_DROP, ITEM_PICKUP, MAX_INPUTS_PER_SECOND, MAX_INTERACTIONS_PER_SECOND, PLAYER_MAX_HEALTH, PLAYER_RESPAWN_TICKS, PLAYER_SNAPSHOT, PLAYER_SPEED, PROTOCOL_VERSION, RELOAD_EVENT, RESPAWN_EVENT, TICK_RATE } from "./protocol";
 import { parseMoveInput } from "./movement";
-import { createZombies, separateZombies, simulateZombie, Zombie } from "./zombies";
+import { createZombies, repairZombiePositions, separateZombies, simulateZombie, Zombie } from "./zombies";
 import { createItemState, dropItem, ItemInstance, ItemState, mutateContainer, parseInteraction, pickupItem } from "./items";
 import { attack, parseAttack, parseReload, reload } from "./combat";
 import { applyWorld, loadWorld, PersistedPlayer, PersistentWorld, snapshotWorld, writeWorld } from "./persistence";
+import { moveWithCollision, PLAYER_RADIUS, repairPosition } from "./world";
 
 interface Player {
   id: string; presence: nkruntime.Presence; x: number; y: number; vx: number; vy: number;
@@ -80,7 +81,21 @@ export const worldMatch: nkruntime.MatchHandler = {
     if (!state.persistenceLoaded) {
       try {
         state.persistenceVersion = loadWorld(nk, state);
-        if (!state.persistenceVersion) state.persistenceVersion = writeWorld(nk, state, "");
+        repairZombiePositions(state.zombies);
+        for (const saved of Object.values(state.persistedPlayers)) {
+          const spawn = PLAYER_SPAWNS[saved.spawnIndex] || PLAYER_SPAWNS[0];
+          const repaired = repairPosition(saved, { x: spawn[0], y: spawn[1] }, PLAYER_RADIUS);
+          saved.x = repaired.x; saved.y = repaired.y;
+        }
+        for (const item of Object.values(state.items.worldItems)) {
+          const repaired = repairPosition(item, { x: 640, y: 360 }, 4);
+          item.x = repaired.x; item.y = repaired.y;
+        }
+        for (const container of Object.values(state.items.containers)) {
+          const repaired = repairPosition(container, { x: 640, y: 400 }, 12);
+          container.x = repaired.x; container.y = repaired.y;
+        }
+        state.persistenceVersion = writeWorld(nk, state, state.persistenceVersion);
         state.persistenceLoaded = true;
         logger.info(JSON.stringify({ event: "persistence_loaded", key: state.persistenceKey, version: state.persistenceVersion, inventory_users: Object.keys(state.inventories).length }));
       }
@@ -152,7 +167,8 @@ export const worldMatch: nkruntime.MatchHandler = {
         continue;
       }
       player.vx = player.inputX * PLAYER_SPEED; player.vy = player.inputY * PLAYER_SPEED;
-      player.x += player.vx * dt; player.y += player.vy * dt;
+      const moved = moveWithCollision(player, { x: player.vx * dt, y: player.vy * dt }, PLAYER_RADIUS);
+      player.x = moved.x; player.y = moved.y;
     }
     if (dueRespawns.length > 0) {
       syncPersistedPlayers(state);

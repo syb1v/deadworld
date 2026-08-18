@@ -324,3 +324,13 @@ Post-MVP:
 - Ordinary integration tests use persistence-disabled isolated matches and cannot mutate the main world.
 - `make test-restart` verifies a private persistent fixture across full PostgreSQL/Nakama container teardown and startup.
 - Continuous movement and nonfatal HP snapshots flush once per second, so abrupt process failure can lose at most the latest snapshot interval; ownership transitions are synchronous.
+
+## 21. Day 6 world and cross-platform client
+
+- `client/data/world_map.json` is the single static source for the 1280x720 map, six named areas, bounds and wall rectangles. Godot renders it and the server bundles the same data.
+- Player and zombie collision is server-authoritative. Inputs remain normalized intentions; clients never submit resolved positions.
+- Collision uses swept axis-separated circle/AABB movement, permitting wall sliding while preventing tunneling and leaving world bounds.
+- Persisted player, zombie, world-item and container positions are repaired deterministically when old coordinates overlap the new map.
+- Touch controls map movement, aim, attack, interact, reload, drop, pause and slot selection to the existing protocol. Desktop keyboard/mouse behavior remains active.
+- Backend URL is editable in the main menu and persisted locally; project settings and desktop CLI overrides remain available. Android deployment uses HTTPS because current target SDK policy rejects cleartext traffic.
+- Checked-in presets produce Linux x86_64, Windows x86_64 and Android arm64 debug artifacts. Signing secrets are not stored in the repository.

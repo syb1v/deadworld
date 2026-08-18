@@ -135,6 +135,32 @@ adb devices
 
 Device should show as `device`, not `unauthorized`.
 
+## Day 6 exports
+
+Build all local artifacts:
+
+```bash
+make export-all
+```
+
+Or separately:
+
+```bash
+make export-linux
+make export-windows
+make export-android
+```
+
+Artifacts are written to ignored `dist/`. Android uses a debug signature; no release keystore is committed.
+
+Desktop builds accept command-line endpoint overrides:
+
+```bash
+godot --path client -- --server-host=192.168.1.10
+```
+
+The main menu also accepts and remembers a complete backend URL. Android target SDK 36 blocks cleartext HTTP by default, so use an HTTPS URL such as `https://game.example.com`; Day 7 provides this through Caddy/TLS. `127.0.0.1` points to the phone itself and cannot reach the development PC. Physical Android crossplay is not complete until tested against that reachable TLS endpoint.
+
 ## Godot Android editor paths
 
 If Godot does not autodetect them, set:
