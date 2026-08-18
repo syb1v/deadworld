@@ -76,11 +76,13 @@ services:
       ADMIN_SESSION_KEY: ${ADMIN_SESSION_KEY:?ADMIN_SESSION_KEY is required}
       NAKAMA_HTTP_KEY: ${NAKAMA_HTTP_KEY:?NAKAMA_HTTP_KEY is required}
       NAKAMA_INTERNAL_URL: http://nakama:7350
+      LANDING_SETTINGS_PATH: /data/landing-settings.json
       RELEASE_TAG: ${RELEASE_TAG:-v0.1.0-prealpha.2}
       GITHUB_REPOSITORY: ${GITHUB_REPOSITORY:-syb1v/deadworld}
     command: ["node", "/app/server.mjs"]
     volumes:
       - ../admin:/app:ro
+      - deadworld-admin-data:/data
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8080/health"]
       interval: 10s
@@ -127,3 +129,4 @@ volumes:
   deadworld-caddy-data:
   deadworld-caddy-config:
   deadworld-caddy-logs:
+  deadworld-admin-data:

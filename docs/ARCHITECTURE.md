@@ -40,6 +40,12 @@ Windows / Linux / Android
 
 Не отвечает за окончательное gameplay state.
 
+### Public portal and admin
+
+The landing resolves the newest complete GitHub release or prerelease through the releases API and caches the tag for 15 minutes. A persisted last-known tag is used when GitHub is unavailable. Operators can switch to a validated manual tag and edit landing copy in the protected `Лендинг` admin tab; settings live in the dedicated `deadworld-admin-data` volume.
+
+On the shared production edge, Perum owns dynamic Caddy tenant routes through the Caddy Admin API. Deadworld deployment must not restart or reload shared Caddy from its static file because doing so removes those runtime routes.
+
 ### Nakama
 
 На MVP:
