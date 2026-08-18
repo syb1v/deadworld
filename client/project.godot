@@ -11,7 +11,7 @@ run/main_scene="res://scenes/Boot.tscn"
 network/host="127.0.0.1"
 network/port=7350
 network/scheme="http"
-network/server_key="deadworld-local-key"
+network/server_key="CHANGE_ME_LOCAL_ONLY"
 
 [autoload]
 

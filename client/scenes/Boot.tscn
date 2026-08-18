@@ -156,6 +156,16 @@ offset_bottom = 400.0
 theme_override_font_sizes/font_size = 22
 text = "ИГРАТЬ"
 
+[node name="ConnectionStatus" type="Label" parent="Menus/MainMenu"]
+offset_left = 390.0
+offset_top = 500.0
+offset_right = 890.0
+offset_bottom = 555.0
+theme_override_colors/font_color = Color(0.82, 0.55, 0.4, 1)
+text = ""
+horizontal_alignment = 1
+autowrap_mode = 2
+
 [node name="ServerLabel" type="Label" parent="Menus/MainMenu"]
 offset_left = 490.0
 offset_top = 290.0
