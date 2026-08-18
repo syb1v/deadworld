@@ -101,41 +101,8 @@ if [[ "${EDGE_MODE}" == "standalone" ]]; then
 else
 	docker network inspect "${CADDY_NETWORK}" >/dev/null
 	docker network connect "${CADDY_NETWORK}" "${CADDY_CONTAINER}" 2>/dev/null || true
-	CADDY_BACKUP="${SHARED_CADDYFILE}.before-deadworld.$(date -u +%Y%m%dT%H%M%SZ)"
-	cp -a "${SHARED_CADDYFILE}" "${CADDY_BACKUP}"
-	python3 - "${SHARED_CADDYFILE}" "${GAME_HOSTNAME}" <<'PY'
-import pathlib, re, sys
-path = pathlib.Path(sys.argv[1])
-hostname = sys.argv[2]
-text = path.read_text()
-block = f'''# BEGIN DEADWORLD (managed by deploy_prod.sh)
-{hostname} {{
-    encode zstd gzip
-    redir / /landing 302
-    handle /landing {{
-        reverse_proxy admin:8080
-    }}
-    handle /status {{
-        reverse_proxy admin:8080
-    }}
-    redir /admin /admin/ 308
-    handle_path /admin/* {{
-        reverse_proxy admin:8080
-    }}
-    handle {{
-        reverse_proxy nakama:7350
-    }}
-}}
-# END DEADWORLD'''
-pattern = re.compile(r'# BEGIN DEADWORLD \(managed by deploy_prod\.sh\).*?# END DEADWORLD', re.S)
-path.write_text(pattern.sub(block, text) if pattern.search(text) else text.rstrip() + '\n\n' + block + '\n')
-PY
-	if ! docker exec "${CADDY_CONTAINER}" caddy validate --config /etc/caddy/Caddyfile; then
-		cp -a "${CADDY_BACKUP}" "${SHARED_CADDYFILE}"
-		echo "Caddy validation failed; original file restored." >&2
-		exit 1
-	fi
-	docker exec "${CADDY_CONTAINER}" caddy reload --config /etc/caddy/Caddyfile
+	# Perum owns dynamic Caddy routes through its Admin API. Reloading the
+	# static file would erase tenant routes, so only verify the existing route.
 	curl --retry 12 --retry-delay 5 --fail --silent --show-error "https://${GAME_HOSTNAME}/status" >/dev/null
 fi
 

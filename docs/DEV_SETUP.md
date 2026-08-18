@@ -229,7 +229,7 @@ cd /opt/deadworld
 sudo scripts/deploy_prod.sh
 ```
 
-The interactive script supports `standalone` Caddy and an existing `shared-caddy` Docker edge. It is idempotent: existing `.env` secrets and database volumes are preserved. On first deployment it prints the generated admin password once; store it in a password manager.
+The interactive script supports `standalone` Caddy and an existing `shared-caddy` Docker edge. It is idempotent: existing `.env` secrets and database volumes are preserved. On first deployment it prints the generated admin password once; store it in a password manager. In `shared-caddy` mode the script never reloads or restarts Caddy: Perum tenant routes are dynamic runtime configuration and would be lost by loading only the static Caddyfile.
 
 ```bash
 npm --prefix server ci
@@ -253,9 +253,9 @@ The restore test starts a temporary PostgreSQL container, restores the dump, che
 
 The MVP endpoint is `https://game.staydev.org`. The current VPS shares an existing Caddy edge: Deadworld Nakama joins `perum_internal`, while the host-specific Caddy route proxies `game.staydev.org` to `nakama:7350`. Do not publish Nakama or PostgreSQL ports as a workaround.
 
-The temporary test admin is available at `https://game.staydev.org/admin/`. Production `ADMIN_USERNAME`, `ADMIN_PASSWORD` and `ADMIN_SESSION_KEY` are random host-only values in `/opt/deadworld/.env`; never place them in client builds or Git. Admin actions are visible in `docker compose logs admin nakama`. Zombie respawn is for MVP testing and should be removed or redesigned before a public operational release.
+The temporary test admin is available at `https://game.staydev.org/admin/`. Production `ADMIN_USERNAME`, `ADMIN_PASSWORD` and `ADMIN_SESSION_KEY` are random host-only values in `/opt/deadworld/.env`; never place them in client builds or Git. Admin actions are visible in `docker compose logs admin nakama`. Zombie respawn is for MVP testing and should be removed or redesigned before a public operational release. The separate `Лендинг` tab edits persisted public copy and chooses automatic or manual release selection.
 
-The landing and public status endpoint are `https://game.staydev.org/` and `https://game.staydev.org/status`. Status contains aggregate availability/player/zombie counts only, never player IDs, credentials or storage contents.
+The landing and public status endpoint are `https://game.staydev.org/` and `https://game.staydev.org/status`. Status contains aggregate availability/player/zombie counts only, never player IDs, credentials or storage contents. Automatic download links use the newest non-draft GitHub release or prerelease that contains all three platform assets, with a 15-minute cache and persisted last-known fallback.
 
 ### GitHub prerelease
 
