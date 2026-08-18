@@ -1,6 +1,6 @@
 import { ATTACK_EVENT, CONTAINER_MUTATE, DAMAGE_EVENT, DEATH_EVENT, ERROR_EVENT, INPUT_ATTACK, INPUT_MOVE, INPUT_RELOAD, INVENTORY_SNAPSHOT, ITEM_DROP, ITEM_PICKUP, MAX_INPUTS_PER_SECOND, MAX_INTERACTIONS_PER_SECOND, PLAYER_MAX_HEALTH, PLAYER_RESPAWN_TICKS, PLAYER_SNAPSHOT, PLAYER_SPEED, PROTOCOL_VERSION, RELOAD_EVENT, RESPAWN_EVENT, TICK_RATE } from "./protocol";
 import { parseMoveInput } from "./movement";
-import { createZombies, repairZombiePositions, separateZombies, simulateZombie, Zombie } from "./zombies";
+import { createZombies, repairZombiePositions, respawnDeadZombies, separateZombies, simulateZombie, Zombie } from "./zombies";
 import { createItemState, dropItem, ItemInstance, ItemState, mutateContainer, parseInteraction, pickupItem } from "./items";
 import { attack, parseAttack, parseReload, reload } from "./combat";
 import { applyWorld, loadWorld, PersistedPlayer, PersistentWorld, snapshotWorld, writeWorld } from "./persistence";
@@ -12,7 +12,8 @@ interface Player {
   health: number; spawnIndex: number; respawnAtMs: number; lastAttackSequence: number; lastReloadSequence: number; nextAttackTick: number;
   inventory: ItemInstance[]; interactionWindow: number; interactionCount: number; inventoryDirty: boolean;
 }
-interface WorldState extends nkruntime.MatchState { players: Record<string, Player>; playerStates: Record<string, Player>; inventories: Record<string, ItemInstance[]>; persistedPlayers: Record<string, PersistedPlayer>; zombies: Record<string, Zombie>; items: ItemState; persistenceEnabled: boolean; persistenceLoaded: boolean; persistenceStale: boolean; persistenceKey: string; persistenceVersion: string; }
+interface AdminEvent { at: number; event: string; actor?: string; target?: string; detail?: string; }
+interface WorldState extends nkruntime.MatchState { players: Record<string, Player>; playerStates: Record<string, Player>; inventories: Record<string, ItemInstance[]>; persistedPlayers: Record<string, PersistedPlayer>; zombies: Record<string, Zombie>; items: ItemState; persistenceEnabled: boolean; persistenceLoaded: boolean; persistenceStale: boolean; persistenceKey: string; persistenceVersion: string; adminEvents: AdminEvent[]; }
 
 const PLAYER_SPAWNS = [[560, 360], [720, 360], [640, 280], [640, 440]];
 
@@ -21,7 +22,7 @@ export const worldMatch: nkruntime.MatchHandler = {
     logger.info(JSON.stringify({ event: "world_created", protocol: PROTOCOL_VERSION }));
     const persistenceEnabled = params.persistence_enabled !== false;
     const activationRequired = params.activation_required === true;
-    const state = { players: {}, playerStates: {}, inventories: {}, persistedPlayers: {}, zombies: createZombies(), items: createItemState(), persistenceEnabled, persistenceLoaded: !persistenceEnabled && !activationRequired, persistenceStale: false, persistenceKey: typeof params.persistence_key === "string" ? params.persistence_key : "main_world_v1", persistenceVersion: "" } as WorldState;
+    const state = { players: {}, playerStates: {}, inventories: {}, persistedPlayers: {}, zombies: createZombies(), items: createItemState(), persistenceEnabled, persistenceLoaded: !persistenceEnabled && !activationRequired, persistenceStale: false, persistenceKey: typeof params.persistence_key === "string" ? params.persistence_key : "main_world_v1", persistenceVersion: "", adminEvents: [] } as WorldState;
     return { state, tickRate: TICK_RATE, label: JSON.stringify({ world: "main", protocol: PROTOCOL_VERSION }) };
   },
   matchJoinAttempt(_ctx, _logger, _nk, _dispatcher, _tick, rawState, presence) {
@@ -56,6 +57,7 @@ export const worldMatch: nkruntime.MatchHandler = {
       }
       state.players[presence.userId] = player;
       logger.info(JSON.stringify({ event: "player_join", player_id: `player:${presence.userId}` }));
+      recordAdminEvent(state, "player_join", player.id);
     }
     dispatcher.matchLabelUpdate(JSON.stringify({ world: "main", protocol: PROTOCOL_VERSION, players: Object.keys(state.players).length }));
     return { state };
@@ -71,6 +73,7 @@ export const worldMatch: nkruntime.MatchHandler = {
         delete state.players[presence.userId];
       }
       logger.info(JSON.stringify({ event: "player_leave", player_id: `player:${presence.userId}` }));
+      recordAdminEvent(state, "player_leave", `player:${presence.userId}`);
     }
     dispatcher.matchLabelUpdate(JSON.stringify({ world: "main", protocol: PROTOCOL_VERSION, players: Object.keys(state.players).length }));
     return { state };
@@ -124,8 +127,9 @@ export const worldMatch: nkruntime.MatchHandler = {
           if (result.ok && (result.inventoryChanged || result.targetId) && !persistMutation(nk, state, rollback, logger)) { restoreRuntime(player, runtimeRollback); sendError(dispatcher, player, "PERSISTENCE_CONFLICT"); return null; }
           if (result.ok && result.inventoryChanged) player.inventoryDirty = true;
           if (result.ok) dispatcher.broadcastMessage(ATTACK_EVENT, JSON.stringify({ player_id: player.id, weapon: result.weapon, aim_x: result.aimX, aim_y: result.aimY, magazine_ammo: result.magazineAmmo }), null, null, true);
+          if (result.ok) recordAdminEvent(state, "attack", player.id, result.targetId, result.weapon);
           if (result.ok && result.targetId) dispatcher.broadcastMessage(DAMAGE_EVENT, JSON.stringify({ source_id: player.id, target_id: result.targetId, damage: result.damage }), null, null, true);
-          if (result.ok && result.killed) dispatcher.broadcastMessage(DEATH_EVENT, JSON.stringify({ entity_id: result.targetId }), null, null, true);
+          if (result.ok && result.killed) { dispatcher.broadcastMessage(DEATH_EVENT, JSON.stringify({ entity_id: result.targetId }), null, null, true); recordAdminEvent(state, "zombie_death", player.id, result.targetId); }
         } else if (message.opCode === INPUT_RELOAD) {
           const input = parseReload(payload);
           if (!input) { sendError(dispatcher, player, "BAD_PAYLOAD"); continue; }
@@ -143,6 +147,9 @@ export const worldMatch: nkruntime.MatchHandler = {
         else {
           if (message.opCode !== INPUT_ATTACK && message.opCode !== INPUT_RELOAD && !persistMutation(nk, state, rollback, logger)) { sendError(dispatcher, player, "PERSISTENCE_CONFLICT"); return null; }
           player.inventoryDirty = true;
+          if (message.opCode === ITEM_PICKUP) recordAdminEvent(state, "item_pickup", player.id, String(payload.item_instance_id || ""));
+          else if (message.opCode === ITEM_DROP) recordAdminEvent(state, "item_drop", player.id, String(payload.item_instance_id || ""));
+          else if (message.opCode === CONTAINER_MUTATE) recordAdminEvent(state, `container_${String(payload.operation || "unknown")}`, player.id, String(payload.container_id || ""), String(payload.item_instance_id || ""));
         }
         continue;
       }
@@ -202,6 +209,7 @@ export const worldMatch: nkruntime.MatchHandler = {
     if (simulationCommitted) {
       for (const event of damageEvents) dispatcher.broadcastMessage(DAMAGE_EVENT, JSON.stringify({ source_id: "zombie", target_id: event.player.id, damage: event.damage }), null, null, true);
       for (const player of deathEvents) dispatcher.broadcastMessage(DEATH_EVENT, JSON.stringify({ player_id: player.id, respawn_tick: tick + Math.ceil(Math.max(0, player.respawnAtMs - Date.now()) * TICK_RATE / 1000) }), null, null, true);
+      for (const player of deathEvents) recordAdminEvent(state, "player_death", "zombie", player.id);
     }
     if (tick % TICK_RATE === 0) {
       syncPersistedPlayers(state);
@@ -232,13 +240,46 @@ export const worldMatch: nkruntime.MatchHandler = {
     try { state.persistenceVersion = writeWorld(nk, state, state.persistenceVersion); } catch (error) { logger.warn(JSON.stringify({ event: "final_persistence_failed", error: String(error) })); }
     return { state };
   },
-  matchSignal(_ctx, _logger, _nk, _dispatcher, _tick, rawState, data) {
+  matchSignal(_ctx, logger, nk, _dispatcher, _tick, rawState, data) {
     const state = rawState as WorldState;
     if (data === "terminate") return null;
     if (data === "activate_persistence") { state.persistenceEnabled = true; state.persistenceLoaded = false; return { state, data: "activated" }; }
+    let command: { type?: string; actor?: string };
+    try { command = JSON.parse(data); } catch (_error) { return { state, data }; }
+    if (command.type === "admin_status") return { state, data: JSON.stringify(adminStatus(state)) };
+    if (command.type === "admin_respawn_zombies") {
+      if (!state.persistenceLoaded) return { state, data: JSON.stringify({ ok: false, error: "WORLD_LOADING" }) };
+      const rollback = snapshotWorld(state);
+      const respawned = respawnDeadZombies(state.zombies);
+      if (respawned > 0 && !persistMutation(nk, state, rollback, logger)) return { state, data: JSON.stringify({ ok: false, error: "PERSISTENCE_CONFLICT" }) };
+      recordAdminEvent(state, "admin_respawn_zombies", command.actor || "admin", undefined, String(respawned));
+      logger.info(JSON.stringify({ event: "admin_respawn_zombies", actor: command.actor || "admin", respawned }));
+      return { state, data: JSON.stringify({ ok: true, respawned, status: adminStatus(state) }) };
+    }
     return { state, data };
   }
 };
+
+function recordAdminEvent(state: WorldState, event: string, actor?: string, target?: string, detail?: string): void {
+  state.adminEvents.push({ at: Date.now(), event, actor, target, detail });
+  if (state.adminEvents.length > 100) state.adminEvents.splice(0, state.adminEvents.length - 100);
+}
+
+function adminStatus(state: WorldState) {
+  const zombies = Object.values(state.zombies);
+  return {
+    ok: true,
+    persistence_loaded: state.persistenceLoaded,
+    persistence_stale: state.persistenceStale,
+    players_online: Object.keys(state.players).length,
+    players_known: Object.keys(state.playerStates).length,
+    zombies_alive: zombies.filter((zombie) => zombie.hp > 0).length,
+    zombies_total: zombies.length,
+    world_items: Object.keys(state.items.worldItems).length,
+    containers: Object.keys(state.items.containers).length,
+    events: state.adminEvents.slice().reverse()
+  };
+}
 
 function sendError(dispatcher: nkruntime.MatchDispatcher, player: Player, code: string): void {
   dispatcher.broadcastMessage(ERROR_EVENT, JSON.stringify({ code }), [player.presence], null, true);
@@ -339,4 +380,21 @@ export const resumeRestartTestWorld: nkruntime.RpcFunction = (ctx, _logger, nk, 
   const token = pointer[0].value.token;
   const matchId = nk.matchCreate("world", { persistence_key: `test_restart_${token}` });
   return JSON.stringify({ match_id: matchId, token, protocol: PROTOCOL_VERSION });
+};
+
+function signalMainWorld(ctx: nkruntime.Context, nk: nkruntime.Nakama, command: Record<string, unknown>): string {
+  if (ctx.userId) throw new Error("Server-to-server authentication required");
+  findWorld(ctx, {} as nkruntime.Logger, nk, "{}");
+  const pointer = nk.storageRead([{ collection: "system", key: "main_world", userId: "00000000-0000-0000-0000-000000000000" }]);
+  const matchId = pointer.length > 0 ? String(pointer[0].value.match_id || "") : "";
+  if (!matchId || nk.matchGet(matchId) === null) return JSON.stringify({ ok: false, error: "WORLD_OFFLINE" });
+  return nk.matchSignal(matchId, JSON.stringify(command));
+}
+
+export const adminStatusRpc: nkruntime.RpcFunction = (ctx, _logger, nk, _payload) => signalMainWorld(ctx, nk, { type: "admin_status" });
+
+export const adminRespawnZombiesRpc: nkruntime.RpcFunction = (ctx, _logger, nk, payload) => {
+  let actor = "admin";
+  try { const input = typeof payload === "string" ? JSON.parse(payload || "{}") : payload as { actor?: unknown }; if (typeof input.actor === "string" && input.actor.length <= 64) actor = input.actor; } catch (_error) { /* default actor */ }
+  return signalMainWorld(ctx, nk, { type: "admin_respawn_zombies", actor });
 };

@@ -20,6 +20,7 @@ export_presets.cfg.bak
 build/
 dist/
 exports/
+release/
 *.apk
 *.aab
 *.exe

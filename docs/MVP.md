@@ -176,6 +176,9 @@ Current acceptance status:
 - [x] exported Linux build connects from an empty user profile over production HTTPS/WSS;
 - [x] `game.staydev.org` DNS points to the production VPS;
 - [x] public Let's Encrypt TLS and HTTPS/WSS acceptance;
+- [x] Russian landing with live server/player status and prerelease downloads;
+- [x] protected Russian test admin with authoritative event feed and persisted zombie respawn;
+- [x] automated interactive deployment and GitHub prerelease workflow;
 - [ ] physical PC ↔ Android crossplay;
 - [ ] clean installs on Windows and Android (Linux empty-profile smoke passed).
 
@@ -201,6 +204,14 @@ Current acceptance status:
 - reconnect.
 
 ## Release tag
+
+Current public test prerelease:
+
+```text
+v0.1.0-prealpha.1
+```
+
+Final MVP tag after all mandatory acceptance gates:
 
 ```text
 v0.1.0-mvp

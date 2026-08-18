@@ -99,6 +99,18 @@ export function killZombie(zombie: Zombie, tick: number): void {
   zombie.hp = 0; zombie.vx = 0; zombie.vy = 0; zombie.state = "DEAD"; zombie.targetId = "";
 }
 
+export function respawnDeadZombies(zombies: Record<string, Zombie>): number {
+  let respawned = 0;
+  for (const zombie of Object.values(zombies)) {
+    if (zombie.hp > 0) continue;
+    zombie.x = zombie.spawnX; zombie.y = zombie.spawnY;
+    zombie.vx = 0; zombie.vy = 0; zombie.hp = 30;
+    zombie.state = "IDLE"; zombie.targetId = ""; zombie.nextAttackTick = 0;
+    respawned += 1;
+  }
+  return respawned;
+}
+
 export function separateZombies(zombies: Record<string, Zombie>): void {
   const living = Object.keys(zombies).sort().map((id) => zombies[id]).filter((zombie) => zombie.hp > 0);
   for (let leftIndex = 0; leftIndex < living.length; leftIndex += 1) {

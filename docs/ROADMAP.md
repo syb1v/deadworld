@@ -13,6 +13,20 @@
 - Windows + Android crossplay;
 - internet VPS playtest.
 
+Current release sequence:
+
+- `v0.1.0-prealpha.1`: public backend, landing/status, protected test admin and downloadable platform builds;
+- `v0.1.0-mvp`: only after physical PC ↔ Android crossplay and clean-install acceptance.
+
+## v0.1.1 — MVP Polish Sprint
+
+- fix playtest blockers and crashes;
+- mobile safe-area/input verification;
+- clearer interaction prompts and connection errors;
+- basic sound/visual feedback;
+- replace temporary admin controls with reviewed operational tooling;
+- no new survival systems before MVP acceptance.
+
 ## v0.1.x — hardening
 
 - prediction/reconciliation;

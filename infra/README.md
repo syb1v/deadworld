@@ -9,3 +9,5 @@ docker compose --env-file .env -f infra/docker-compose.prod.yml config --quiet
 ```
 
 Daily backups use `scripts/backup_prod.sh`; `scripts/test_restore_prod.sh` restores a selected dump into an isolated temporary PostgreSQL container and never modifies the production database. A shared host that already owns `80/443` must reuse its existing Caddy with `docker-compose.shared-caddy.yml`, set `CADDY_NETWORK`, and add a validated hostname route instead of starting a second proxy.
+
+Use `sudo scripts/deploy_prod.sh` for automated first deploy/update. It supports standalone Caddy or a shared Caddyfile with backup, marker-based idempotent route insertion, validation and reload. The private `admin` service also serves the Russian landing and aggregate `/status`; it publishes no host ports.

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createZombies, separateZombies, simulateZombie, Zombie, ZombieTarget } from "../src/zombies";
+import { createZombies, respawnDeadZombies, separateZombies, simulateZombie, Zombie, ZombieTarget } from "../src/zombies";
 
 const zombie = (): Zombie => ({ id: "zombie:test", x: 0, y: 0, vx: 0, vy: 0, hp: 30, state: "IDLE", targetId: "", nextAttackTick: 0, spawnX: 0, spawnY: 0 });
 const player = (id: string, x: number): ZombieTarget => ({ id, x, y: 0, health: 100 });
@@ -9,6 +9,16 @@ test("creates stable world zombie IDs", () => {
   const zombies = createZombies();
   assert.deepEqual(Object.keys(zombies), ["zombie:main-1", "zombie:main-2", "zombie:main-3"]);
   assert.ok(Object.values(zombies).every((entity) => entity.hp === 30 && entity.state === "IDLE"));
+});
+
+test("respawns only dead zombies at authoritative spawn points", () => {
+  const zombies = createZombies();
+  zombies["zombie:main-1"].x = 999; zombies["zombie:main-1"].y = 999;
+  zombies["zombie:main-1"].hp = 0; zombies["zombie:main-1"].state = "DEAD";
+  const livingBefore = { ...zombies["zombie:main-2"] };
+  assert.equal(respawnDeadZombies(zombies), 1);
+  assert.deepEqual(zombies["zombie:main-1"], { ...zombies["zombie:main-1"], x: 420, y: 360, vx: 0, vy: 0, hp: 30, state: "IDLE", targetId: "", nextAttackTick: 0 });
+  assert.deepEqual(zombies["zombie:main-2"], livingBefore);
 });
 
 test("selects nearest player and chases server-side", () => {
