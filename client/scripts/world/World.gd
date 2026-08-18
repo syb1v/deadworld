@@ -66,7 +66,7 @@ func _ready() -> void:
 	touch_controls.pause_pressed.connect(_toggle_pause)
 	touch_controls.slot_pressed.connect(func():
 		if game_started and not game_paused: _select_next_slot())
-	Network.status_changed.connect(func(text: String): $HUD/Status.text = text)
+	Network.status_changed.connect(_on_network_status)
 	Network.snapshot_received.connect(_on_snapshot)
 	Network.inventory_received.connect(_on_inventory)
 	Network.damage_received.connect(_on_damage)
@@ -82,6 +82,10 @@ func _ready() -> void:
 	_draw_grid()
 	if OS.get_cmdline_user_args().has("--auto-start"):
 		_start_game()
+
+func _on_network_status(text: String) -> void:
+	$HUD/Status.text = text
+	$Menus/MainMenu/ConnectionStatus.text = text
 
 func _process(delta: float) -> void:
 	if touch_controls != null and touch_controls.visible:
