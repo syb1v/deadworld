@@ -9,6 +9,7 @@ const FloatingDamageScript = preload("res://scripts/ui/FloatingDamage.gd")
 const WorldMapScript = preload("res://scripts/world/WorldMap.gd")
 const TouchControlsScript = preload("res://scripts/ui/TouchControls.gd")
 const InteractionTarget = preload("res://scripts/ui/InteractionTarget.gd")
+const BUILD_LABEL := "v0.1.0-prealpha.5"
 const ITEM_NAMES: Dictionary = preload("res://data/item_names_ru.json").data
 const ERROR_NAMES := {
 	"BAD_PAYLOAD": "Некорректный запрос",
@@ -92,6 +93,7 @@ func _ready() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	get_viewport().size_changed.connect(_update_ui_layout)
 	_update_ui_layout()
+	$HUD/BuildMarker.text = "%s · %s" % [BUILD_LABEL, "TOUCH" if _touch_enabled() else "DESKTOP"]
 	_draw_grid()
 	if OS.get_cmdline_user_args().has("--auto-start"):
 		_start_game()
@@ -278,7 +280,7 @@ func _start_game() -> void:
 	if not connected:
 		return
 	game_started = true
-	touch_controls.visible = OS.has_feature("mobile") or OS.get_cmdline_user_args().has("--touch-controls")
+	touch_controls.visible = _touch_enabled()
 	_update_ui_layout()
 	$Menus/MainMenu.hide()
 	$HUD.show()
@@ -287,7 +289,7 @@ func _start_game() -> void:
 func _toggle_pause() -> void:
 	game_paused = not game_paused
 	$Menus/PauseMenu.visible = game_paused
-	if touch_controls != null: touch_controls.visible = (OS.has_feature("mobile") or OS.get_cmdline_user_args().has("--touch-controls")) and not game_paused
+	if touch_controls != null: touch_controls.visible = _touch_enabled() and not game_paused
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if game_paused else Input.MOUSE_MODE_HIDDEN
 	if game_paused:
 		touch_controls.reset_input()
@@ -297,7 +299,7 @@ func _toggle_pause() -> void:
 func _update_ui_layout() -> void:
 	var viewport_size := get_viewport_rect().size
 	var compact := viewport_size.x < 1050.0 or viewport_size.y < 620.0
-	var mobile_layout := OS.has_feature("mobile") or OS.get_cmdline_user_args().has("--touch-controls")
+	var mobile_layout := _touch_enabled()
 	var safe: Rect2 = touch_controls.safe_rect if touch_controls != null and touch_controls.safe_rect.has_area() else get_viewport_rect()
 	$HUD/Hint.visible = not compact and not mobile_layout
 	$HUD/Status.position = safe.position + Vector2(16, 12)
@@ -416,7 +418,7 @@ func _close_container() -> void:
 	container_mutation_pending = false
 	pending_container_version = -1
 	$HUD/ContainerPanel.hide()
-	if game_started and not game_paused and (OS.has_feature("mobile") or OS.get_cmdline_user_args().has("--touch-controls")):
+	if game_started and not game_paused and _touch_enabled():
 		touch_controls.show()
 
 func _refresh_container_panel() -> void:
@@ -501,3 +503,6 @@ func _on_server_error(code: String) -> void:
 		pending_container_version = -1
 		$HUD/ContainerPanel/Margin/Layout/Feedback.text = message
 		_refresh_container_panel()
+
+func _touch_enabled() -> bool:
+	return OS.has_feature("mobile") or OS.get_name() in ["iOS", "Android"] or OS.get_cmdline_user_args().has("--touch-controls")

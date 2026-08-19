@@ -2,7 +2,7 @@
 
 > **Pre-alpha / vertical-slice stage**
 
-Current client metadata version: `0.1.0`; public test label/tag: `v0.1.0-prealpha.4`. The final MVP tag `v0.1.0-mvp` remains gated by physical cross-platform acceptance of the updated client.
+Current client metadata version: `0.1.0`; public test label/tag: `v0.1.0-prealpha.5`. The final MVP tag `v0.1.0-mvp` remains gated by physical cross-platform acceptance of the updated client.
 
 Production pre-alpha backend: `https://game.staydev.org` (HTTPS/WSS). Physical Android crossplay and clean-install acceptance remain release gates.
 

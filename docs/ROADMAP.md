@@ -45,7 +45,7 @@ v0.1 MVP
 - исправление playtest blockers, crashes и operational tooling;
 - Google Play Internal Testing; официальный Apple signing/TestFlight отдельно от unsigned test flow.
 
-Current delivery checkpoint: `v0.1.0-prealpha.4` adds responsive twin-stick controls, explicit authoritative container transfers and resilient production HTTPS/WSS connection establishment.
+Current delivery checkpoint: `v0.1.0-prealpha.5` adds an explicit runtime build/input marker and direct iOS/Android touch-mode detection on top of responsive twin-stick controls, authoritative container transfers and resilient production HTTPS/WSS connection establishment.
 
 ## v0.2 - Survival Foundation
 

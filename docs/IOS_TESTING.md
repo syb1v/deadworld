@@ -7,6 +7,7 @@ CI produces `deadworld-ios-arm64-unsigned.ipa` for later resigning. CI build ver
 - [ ] IPA installs on iPhone
 - [ ] app launches
 - [ ] main menu visible
+- [ ] in-game HUD shows `v0.1.0-prealpha.5 · TOUCH` (not an older version and not `DESKTOP`)
 - [ ] production backend connects
 - [ ] authentication succeeds
 - [ ] player enters same world as PC

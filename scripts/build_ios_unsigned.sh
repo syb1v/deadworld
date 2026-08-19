@@ -113,5 +113,13 @@ for required in ("Payload/Deadworld.app/Info.plist", f"Payload/Deadworld.app/{sy
     if required not in names:
         raise SystemExit(f"IPA entry is missing: {required}")
 PY
+python3 - "${IPA}" <<'PY'
+import sys, zipfile
+with zipfile.ZipFile(sys.argv[1]) as archive:
+    pck = archive.read("Payload/Deadworld.app/Deadworld.pck")
+for marker in (b"v0.1.0-prealpha.5", b"ContainerPanel", b"InteractionTarget"):
+    if marker not in pck:
+        raise SystemExit(f"IPA game data is missing release marker: {marker.decode()}")
+PY
 echo "Unsigned IPA: ${IPA}"
 cat "${CHECKSUM}"
