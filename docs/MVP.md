@@ -181,6 +181,7 @@ Current acceptance status:
 - [x] automated interactive deployment and GitHub prerelease workflow;
 - [ ] physical PC ↔ Android crossplay;
 - [x] clean installs on Windows and Android confirmed by the test operator (Linux empty-profile smoke also passed).
+- [ ] optional iOS unsigned CI build and physical GBox/iPhone acceptance (not an MVP gate).
 
 ## Cut order
 

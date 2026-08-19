@@ -1,0 +1,75 @@
+name: iOS unsigned build
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Existing GitHub release tag to receive the IPA; leave empty for artifacts only
+        required: false
+        type: string
+  push:
+    tags: ["v*-prealpha.*"]
+
+permissions:
+  contents: write
+
+jobs:
+  ios-unsigned:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.7.1
+          use-dotnet: false
+          include-templates: true
+      - name: Verify pinned toolchain
+        run: |
+          godot --version
+          xcodebuild -version
+          xcode-select -p
+          xcrun --sdk iphoneos --show-sdk-path
+      - name: Build unsigned resignable IPA
+        run: make ios
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deadworld-ios-arm64-unsigned
+          path: |
+            dist/deadworld-ios-arm64-unsigned.ipa
+            dist/deadworld-ios-arm64-unsigned.ipa.sha256
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deadworld-ios-xcode-project
+          path: dist/deadworld-ios-xcode-project.zip
+          if-no-files-found: error
+      - name: Resolve release tag
+        id: release
+        env:
+          INPUT_TAG: ${{ inputs.release_tag }}
+        run: |
+          if [[ -n "${INPUT_TAG}" ]]; then
+            echo "tag=${INPUT_TAG}" >> "$GITHUB_OUTPUT"
+          elif [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            echo "tag=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Attach IPA to existing release
+        if: steps.release.outputs.tag != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+        run: |
+          for attempt in {1..40}; do
+            if gh release view "${RELEASE_TAG}" >/dev/null 2>&1; then
+              break
+            fi
+            if [[ "${attempt}" == "40" ]]; then
+              echo "Existing release ${RELEASE_TAG} was not created within 10 minutes" >&2
+              exit 1
+            fi
+            sleep 15
+          done
+          gh release upload "${RELEASE_TAG}" \
+            dist/deadworld-ios-arm64-unsigned.ipa \
+            dist/deadworld-ios-arm64-unsigned.ipa.sha256 \
+            --clobber
