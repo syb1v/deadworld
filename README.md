@@ -2,7 +2,7 @@
 
 > **Pre-alpha / vertical-slice stage**
 
-Current client metadata version: `0.1.0`; public test label/tag: `v0.1.0-prealpha.3`. The final MVP tag `v0.1.0-mvp` remains gated by physical PC ↔ Android acceptance of the updated client.
+Current client metadata version: `0.1.0`; public test label/tag: `v0.1.0-prealpha.4`. The final MVP tag `v0.1.0-mvp` remains gated by physical cross-platform acceptance of the updated client.
 
 Production pre-alpha backend: `https://game.staydev.org` (HTTPS/WSS). Physical Android crossplay and clean-install acceptance remain release gates.
 
@@ -335,6 +335,8 @@ Automated auth/socket/shared-world/movement/zombie/item and combat lifecycle cov
 The local Compose profile binds Nakama API and console ports to loopback. Test-world RPCs require the private runtime HTTP key and reject normal user sessions.
 
 Day 6 includes a shared logical 1280x720 world with seven named areas, server-authoritative player/zombie collision and cross-platform exports. Mobile HUD controls adapt to the landscape viewport and display safe area: the left joystick moves, while the right joystick aims and emits one attack when dragged into its outer ring. Release the right stick or return it below the inner reset threshold before firing again. Physical cross-platform combinations remain acceptance gates and use the production HTTPS/WSS backend.
+
+Nearby interaction now identifies the exact target. `E` or the mobile `ДЕЙСТВИЕ` button picks up a world item or opens a container. The container panel lists authoritative contents beside the private backpack and sends explicit whole-instance Take/Deposit intentions; it never moves ownership locally before server confirmation. Split stacks, drag/drop and Take All remain later `v0.1.1` work.
 
 Desktop exports consist of the executable and its adjacent `.pck`; distribute both files together. Initial and reconnect world discovery retry short transient RPC failures before reporting an error.
 

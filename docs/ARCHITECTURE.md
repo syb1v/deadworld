@@ -56,6 +56,8 @@ The iOS test pipeline is intentionally unsigned: pinned Godot `4.7.1` exports an
 
 iOS uses the same `gl_compatibility` renderer, `mobile` feature touch controls and production HTTPS/WSS endpoint as Android. No ATS arbitrary-load/cleartext exception or unnecessary Apple capability is enabled.
 
+The Godot Nakama transport uses a 10-second timeout for production HTTPS and WSS establishment, with one bounded HTTP retry. The SDK's previous 3-second default caused false offline errors on valid but slower mobile/TLS connections. Device identity is regenerated only for invalid local data or an explicit HTTP 4xx authentication rejection, never for a transient timeout, so retry cannot silently replace a persistent player identity.
+
 ### Nakama
 
 На MVP:

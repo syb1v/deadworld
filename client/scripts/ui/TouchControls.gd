@@ -88,7 +88,7 @@ func _emit_action(action: String) -> void:
 		"pause": pause_pressed.emit()
 
 func _label(action: String) -> String:
-	return { "interact": "ВЗЯТЬ", "reload": "R", "drop": "БРОСИТЬ", "slot": "СЛОТ", "pause": "II" }.get(action, action)
+	return { "interact": "ДЕЙСТВИЕ", "reload": "R", "drop": "БРОСИТЬ", "slot": "СЛОТ", "pause": "II" }.get(action, action)
 
 func reset_input() -> void:
 	move_touch = -1

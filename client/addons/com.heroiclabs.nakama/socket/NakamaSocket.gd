@@ -315,11 +315,14 @@ func close():
 # @param p_connect_timeout - The time allowed for the socket connection to be established.
 # Returns a task to represent the asynchronous operation.
 func connect_async(p_session : NakamaSession, p_appear_online : bool = false, p_connect_timeout : int = 3):
-	var uri = "%s/ws?lang=en&status=%s&token=%s" % [_base_uri, str(p_appear_online).to_lower(), p_session.token]
+	var uri = websocket_uri(p_session.token, p_appear_online)
 	logger.debug("Connecting to host: %s" % uri)
 	_conn = AsyncConnection.new()
 	_adapter.connect_to_host(uri, p_connect_timeout)
 	return await _conn.completed
+
+func websocket_uri(p_token: String, p_appear_online: bool) -> String:
+	return "%s/ws?lang=en&status=%s&token=%s" % [_base_uri, str(p_appear_online).to_lower(), p_token.uri_encode()]
 
 # Join the matchmaker pool and search for opponents on the server.
 # @param p_query - The matchmaker query to search for opponents.

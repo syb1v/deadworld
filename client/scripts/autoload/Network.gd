@@ -31,6 +31,7 @@ var sequence := 0
 var attack_sequence := 0
 var reload_sequence := 0
 var reconnecting := false
+var initial_connecting := false
 var server_host_override := ""
 
 func set_server_host(host: String) -> void:
@@ -46,36 +47,53 @@ func saved_server_host() -> String:
 	return str(ProjectSettings.get_setting("deadworld/network/host", "127.0.0.1"))
 
 func connect_to_world() -> bool:
+	initial_connecting = true
 	status_changed.emit("Авторизация устройства...")
 	var endpoint := _endpoint()
-	Nakama.get_client_adapter().auto_retry = false
-	client = Nakama.create_client(endpoint.key, endpoint.host, endpoint.port, endpoint.scheme, 3, NakamaLogger.LOG_LEVEL.INFO)
-	var auth = await client.authenticate_device_async(_device_id())
-	if auth.is_exception():
-		status_changed.emit("Сервер %s://%s:%d не отвечает" % [endpoint.scheme, endpoint.host, endpoint.port])
+	var adapter = Nakama.get_client_adapter()
+	adapter.auto_retry = true
+	adapter.auto_retry_count = 2
+	adapter.auto_retry_backoff_base = 1
+	adapter.timeout = 10
+	client = Nakama.create_client(endpoint.key, endpoint.host, endpoint.port, endpoint.scheme, 10, NakamaLogger.LOG_LEVEL.INFO)
+	var device_id := _device_id()
+	var auth = await client.authenticate_device_async(device_id)
+	var auth_error = auth.get_exception() if auth.is_exception() else null
+	if auth_error != null and auth_error.status_code >= 400 and auth_error.status_code < 500:
+		device_id = _replace_device_id()
+		auth = await client.authenticate_device_async(device_id)
+		auth_error = auth.get_exception() if auth.is_exception() else null
+	if auth_error != null:
+		status_changed.emit(_connection_error(endpoint, auth_error))
+		initial_connecting = false
 		return false
 	session = auth
 	player_id = "player:%s" % session.user_id
 	socket = Nakama.create_socket_from(client)
 	socket.received_match_state.connect(_on_match_state)
 	socket.closed.connect(_on_socket_closed.bind(socket))
-	var connected = await socket.connect_async(session, true)
+	var connected = await socket.connect_async(session, true, 10)
 	if connected.is_exception():
 		status_changed.emit("Ошибка подключения: %s" % connected)
+		initial_connecting = false
 		return false
 	var rpc = await _find_world()
 	if rpc.is_exception():
 		status_changed.emit("Мир недоступен: %s" % rpc)
+		initial_connecting = false
 		return false
 	var world = JSON.parse_string(rpc.payload)
 	if typeof(world) != TYPE_DICTIONARY or world.get("protocol") != PROTOCOL_VERSION:
 		status_changed.emit("Несовместимая версия протокола")
+		initial_connecting = false
 		return false
 	match_id = world.match_id
 	var joined = await _join_loaded_world(socket, match_id)
 	if joined.is_exception():
 		status_changed.emit("Не удалось войти в мир: %s" % joined)
+		initial_connecting = false
 		return false
+	initial_connecting = false
 	status_changed.emit("В сети  |  %s" % player_id)
 	return true
 
@@ -102,6 +120,9 @@ func reload(weapon_slot: int) -> void:
 func take_from_container(container_id: String, item_id: String, version: int) -> void:
 	_send_intention(CONTAINER_MUTATE, {"container_id": container_id, "item_instance_id": item_id, "expected_version": version, "operation": "take"})
 
+func deposit_to_container(container_id: String, item_id: String, version: int) -> void:
+	_send_intention(CONTAINER_MUTATE, {"container_id": container_id, "item_instance_id": item_id, "expected_version": version, "operation": "deposit"})
+
 func _send_intention(opcode: int, payload: Dictionary) -> void:
 	if not match_id.is_empty():
 		socket.send_match_state_async(match_id, opcode, JSON.stringify(payload))
@@ -127,7 +148,7 @@ func _on_socket_closed(closed_socket) -> void:
 	if closed_socket != socket:
 		return
 	match_id = ""
-	if reconnecting or session == null:
+	if initial_connecting or reconnecting or session == null:
 		return
 	reconnecting = true
 	status_changed.emit("Соединение потеряно, переподключение...")
@@ -136,7 +157,7 @@ func _on_socket_closed(closed_socket) -> void:
 		var candidate = Nakama.create_socket_from(client)
 		candidate.received_match_state.connect(_on_match_state)
 		candidate.closed.connect(_on_socket_closed.bind(candidate))
-		var connected = await candidate.connect_async(session, true)
+		var connected = await candidate.connect_async(session, true, 10)
 		if connected.is_exception():
 			candidate.close()
 			continue
@@ -185,11 +206,35 @@ func _device_id() -> String:
 			profile = argument.trim_prefix("--profile=").validate_filename()
 	var path := "user://device_id_%s.txt" % profile
 	if FileAccess.file_exists(path):
-		return FileAccess.get_file_as_string(path).strip_edges()
+		var saved := FileAccess.get_file_as_string(path).strip_edges()
+		if _valid_device_id(saved):
+			return saved
+	return _replace_device_id(profile)
+
+func _replace_device_id(profile := "default") -> String:
+	for argument in OS.get_cmdline_user_args():
+		if argument.begins_with("--profile="):
+			profile = argument.trim_prefix("--profile=").validate_filename()
+	var path := "user://device_id_%s.txt" % profile
 	var id := "deadworld-%s" % Crypto.new().generate_random_bytes(16).hex_encode()
 	var file := FileAccess.open(path, FileAccess.WRITE)
-	file.store_string(id)
+	if file != null:
+		file.store_string(id)
 	return id
+
+func _valid_device_id(value: String) -> bool:
+	if value.length() < 10 or value.length() > 128:
+		return false
+	for character in value:
+		if not character.to_lower() in "abcdefghijklmnopqrstuvwxyz0123456789-_.":
+			return false
+	return true
+
+func _connection_error(endpoint: Dictionary, error) -> String:
+	var address := "%s://%s:%d" % [endpoint.scheme, endpoint.host, endpoint.port]
+	if error.status_code == 0 or error.status_code < 0:
+		return "Нет соединения с %s. Проверьте интернет, дату и сертификаты устройства" % address
+	return "Сервер отклонил вход (%d): %s" % [error.status_code, error.message]
 
 func _endpoint() -> Dictionary:
 	var result := {
@@ -218,7 +263,7 @@ func _endpoint() -> Dictionary:
 func set_server_url(url: String) -> void:
 	var value := url.strip_edges()
 	if value.is_empty(): return
-	if not value.begins_with("http://") and not value.begins_with("https://"): value = "http://%s" % value
+	if not value.begins_with("http://") and not value.begins_with("https://"): value = "%s://%s" % [ProjectSettings.get_setting("deadworld/network/scheme", "https"), value]
 	var file := FileAccess.open("user://server_url.txt", FileAccess.WRITE)
 	file.store_string(value)
 	set_server_host(value)

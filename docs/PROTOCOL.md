@@ -174,6 +174,8 @@ Stackable item definitions use authoritative `quantity` with a maximum of 64 per
 
 Day 5 persistence is server-side and does not change the wire version. Ownership/container/combat mutations are acknowledged to clients only after versioned storage CAS succeeds. On write conflict the mutation is rolled back, opcode `50` carries `PERSISTENCE_CONFLICT`, and the stale match stops instead of continuing from divergent state.
 
+The `v0.1.1` interaction UI does not change protocol version `1`. Opening a generic container is local presentation over the latest public container snapshot and performs no mutation. Explicit Take and Deposit actions send existing opcode `41` with the latest observed `container.version`; the client does not optimistically change either collection and waits for authoritative container/inventory snapshots or opcode `50`. Empty containers remain valid deposit targets.
+
 Day 6 keeps protocol version `1`. Keyboard, mouse and touch controls produce identical existing intentions. Map bounds, wall collision, sliding and persisted-position repair are server-owned simulation rules and do not add client-authoritative coordinates or platform-specific opcodes.
 
 Day 7's temporary `/admin/` control plane does not change protocol version `1`. `admin_status` and `admin_respawn_zombies` are private server-to-server RPCs requiring the runtime HTTP key; normal client sessions are rejected. Respawn remains a server-owned persisted world mutation and introduces no player opcode.

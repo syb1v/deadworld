@@ -67,3 +67,30 @@ test("rejects an entire stack when no quantity can fit", () => {
   assert.equal(owner.inventory[0].quantity, 64);
   assert.equal(state.worldItems["item:world-ammo-1"].quantity, 24);
 });
+
+test("deposits an owned item into an empty container exactly once", () => {
+  const state = createItemState();
+  const owner = player("player:owner", 640, 400);
+  const container = state.containers["container:clinic"];
+  container.items = [];
+  owner.inventory.push({ id: "item:owned-bandage", definitionId: "bandage", quantity: 2 });
+  const version = container.version;
+  assert.equal(mutateContainer(state, owner, { container_id: container.id, expected_version: version, operation: "deposit", item_instance_id: "item:owned-bandage" }).ok, true);
+  assert.equal(owner.inventory.length, 0);
+  assert.deepEqual(container.items, [{ id: "item:owned-bandage", definitionId: "bandage", quantity: 2 }]);
+  assert.equal(container.version, version + 1);
+  assert.equal(mutateContainer(state, owner, { container_id: container.id, expected_version: version, operation: "deposit", item_instance_id: "item:owned-bandage" }).code, "STALE_CONTAINER_VERSION");
+  assert.equal(container.items.length, 1);
+});
+
+test("rejects unowned and out-of-range deposits without moving items", () => {
+  const state = createItemState();
+  const owner = player("player:owner", 640, 400);
+  owner.inventory.push({ id: "item:owned-bandage", definitionId: "bandage" });
+  const container = state.containers["container:clinic"];
+  assert.equal(mutateContainer(state, owner, { container_id: container.id, expected_version: container.version, operation: "deposit", item_instance_id: "item:missing" }).code, "ITEM_NOT_OWNED");
+  owner.x = 0; owner.y = 0;
+  assert.equal(mutateContainer(state, owner, { container_id: container.id, expected_version: container.version, operation: "deposit", item_instance_id: "item:owned-bandage" }).code, "OUT_OF_RANGE");
+  assert.equal(owner.inventory.length, 1);
+  assert.equal(container.items.some((item) => item.id === "item:owned-bandage"), false);
+});

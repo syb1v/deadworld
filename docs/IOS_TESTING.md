@@ -17,6 +17,10 @@ CI produces `deadworld-ios-arm64-unsigned.ipa` for later resigning. CI build ver
 - [ ] controls stay inside the safe area on 16:9, 19.5:9/notched and 4:3 landscape screens
 - [ ] attack
 - [ ] interact
+- [ ] interaction prompt identifies the nearest item or container
+- [ ] container panel opens without automatically taking an item
+- [ ] explicit container take and backpack deposit update only after server confirmation
+- [ ] empty container can be opened and accepts a deposit
 - [ ] reload
 - [ ] inventory slots
 - [ ] drop

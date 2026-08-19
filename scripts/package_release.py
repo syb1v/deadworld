@@ -10,7 +10,8 @@ import zipfile
 root = pathlib.Path(__file__).resolve().parent.parent
 dist = root / "dist"
 release = root / "release"
-version = os.environ.get("RELEASE_VERSION", "0.1.0~prealpha3")
+version = os.environ.get("RELEASE_VERSION", "0.1.0~prealpha4")
+rpm_release = os.environ.get("RPM_RELEASE", "0.prealpha4")
 if release.exists():
     shutil.rmtree(release)
 release.mkdir()
@@ -54,7 +55,7 @@ def write_rpm(architecture, binary, pck):
     shutil.copy2(pck, top / "SOURCES" / "deadworld.pck")
     spec = f'''Name: deadworld
 Version: 0.1.0
-Release: 0.prealpha3
+Release: {rpm_release}
 Summary: Pre-alpha multiplayer survival tech test
 License: Proprietary
 %description
