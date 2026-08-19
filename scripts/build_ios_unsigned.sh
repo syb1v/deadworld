@@ -105,7 +105,13 @@ cp -R "${APP}" "${PACKAGE_ROOT}/Payload/Deadworld.app"
 )
 shasum -a 256 "${IPA}" | awk '{print $1 "  deadworld-ios-arm64-unsigned.ipa"}' > "${CHECKSUM}"
 
-unzip -l "${IPA}" | grep -q 'Payload/Deadworld.app/Info.plist' || { echo "IPA Info.plist is missing" >&2; exit 1; }
-unzip -l "${IPA}" | grep -q "Payload/Deadworld.app/${EXECUTABLE_NAME}" || { echo "IPA executable is missing" >&2; exit 1; }
+python3 - "${IPA}" "${EXECUTABLE_NAME}" <<'PY'
+import sys, zipfile
+with zipfile.ZipFile(sys.argv[1]) as archive:
+    names = set(archive.namelist())
+for required in ("Payload/Deadworld.app/Info.plist", f"Payload/Deadworld.app/{sys.argv[2]}"):
+    if required not in names:
+        raise SystemExit(f"IPA entry is missing: {required}")
+PY
 echo "Unsigned IPA: ${IPA}"
 cat "${CHECKSUM}"
