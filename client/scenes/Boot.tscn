@@ -129,6 +129,18 @@ theme_override_colors/font_color = Color(0.9, 0.4, 0.35, 1)
 theme_override_font_sizes/font_size = 17
 text = "Зомби: ожидание данных"
 
+[node name="BuildMarker" type="Label" parent="HUD"]
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -260.0
+offset_top = 18.0
+offset_right = -18.0
+offset_bottom = 44.0
+theme_override_colors/font_color = Color(0.5, 0.62, 0.57, 1)
+theme_override_font_sizes/font_size = 13
+text = "v0.1.0-prealpha.5"
+horizontal_alignment = 2
+
 [node name="InteractionPrompt" type="Label" parent="HUD"]
 anchor_left = 0.5
 anchor_top = 1.0
@@ -275,7 +287,7 @@ offset_top = -95.0
 offset_right = 250.0
 offset_bottom = -73.0
 theme_override_colors/font_color = Color(0.35, 0.46, 0.4, 1)
-text = "v0.1.0-prealpha.4 | PRE-ALPHA"
+text = "v0.1.0-prealpha.5 | PRE-ALPHA"
 horizontal_alignment = 1
 
 [node name="Play" type="Button" parent="Menus/MainMenu"]

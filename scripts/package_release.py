@@ -10,8 +10,8 @@ import zipfile
 root = pathlib.Path(__file__).resolve().parent.parent
 dist = root / "dist"
 release = root / "release"
-version = os.environ.get("RELEASE_VERSION", "0.1.0~prealpha4")
-rpm_release = os.environ.get("RPM_RELEASE", "0.prealpha4")
+version = os.environ.get("RELEASE_VERSION", "0.1.0~prealpha5")
+rpm_release = os.environ.get("RPM_RELEASE", "0.prealpha5")
 if release.exists():
     shutil.rmtree(release)
 release.mkdir()
