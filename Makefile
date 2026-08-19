@@ -45,6 +45,7 @@ test:
 	$(COMPOSE) config --quiet
 	NAKAMA_SERVER_KEY=$$(grep '^NAKAMA_SERVER_KEY=' .env | cut -d= -f2-) NAKAMA_HTTP_KEY=$$(grep '^NAKAMA_HTTP_KEY=' .env | cut -d= -f2-); NAKAMA_SERVER_KEY=$${NAKAMA_SERVER_KEY:-deadworld-local-key} NAKAMA_HTTP_KEY=$${NAKAMA_HTTP_KEY:-deadworld-local-http-key} npm --prefix server run test:integration
 	godot --headless --path client --editor --quit
+	godot --headless --path client --script res://tests/touch_controls_test.gd
 
 test-restart:
 	npm --prefix server run check

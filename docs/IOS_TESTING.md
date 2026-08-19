@@ -11,7 +11,10 @@ CI produces `deadworld-ios-arm64-unsigned.ipa` for later resigning. CI build ver
 - [ ] authentication succeeds
 - [ ] player enters same world as PC
 - [ ] touch movement
+- [ ] right joystick aims continuously and fires once when entering its outer ring
+- [ ] holding the right joystick at the edge does not spam attacks; returning inward and pushing outward fires again
 - [ ] simultaneous move + aim
+- [ ] controls stay inside the safe area on 16:9, 19.5:9/notched and 4:3 landscape screens
 - [ ] attack
 - [ ] interact
 - [ ] reload
