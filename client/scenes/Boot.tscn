@@ -7,8 +7,11 @@
 script = ExtResource("1")
 
 [node name="Background" type="ColorRect" parent="."]
-offset_right = 1280.0
-offset_bottom = 720.0
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 color = Color(0.035, 0.055, 0.05, 1)
 mouse_filter = 2
 show_behind_parent = true
@@ -42,17 +45,21 @@ theme_override_font_sizes/font_size = 18
 text = "Нажмите «Играть»"
 
 [node name="Hint" type="Label" parent="HUD"]
+anchor_top = 1.0
+anchor_bottom = 1.0
 offset_left = 24.0
-offset_top = 674.0
+offset_top = -46.0
 offset_right = 800.0
-offset_bottom = 704.0
+offset_bottom = -16.0
 theme_override_colors/font_color = Color(0.5, 0.62, 0.57, 1)
 text = "WASD: движение | E: взять | Q: выбросить | 1-8: слот | ЛКМ/Пробел: атака | R: перезарядка | Esc: пауза"
 
 [node name="Inventory" type="Label" parent="HUD"]
-offset_left = 930.0
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -350.0
 offset_top = 72.0
-offset_right = 1255.0
+offset_right = -24.0
 offset_bottom = 300.0
 theme_override_colors/font_color = Color(0.92, 0.83, 0.52, 1)
 theme_override_font_sizes/font_size = 16
@@ -60,10 +67,12 @@ text = "Инвентарь пуст"
 horizontal_alignment = 2
 
 [node name="PlayerPanel" type="ColorRect" parent="HUD"]
+anchor_top = 1.0
+anchor_bottom = 1.0
 offset_left = 24.0
-offset_top = 604.0
+offset_top = -116.0
 offset_right = 374.0
-offset_bottom = 666.0
+offset_bottom = -54.0
 color = Color(0.025, 0.045, 0.04, 0.88)
 
 [node name="HealthText" type="Label" parent="HUD/PlayerPanel"]
@@ -83,10 +92,12 @@ value = 100.0
 show_percentage = false
 
 [node name="WeaponPanel" type="ColorRect" parent="HUD"]
+anchor_top = 1.0
+anchor_bottom = 1.0
 offset_left = 390.0
-offset_top = 604.0
+offset_top = -116.0
 offset_right = 735.0
-offset_bottom = 666.0
+offset_bottom = -54.0
 color = Color(0.025, 0.045, 0.04, 0.88)
 
 [node name="Weapon" type="Label" parent="HUD/WeaponPanel"]
@@ -130,70 +141,102 @@ grow_vertical = 2
 color = Color(0.018, 0.03, 0.027, 0.96)
 
 [node name="Title" type="Label" parent="Menus/MainMenu"]
-offset_left = 390.0
-offset_top = 180.0
-offset_right = 890.0
-offset_bottom = 245.0
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -250.0
+offset_top = -180.0
+offset_right = 250.0
+offset_bottom = -115.0
 theme_override_colors/font_color = Color(0.78, 0.9, 0.68, 1)
 theme_override_font_sizes/font_size = 42
 text = "МЁРТВЫЙ МИР"
 horizontal_alignment = 1
 
 [node name="Subtitle" type="Label" parent="Menus/MainMenu"]
-offset_left = 390.0
-offset_top = 245.0
-offset_right = 890.0
-offset_bottom = 280.0
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -250.0
+offset_top = -115.0
+offset_right = 250.0
+offset_bottom = -80.0
 theme_override_colors/font_color = Color(0.43, 0.56, 0.48, 1)
 text = "СЕТЕВОЙ SURVIVAL-ТЕСТ"
 horizontal_alignment = 1
 
 [node name="Version" type="Label" parent="Menus/MainMenu"]
-offset_left = 390.0
-offset_top = 265.0
-offset_right = 890.0
-offset_bottom = 287.0
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -250.0
+offset_top = -95.0
+offset_right = 250.0
+offset_bottom = -73.0
 theme_override_colors/font_color = Color(0.35, 0.46, 0.4, 1)
 text = "v0.1.0-prealpha.3 | PRE-ALPHA"
 horizontal_alignment = 1
 
 [node name="Play" type="Button" parent="Menus/MainMenu"]
-offset_left = 490.0
-offset_top = 340.0
-offset_right = 790.0
-offset_bottom = 400.0
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -150.0
+offset_top = -20.0
+offset_right = 150.0
+offset_bottom = 40.0
 theme_override_font_sizes/font_size = 22
 text = "ИГРАТЬ"
 
 [node name="ConnectionStatus" type="Label" parent="Menus/MainMenu"]
-offset_left = 390.0
-offset_top = 500.0
-offset_right = 890.0
-offset_bottom = 555.0
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -250.0
+offset_top = 140.0
+offset_right = 250.0
+offset_bottom = 195.0
 theme_override_colors/font_color = Color(0.82, 0.55, 0.4, 1)
 text = ""
 horizontal_alignment = 1
 autowrap_mode = 2
 
 [node name="ServerLabel" type="Label" parent="Menus/MainMenu"]
-offset_left = 490.0
-offset_top = 290.0
-offset_right = 610.0
-offset_bottom = 325.0
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -150.0
+offset_top = -70.0
+offset_right = -30.0
+offset_bottom = -35.0
 text = "Сервер:"
 
 [node name="ServerHost" type="LineEdit" parent="Menus/MainMenu"]
-offset_left = 600.0
-offset_top = 284.0
-offset_right = 790.0
-offset_bottom = 328.0
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -40.0
+offset_top = -76.0
+offset_right = 150.0
+offset_bottom = -32.0
 placeholder_text = "https://game.example.com"
 
 [node name="Quit" type="Button" parent="Menus/MainMenu"]
-offset_left = 490.0
-offset_top = 420.0
-offset_right = 790.0
-offset_bottom = 480.0
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -150.0
+offset_top = 60.0
+offset_right = 150.0
+offset_bottom = 120.0
 theme_override_font_sizes/font_size = 22
 text = "ВЫХОД"
 
@@ -207,26 +250,38 @@ grow_vertical = 2
 color = Color(0.018, 0.03, 0.027, 0.88)
 
 [node name="Title" type="Label" parent="Menus/PauseMenu"]
-offset_left = 490.0
-offset_top = 220.0
-offset_right = 790.0
-offset_bottom = 275.0
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -150.0
+offset_top = -140.0
+offset_right = 150.0
+offset_bottom = -85.0
 theme_override_font_sizes/font_size = 34
 text = "ПАУЗА"
 horizontal_alignment = 1
 
 [node name="Resume" type="Button" parent="Menus/PauseMenu"]
-offset_left = 490.0
-offset_top = 320.0
-offset_right = 790.0
-offset_bottom = 380.0
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -150.0
+offset_top = -40.0
+offset_right = 150.0
+offset_bottom = 20.0
 theme_override_font_sizes/font_size = 20
 text = "ПРОДОЛЖИТЬ"
 
 [node name="Quit" type="Button" parent="Menus/PauseMenu"]
-offset_left = 490.0
-offset_top = 400.0
-offset_right = 790.0
-offset_bottom = 460.0
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -150.0
+offset_top = 40.0
+offset_right = 150.0
+offset_bottom = 100.0
 theme_override_font_sizes/font_size = 20
 text = "ВЫХОД В ОС"

@@ -79,6 +79,8 @@ func _ready() -> void:
 	$Menus/PauseMenu/Resume.pressed.connect(_toggle_pause)
 	$Menus/PauseMenu/Quit.pressed.connect(func(): get_tree().quit())
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	get_viewport().size_changed.connect(_update_ui_layout)
+	_update_ui_layout()
 	_draw_grid()
 	if OS.get_cmdline_user_args().has("--auto-start"):
 		_start_game()
@@ -263,6 +265,7 @@ func _start_game() -> void:
 		return
 	game_started = true
 	touch_controls.visible = OS.has_feature("mobile") or OS.get_cmdline_user_args().has("--touch-controls")
+	_update_ui_layout()
 	$Menus/MainMenu.hide()
 	$HUD.show()
 	Input.mouse_mode = Input.MOUSE_MODE_HIDDEN
@@ -273,8 +276,30 @@ func _toggle_pause() -> void:
 	if touch_controls != null: touch_controls.visible = (OS.has_feature("mobile") or OS.get_cmdline_user_args().has("--touch-controls")) and not game_paused
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if game_paused else Input.MOUSE_MODE_HIDDEN
 	if game_paused:
-		touch_controls.movement = Vector2.ZERO
+		touch_controls.reset_input()
 		Network.send_move(Vector2.ZERO)
+
+func _update_ui_layout() -> void:
+	var viewport_size := get_viewport_rect().size
+	var compact := viewport_size.x < 1050.0 or viewport_size.y < 620.0
+	var mobile_layout := OS.has_feature("mobile") or OS.get_cmdline_user_args().has("--touch-controls")
+	var safe: Rect2 = touch_controls.safe_rect if touch_controls != null and touch_controls.safe_rect.has_area() else get_viewport_rect()
+	$HUD/Hint.visible = not compact and not mobile_layout
+	$HUD/Status.position = safe.position + Vector2(16, 12)
+	$HUD/ZombieCount.position = safe.position + Vector2(16, 48)
+	$HUD/Inventory.offset_left = -330.0 if not compact else -270.0
+	$HUD/Inventory.offset_top = 72.0
+	$HUD/Inventory.offset_right = safe.end.x - viewport_size.x - 16.0
+	$HUD/Inventory.offset_bottom = 300.0 if not compact else 250.0
+	$HUD/Inventory.add_theme_font_size_override("font_size", 16 if not compact else 13)
+	if mobile_layout:
+		$HUD/PlayerPanel.set_anchors_preset(Control.PRESET_TOP_LEFT)
+		$HUD/PlayerPanel.position = safe.position + Vector2(16, 80)
+		$HUD/PlayerPanel.size = Vector2(280, 56)
+		$HUD/PlayerPanel/HealthBar.offset_right = 266.0
+		$HUD/WeaponPanel.set_anchors_preset(Control.PRESET_CENTER_TOP)
+		$HUD/WeaponPanel.position = Vector2(viewport_size.x * 0.5 - 150.0, safe.position.y + 12.0)
+		$HUD/WeaponPanel.size = Vector2(300, 56)
 
 func _update_aim_line() -> void:
 	var local_player = players.get(Network.player_id)

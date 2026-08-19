@@ -42,7 +42,7 @@ Windows / Linux / Android
 
 ### Public portal and admin
 
-The landing resolves the newest complete GitHub release or prerelease through the releases API and caches the tag for 15 minutes. A persisted last-known tag is used when GitHub is unavailable. Operators can switch to a validated manual tag and edit landing copy in the protected `Лендинг` admin tab; settings live in the dedicated `deadworld-admin-data` volume.
+The landing resolves the newest complete GitHub release or prerelease through the releases API and caches its allowlisted asset manifest for 15 minutes. Core completeness requires Linux x86_64 TAR.GZ, Windows x86_64 ZIP and the universal Android APK. The landing groups every published allowlisted Linux, Windows, Android and iOS artifact by platform; optional artifacts are never rendered as guessed links. The unsigned iOS IPA is attached asynchronously and therefore does not block selection of an otherwise complete release. A persisted last-known tag and manifest are used when GitHub is unavailable. Operators can switch to a validated manual tag and edit landing copy in the protected `Лендинг` admin tab; settings live in the dedicated `deadworld-admin-data` volume.
 
 On the shared production edge, Perum owns dynamic Caddy tenant routes through the Caddy Admin API. Deadworld deployment must not restart or reload shared Caddy from its static file because doing so removes those runtime routes.
 

@@ -11,7 +11,7 @@ test("admin login, status and CSRF-protected respawn", async (context) => {
     calls.push(url.pathname);
     if (url.pathname === "/releases") {
       response.setHeader("Content-Type", "application/json");
-      return response.end(JSON.stringify([{ tag_name: "v9.9.9-prealpha.1", draft: false, prerelease: true, assets: [{ name: "deadworld-linux-x86_64.tar.gz" }, { name: "deadworld-windows-x86_64.zip" }, { name: "deadworld-android-universal.apk" }] }]));
+      return response.end(JSON.stringify([{ tag_name: "v10.0.0-incomplete", draft: false, assets: [{ name: "deadworld-linux-x86_64.tar.gz" }] }, { tag_name: "v9.9.9-prealpha.1", draft: false, prerelease: true, assets: releaseAssets.map((name) => ({ name })) }]));
     }
     const result = url.pathname.endsWith("admin_respawn_zombies") ? { ok: true, respawned: 2 } : { ok: true, players_online: 1, zombies_alive: 1, zombies_total: 3, events: [] };
     response.setHeader("Content-Type", "application/json");
@@ -28,7 +28,10 @@ test("admin login, status and CSRF-protected respawn", async (context) => {
   assert.match(landingResponse.headers.get("content-security-policy") ?? "", /connect-src 'self'/);
   const landing = await landingResponse.text();
   assert.match(landing, /МЁРТВЫЙ/);
-  assert.match(landing, /deadworld-linux-x86_64\.tar\.gz/);
+  for (const asset of releaseAssets) assert.match(landing, new RegExp(asset.replaceAll(".", "\\.")));
+  assert.match(landing, /требуется переподписание/);
+  assert.match(landing, /SHA256SUMS\.txt/);
+  assert.doesNotMatch(landing, /v10\.0\.0-incomplete/);
   assert.match(landing, /v9\.9\.9-prealpha\.1/);
   const status = await (await fetch("http://127.0.0.1:18182/status")).json();
   assert.deepEqual(status, { online: true, players: 1, zombies_alive: 1, zombies_total: 3 });
@@ -78,6 +81,15 @@ test("admin login, status and CSRF-protected respawn", async (context) => {
   assert.equal(respawn.status, 303);
   assert.equal(calls.filter((path) => path.endsWith("admin_respawn_zombies")).length, 1);
 });
+
+const releaseAssets = [
+  "deadworld-linux-x86_64.tar.gz", "deadworld-linux-x86_32.tar.gz", "deadworld-linux-arm64.tar.gz", "deadworld-linux-arm32.tar.gz",
+  "deadworld-linux-amd64.deb", "deadworld-linux-i386.deb", "deadworld-linux-arm64.deb", "deadworld-linux-armhf.deb",
+  "deadworld-linux-x86_64.rpm", "deadworld-linux-i686.rpm", "deadworld-linux-aarch64.rpm", "deadworld-linux-armv7hl.rpm",
+  "deadworld-windows-x86_64.zip", "deadworld-windows-x86_32.zip", "deadworld-windows-arm64.zip",
+  "deadworld-windows-x86_64.exe", "deadworld-windows-x86_32.exe", "deadworld-windows-arm64.exe",
+  "deadworld-android-universal.apk", "deadworld-ios-arm64-unsigned.ipa", "deadworld-ios-arm64-unsigned.ipa.sha256", "SHA256SUMS.txt"
+];
 
 async function waitForServer(url) {
   for (let attempt = 0; attempt < 40; attempt += 1) {

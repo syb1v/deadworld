@@ -6,6 +6,8 @@ Current client metadata version: `0.1.0`; public test label/tag: `v0.1.0-prealph
 
 Production pre-alpha backend: `https://game.staydev.org` (HTTPS/WSS). Physical Android crossplay and clean-install acceptance remain release gates.
 
+The public landing groups every asset actually published in the selected release: Linux TAR.GZ/DEB/RPM architectures, Windows ZIP/EXE architectures, universal Android APK, optional unsigned iOS IPA and checksum files. Linux x86_64, Windows x86_64 and Android remain the automatic release-selection core; the separately uploaded iOS artifact does not delay selection and is shown as soon as GitHub reports it.
+
 Temporary authenticated test operations are served at `https://game.staydev.org/admin/`. Credentials are production-host secrets; the panel exposes recent authoritative events and a persisted dead-zombie respawn action without exposing Nakama console or raw backend ports.
 
 The Russian landing page at `https://game.staydev.org/` shows live server/player status and links to the current GitHub prerelease builds.
@@ -332,7 +334,7 @@ Automated auth/socket/shared-world/movement/zombie/item and combat lifecycle cov
 
 The local Compose profile binds Nakama API and console ports to loopback. Test-world RPCs require the private runtime HTTP key and reject normal user sessions.
 
-Day 6 now includes a shared 1280x720 map with seven named areas, server-authoritative player/zombie collision, touch intentions and Linux/Windows/Android export presets. The generated Android build is landscape arm64 with Internet permission. Physical PC-to-Android crossplay remains an acceptance gate because no Android device is currently connected; Android should use the HTTPS backend URL provided by Day 7.
+Day 6 includes a shared logical 1280x720 world with seven named areas, server-authoritative player/zombie collision and cross-platform exports. Mobile HUD controls adapt to the landscape viewport and display safe area: the left joystick moves, while the right joystick aims and emits one attack when dragged into its outer ring. Release the right stick or return it below the inner reset threshold before firing again. Physical cross-platform combinations remain acceptance gates and use the production HTTPS/WSS backend.
 
 Desktop exports consist of the executable and its adjacent `.pck`; distribute both files together. Initial and reconnect world discovery retry short transient RPC failures before reporting an error.
 
