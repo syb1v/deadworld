@@ -36,7 +36,6 @@ https://github.com/syb1v/deadworld
 
 ### Позже
 
-- iOS/iPadOS
 - macOS
 - Steam / Google Play / App Store
 
@@ -106,7 +105,40 @@ Android, Google Play Protect, Samsung Auto Blocker и Xiaomi Security могут
 
 ### iOS и iPadOS
 
-iOS запланирован после стабилизации MVP. Godot поддерживает iOS export, но рабочая сборка требует macOS, Xcode, Apple Developer Program, provisioning profiles, Apple signing и тестов touch/safe-area/background behavior. Linux CI не может легитимно создать подписанный `.ipa`. План распространения: сначала TestFlight, затем App Store; даты пока нет.
+iOS test build создаётся отдельным macOS GitHub Actions workflow без Apple signing. Это дополнительная testing platform, а не обязательный MVP gate и не App Store build.
+
+## iOS test build
+
+### Automatic build
+
+```text
+GitHub -> Actions -> iOS unsigned build -> Run workflow
+```
+
+Workflow использует Godot `4.7.1`, экспортирует Xcode project, собирает `iphoneos` arm64 с полностью отключённым code signing и создаёт:
+
+```text
+deadworld-ios-arm64-unsigned.ipa
+```
+
+### Installation
+
+```text
+Download IPA
+-> import into GBox
+-> sign with owner's existing certificate/profile
+-> install
+```
+
+Unsigned IPA нельзя установить стандартными средствами iOS напрямую. Его необходимо переподписать совместимыми certificate и provisioning profile. CI не требует Apple Developer Program, Apple certificate или provisioning profile и не хранит их. Совместимость конкретного стороннего сертификата с bundle ID `org.staydev.deadworld` должна быть подтверждена физической установкой.
+
+Для локальной сборки на Mac с Xcode:
+
+```bash
+make ios
+```
+
+На Linux команда сообщает, что нужен macOS + Xcode, и направляет в GitHub Actions. Checklist физического теста: `docs/IOS_TESTING.md`.
 
 ## Стек MVP
 

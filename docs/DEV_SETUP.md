@@ -260,3 +260,9 @@ The landing and public status endpoint are `https://game.staydev.org/` and `http
 ### GitHub prerelease
 
 Run `make package-release` for local packages. Tags matching `v*-prealpha.*` build the supported Linux/Windows architecture matrix, a release-signed universal Android APK, native Linux packages and checksums before creating a GitHub prerelease. Android signing uses repository secrets `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS` and `ANDROID_KEY_PASSWORD`; never put their values in files or logs. Play Console AAB requires a separate custom-Gradle pipeline and remains pending. Do not tag `v0.1.0-mvp` before physical crossplay acceptance.
+
+### Unsigned iOS test build
+
+Run `make ios` on macOS with Xcode and Godot `4.7.1`, or manually run the `iOS unsigned build` GitHub Actions workflow. The reusable `scripts/build_ios_unsigned.sh` exports the `iOS Unsigned` preset, discovers the generated Xcode project and scheme, builds `Release-iphoneos` arm64 with code signing disabled, validates bundle metadata and packages `dist/deadworld-ios-arm64-unsigned.ipa` plus its SHA256. CI also uploads the generated Xcode project ZIP for diagnostics.
+
+The preset contains Team ID `AAAAAAAAAA` only because Godot rejects an empty value while generating the Xcode project. It is not an Apple account or credential and is cleared for the unsigned Xcode build. No `.p12`, `.mobileprovision`, Apple private key or password is required or stored. The IPA must be resigned outside CI before installation; follow `docs/IOS_TESTING.md` and do not claim physical iPhone support before completing it.

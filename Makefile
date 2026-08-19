@@ -1,4 +1,4 @@
-.PHONY: help env-check preflight repo-tree up down logs test test-restart prod-config export-linux export-windows export-android export-all package-release client
+.PHONY: help env-check preflight repo-tree up down logs test test-restart prod-config export-linux export-windows export-android export-all package-release ios client
 
 help:
 	@echo "Project Deadworld"
@@ -13,6 +13,7 @@ help:
 	@echo "  make prod-config  - validate the production Compose configuration"
 	@echo "  make export-all  - build Linux, Windows and Android clients"
 	@echo "  make package-release - create portable prerelease archives"
+	@echo "  make ios         - build unsigned resignable IPA on macOS"
 	@echo "  make client      - run Godot client"
 
 env-check:
@@ -81,6 +82,9 @@ export-all: export-linux export-windows export-android
 
 package-release: export-all
 	python3 scripts/package_release.py
+
+ios:
+	@./scripts/build_ios_unsigned.sh
 
 client:
 	@NAKAMA_SERVER_KEY=$$(grep '^NAKAMA_SERVER_KEY=' .env | cut -d= -f2-); godot --path client -- --server-host=127.0.0.1 --server-port=7350 --server-scheme=http --server-key=$${NAKAMA_SERVER_KEY:-deadworld-mvp-client-v1}
