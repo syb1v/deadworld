@@ -29,30 +29,39 @@ jobs:
           xcodebuild -version
           xcode-select -p
           xcrun --sdk iphoneos --show-sdk-path
+      - name: Resolve release tag
+        id: release
+        env:
+          INPUT_TAG: ${{ inputs.release_tag }}
+        run: |
+          expected="$(python3 scripts/version.py print --field tag)"
+          echo "version=${expected}" >> "$GITHUB_OUTPUT"
+          if [[ -n "${INPUT_TAG}" ]]; then
+            tag="${INPUT_TAG}"
+          elif [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            tag="${GITHUB_REF_NAME}"
+          else
+            tag=""
+          fi
+          if [[ -n "${tag}" && "${tag}" != "${expected}" ]]; then
+            echo "Release tag ${tag} does not match VERSION ${expected}" >&2
+            exit 1
+          fi
+          echo "tag=${tag}" >> "$GITHUB_OUTPUT"
       - name: Build unsigned resignable IPA
         run: make ios
       - uses: actions/upload-artifact@v4
         with:
           name: deadworld-ios-arm64-unsigned
           path: |
-            dist/deadworld-ios-arm64-unsigned.ipa
-            dist/deadworld-ios-arm64-unsigned.ipa.sha256
+            dist/deadworld-${{ steps.release.outputs.version }}-ios-arm64-unsigned.ipa
+            dist/deadworld-${{ steps.release.outputs.version }}-ios-arm64-unsigned.ipa.sha256
           if-no-files-found: error
       - uses: actions/upload-artifact@v4
         with:
           name: deadworld-ios-xcode-project
-          path: dist/deadworld-ios-xcode-project.zip
+          path: dist/deadworld-${{ steps.release.outputs.version }}-ios-xcode-project.zip
           if-no-files-found: error
-      - name: Resolve release tag
-        id: release
-        env:
-          INPUT_TAG: ${{ inputs.release_tag }}
-        run: |
-          if [[ -n "${INPUT_TAG}" ]]; then
-            echo "tag=${INPUT_TAG}" >> "$GITHUB_OUTPUT"
-          elif [[ "$GITHUB_REF" == refs/tags/* ]]; then
-            echo "tag=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
-          fi
       - name: Attach IPA to existing release
         if: steps.release.outputs.tag != ''
         env:
@@ -69,10 +78,7 @@ jobs:
             fi
             sleep 15
           done
-          VERSIONED_IPA="deadworld-ios-arm64-${RELEASE_TAG}-unsigned.ipa"
-          cp dist/deadworld-ios-arm64-unsigned.ipa "dist/${VERSIONED_IPA}"
-          shasum -a 256 "dist/${VERSIONED_IPA}" | awk -v name="${VERSIONED_IPA}" '{print $1 "  " name}' > "dist/${VERSIONED_IPA}.sha256"
           gh release upload "${RELEASE_TAG}" \
-            "dist/${VERSIONED_IPA}" \
-            "dist/${VERSIONED_IPA}.sha256" \
+            "dist/deadworld-${RELEASE_TAG}-ios-arm64-unsigned.ipa" \
+            "dist/deadworld-${RELEASE_TAG}-ios-arm64-unsigned.ipa.sha256" \
             --clobber

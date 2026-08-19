@@ -1,17 +1,21 @@
 #!/usr/bin/env python3
 import hashlib
-import os
 import pathlib
 import shutil
 import subprocess
+import sys
 import tarfile
 import zipfile
 
 root = pathlib.Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(root / "scripts"))
+from version import load as load_version  # noqa: E402
+
 dist = root / "dist"
 release = root / "release"
-version = os.environ.get("RELEASE_VERSION", "0.1.0~prealpha5")
-rpm_release = os.environ.get("RPM_RELEASE", "0.prealpha5")
+release_version = load_version()
+version = release_version.deb_version
+rpm_release = release_version.rpm_release
 if release.exists():
     shutil.rmtree(release)
 release.mkdir()
@@ -45,7 +49,7 @@ def write_deb(architecture, binary, pck):
     shutil.copy2(pck, app / "deadworld.pck")
     (desktop / "deadworld.desktop").write_text("[Desktop Entry]\nType=Application\nName=Project Deadworld\nExec=/opt/deadworld/deadworld\nTerminal=false\nCategories=Game;\n", encoding="ascii")
     (control / "control").write_text(f"Package: deadworld\nVersion: {version}\nArchitecture: {architecture}\nMaintainer: Project Deadworld\nSection: games\nPriority: optional\nDescription: Pre-alpha multiplayer survival tech test\n", encoding="ascii")
-    subprocess.run(["dpkg-deb", "--root-owner-group", "--build", str(package_root), str(release / f"deadworld-linux-{architecture}.deb")], check=True)
+    subprocess.run(["dpkg-deb", "--root-owner-group", "--build", str(package_root), str(release / release_version.artifact("linux", architecture, "deb"))], check=True)
     shutil.rmtree(package_root)
 
 def write_rpm(architecture, binary, pck):
@@ -54,7 +58,7 @@ def write_rpm(architecture, binary, pck):
     shutil.copy2(binary, top / "SOURCES" / "deadworld")
     shutil.copy2(pck, top / "SOURCES" / "deadworld.pck")
     spec = f'''Name: deadworld
-Version: 0.1.0
+Version: {release_version.semantic}
 Release: {rpm_release}
 Summary: Pre-alpha multiplayer survival tech test
 License: Proprietary
@@ -73,13 +77,13 @@ install -m 0644 %{{_sourcedir}}/deadworld.pck %{{buildroot}}/opt/deadworld/deadw
     (top / "SPECS" / "deadworld.spec").write_text(spec, encoding="ascii")
     subprocess.run(["rpmbuild", "--target", architecture, "--define", f"_topdir {top}", "-bb", str(top / "SPECS" / "deadworld.spec")], check=True)
     built = next((top / "RPMS").rglob("*.rpm"))
-    shutil.move(built, release / f"deadworld-linux-{architecture}.rpm")
+    shutil.move(built, release / release_version.artifact("linux", architecture, "rpm"))
     shutil.rmtree(top)
 
 for godot_arch, (deb_arch, rpm_arch) in linux_arches.items():
     binary = required(dist / f"linux-{godot_arch}" / "deadworld")
     pck = required(dist / f"linux-{godot_arch}" / "deadworld.pck")
-    with tarfile.open(release / f"deadworld-linux-{godot_arch}.tar.gz", "w:gz", compresslevel=9) as archive:
+    with tarfile.open(release / release_version.artifact("linux", godot_arch, "tar.gz"), "w:gz", compresslevel=9) as archive:
         add_tar_file(archive, binary, "deadworld/deadworld", 0o755)
         add_tar_file(archive, pck, "deadworld/deadworld.pck", 0o644)
     write_deb(deb_arch, binary, pck)
@@ -87,16 +91,17 @@ for godot_arch, (deb_arch, rpm_arch) in linux_arches.items():
 
 for architecture in windows_arches:
     binary = required(dist / f"windows-{architecture}" / "deadworld.exe")
-    shutil.copy2(binary, release / f"deadworld-windows-{architecture}.exe")
-    with zipfile.ZipFile(release / f"deadworld-windows-{architecture}.zip", "w", zipfile.ZIP_DEFLATED, compresslevel=9) as archive:
+    shutil.copy2(binary, release / release_version.artifact("windows", architecture, "exe"))
+    with zipfile.ZipFile(release / release_version.artifact("windows", architecture, "zip"), "w", zipfile.ZIP_DEFLATED, compresslevel=9) as archive:
         archive.write(binary, "deadworld.exe")
 
 apk = dist / "deadworld-android-universal.apk"
-if apk.is_file(): shutil.copy2(apk, release / apk.name)
+if apk.is_file(): shutil.copy2(apk, release / release_version.artifact("android", "universal", "apk"))
 aab = dist / "deadworld-android-universal.aab"
-if aab.is_file(): shutil.copy2(aab, release / aab.name)
+if aab.is_file(): shutil.copy2(aab, release / release_version.artifact("android", "universal", "aab"))
 
 outputs = sorted(release.glob("deadworld-*"))
-with (release / "SHA256SUMS.txt").open("w", encoding="ascii") as checksums:
+with (release / f"SHA256SUMS-{release_version.tag}.txt").open("w", encoding="ascii") as checksums:
     for path in outputs:
         checksums.write(f"{hashlib.sha256(path.read_bytes()).hexdigest()}  {path.name}\n")
+print(f"Packaged {len(outputs)} artifacts for {release_version.tag}")

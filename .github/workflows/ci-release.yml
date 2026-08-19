@@ -22,6 +22,7 @@ jobs:
           cache: npm
           cache-dependency-path: server/package-lock.json
       - run: npm --prefix server ci
+      - run: python3 scripts/version.py check
       - run: npm --prefix server run check
       - run: npm --prefix server test
       - run: npm --prefix server run build
@@ -34,6 +35,14 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
+      - name: Verify VERSION matches the tag
+        run: |
+          expected="$(python3 scripts/version.py print --field tag)"
+          if [[ "${GITHUB_REF_NAME}" != "${expected}" ]]; then
+            echo "Tag ${GITHUB_REF_NAME} does not match VERSION ${expected}" >&2
+            exit 1
+          fi
+          python3 scripts/version.py check
       - uses: chickensoft-games/setup-godot@v2
         with:
           version: 4.7.1
@@ -71,4 +80,4 @@ jobs:
             Physical PC ↔ Android acceptance is not yet complete; this is not the final MVP release.
           files: |
             release/deadworld-*
-            release/SHA256SUMS.txt
+            release/SHA256SUMS-*.txt

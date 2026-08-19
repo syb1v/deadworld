@@ -1,4 +1,4 @@
-.PHONY: help env-check preflight repo-tree up down logs test test-restart prod-config export-linux export-windows export-android export-all package-release ios client
+.PHONY: help env-check preflight repo-tree up down logs test test-restart prod-config export-linux export-windows export-android export-all package-release ios client version-stamp version-check
 
 help:
 	@echo "Project Deadworld"
@@ -11,10 +11,18 @@ help:
 	@echo "  make test        - run Day 1 checks"
 	@echo "  make test-restart - destructive isolated Day 5 full restart test"
 	@echo "  make prod-config  - validate the production Compose configuration"
+	@echo "  make version-stamp - write VERSION into client/package metadata"
+	@echo "  make version-check - fail when metadata drifted from VERSION"
 	@echo "  make export-all  - build Linux, Windows and Android clients"
 	@echo "  make package-release - create portable prerelease archives"
 	@echo "  make ios         - build unsigned resignable IPA on macOS"
 	@echo "  make client      - run Godot client"
+
+version-stamp:
+	@python3 scripts/version.py stamp
+
+version-check:
+	@python3 scripts/version.py check
 
 env-check:
 	@./scripts/check_env.sh
@@ -38,6 +46,7 @@ logs:
 	$(COMPOSE) logs -f
 
 test:
+	python3 scripts/version.py check
 	npm --prefix server run check
 	npm --prefix server test
 	npm --prefix server run build

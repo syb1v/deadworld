@@ -15,9 +15,14 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BUILD_ROOT="${ROOT}/build/ios-xcode"
 DERIVED_DATA="${ROOT}/build/ios-derived"
 DIST="${ROOT}/dist"
-IPA="${DIST}/deadworld-ios-arm64-unsigned.ipa"
-PROJECT_ZIP="${DIST}/deadworld-ios-xcode-project.zip"
-CHECKSUM="${DIST}/deadworld-ios-arm64-unsigned.ipa.sha256"
+RELEASE_TAG="$(python3 "${ROOT}/scripts/version.py" print --field tag)"
+BUILD_NUMBER="$(python3 "${ROOT}/scripts/version.py" print --field build)"
+IPA_NAME="deadworld-${RELEASE_TAG}-ios-arm64-unsigned.ipa"
+IPA="${DIST}/${IPA_NAME}"
+PROJECT_ZIP="${DIST}/deadworld-${RELEASE_TAG}-ios-xcode-project.zip"
+CHECKSUM="${IPA}.sha256"
+
+python3 "${ROOT}/scripts/version.py" check
 
 rm -rf "${BUILD_ROOT}" "${DERIVED_DATA}" "${IPA}" "${PROJECT_ZIP}" "${CHECKSUM}"
 mkdir -p "${BUILD_ROOT}" "${DIST}"
@@ -77,6 +82,7 @@ file "${EXECUTABLE}"
 lipo -info "${EXECUTABLE}"
 lipo -archs "${EXECUTABLE}" | tr ' ' '\n' | grep -qx arm64 || { echo "Built app is not arm64" >&2; exit 1; }
 [[ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "${PLIST}")" == "org.staydev.deadworld" ]] || { echo "Unexpected bundle identifier" >&2; exit 1; }
+[[ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "${PLIST}")" == "${BUILD_NUMBER}" ]] || { echo "Built app CFBundleVersion does not match ${RELEASE_TAG}" >&2; exit 1; }
 /usr/libexec/PlistBuddy -c 'Print :CFBundleDisplayName' "${PLIST}"
 /usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "${PLIST}"
 python3 - "${PLIST}" <<'PY'
@@ -103,7 +109,7 @@ cp -R "${APP}" "${PACKAGE_ROOT}/Payload/Deadworld.app"
 	cd "${BUILD_ROOT}"
 	zip -qry "${PROJECT_ZIP}" .
 )
-shasum -a 256 "${IPA}" | awk '{print $1 "  deadworld-ios-arm64-unsigned.ipa"}' > "${CHECKSUM}"
+shasum -a 256 "${IPA}" | awk -v name="${IPA_NAME}" '{print $1 "  " name}' > "${CHECKSUM}"
 
 python3 - "${IPA}" "${EXECUTABLE_NAME}" <<'PY'
 import sys, zipfile
@@ -113,11 +119,11 @@ for required in ("Payload/Deadworld.app/Info.plist", f"Payload/Deadworld.app/{sy
     if required not in names:
         raise SystemExit(f"IPA entry is missing: {required}")
 PY
-python3 - "${IPA}" <<'PY'
+python3 - "${IPA}" "${RELEASE_TAG}" <<'PY'
 import sys, zipfile
 with zipfile.ZipFile(sys.argv[1]) as archive:
     pck = archive.read("Payload/Deadworld.app/Deadworld.pck")
-for marker in (b"v0.1.0-prealpha.5", b"ContainerPanel", b"InteractionTarget"):
+for marker in (sys.argv[2].encode(), b"ContainerPanel", b"InteractionTarget"):
     if marker not in pck:
         raise SystemExit(f"IPA game data is missing release marker: {marker.decode()}")
 PY

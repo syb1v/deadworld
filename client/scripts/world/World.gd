@@ -9,7 +9,7 @@ const FloatingDamageScript = preload("res://scripts/ui/FloatingDamage.gd")
 const WorldMapScript = preload("res://scripts/world/WorldMap.gd")
 const TouchControlsScript = preload("res://scripts/ui/TouchControls.gd")
 const InteractionTarget = preload("res://scripts/ui/InteractionTarget.gd")
-const BUILD_LABEL := "v0.1.0-prealpha.5"
+const BUILD_LABEL := "v0.1.0-prealpha.6"
 const ITEM_NAMES: Dictionary = preload("res://data/item_names_ru.json").data
 const ERROR_NAMES := {
 	"BAD_PAYLOAD": "Некорректный запрос",
