@@ -129,6 +129,104 @@ theme_override_colors/font_color = Color(0.9, 0.4, 0.35, 1)
 theme_override_font_sizes/font_size = 17
 text = "Зомби: ожидание данных"
 
+[node name="InteractionPrompt" type="Label" parent="HUD"]
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -260.0
+offset_top = -174.0
+offset_right = 260.0
+offset_bottom = -138.0
+theme_override_colors/font_color = Color(0.9, 0.88, 0.65, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.9)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+theme_override_font_sizes/font_size = 18
+horizontal_alignment = 1
+
+[node name="ContainerPanel" type="Panel" parent="HUD"]
+visible = false
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -430.0
+offset_top = -245.0
+offset_right = 430.0
+offset_bottom = 245.0
+
+[node name="Margin" type="MarginContainer" parent="HUD/ContainerPanel"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 20.0
+offset_top = 18.0
+offset_right = -20.0
+offset_bottom = -18.0
+
+[node name="Layout" type="VBoxContainer" parent="HUD/ContainerPanel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Header" type="HBoxContainer" parent="HUD/ContainerPanel/Margin/Layout"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="HUD/ContainerPanel/Margin/Layout/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 24
+text = "КОНТЕЙНЕР"
+
+[node name="Close" type="Button" parent="HUD/ContainerPanel/Margin/Layout/Header"]
+layout_mode = 2
+text = "ЗАКРЫТЬ"
+
+[node name="Columns" type="HBoxContainer" parent="HUD/ContainerPanel/Margin/Layout"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 18
+
+[node name="ContainerColumn" type="VBoxContainer" parent="HUD/ContainerPanel/Margin/Layout/Columns"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Label" type="Label" parent="HUD/ContainerPanel/Margin/Layout/Columns/ContainerColumn"]
+layout_mode = 2
+text = "СОДЕРЖИМОЕ"
+
+[node name="Items" type="ItemList" parent="HUD/ContainerPanel/Margin/Layout/Columns/ContainerColumn"]
+layout_mode = 2
+size_flags_vertical = 3
+allow_reselect = true
+
+[node name="Take" type="Button" parent="HUD/ContainerPanel/Margin/Layout/Columns/ContainerColumn"]
+layout_mode = 2
+text = "ВЗЯТЬ ВЫБРАННОЕ"
+
+[node name="InventoryColumn" type="VBoxContainer" parent="HUD/ContainerPanel/Margin/Layout/Columns"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Label" type="Label" parent="HUD/ContainerPanel/Margin/Layout/Columns/InventoryColumn"]
+layout_mode = 2
+text = "МОЙ РЮКЗАК"
+
+[node name="Items" type="ItemList" parent="HUD/ContainerPanel/Margin/Layout/Columns/InventoryColumn"]
+layout_mode = 2
+size_flags_vertical = 3
+allow_reselect = true
+
+[node name="Deposit" type="Button" parent="HUD/ContainerPanel/Margin/Layout/Columns/InventoryColumn"]
+layout_mode = 2
+text = "ПОЛОЖИТЬ ВЫБРАННОЕ"
+
+[node name="Feedback" type="Label" parent="HUD/ContainerPanel/Margin/Layout"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.82, 0.62, 0.48, 1)
+text = "Сервер подтверждает каждый перенос"
+horizontal_alignment = 1
+
 [node name="Menus" type="CanvasLayer" parent="."]
 layer = 10
 
@@ -177,7 +275,7 @@ offset_top = -95.0
 offset_right = 250.0
 offset_bottom = -73.0
 theme_override_colors/font_color = Color(0.35, 0.46, 0.4, 1)
-text = "v0.1.0-prealpha.3 | PRE-ALPHA"
+text = "v0.1.0-prealpha.4 | PRE-ALPHA"
 horizontal_alignment = 1
 
 [node name="Play" type="Button" parent="Menus/MainMenu"]

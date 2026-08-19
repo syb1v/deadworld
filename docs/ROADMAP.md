@@ -38,12 +38,14 @@ v0.1 MVP
 
 - responsive desktop/mobile layouts, safe areas и разные aspect ratios;
 - twin-stick mobile input: движение слева, aim/fire справа;
-- interaction prompt, полноценный container/inventory UI, drag/drop, split, context actions, take all и server reject feedback;
+- interaction prompt and explicit authoritative container/inventory take/deposit are implemented; drag/drop, split, context actions and take all remain;
 - combat feedback: muzzle/hit flash, blood, recoil, reaction, restrained shake, reload/cooldown, death/body presentation;
 - sound pass: movement, weapons, zombies, interactions, damage/death, UI и ambience;
 - coherent tileset, roads, buildings, furniture, debris, decals, shadows, character/zombie sprites и item icons;
 - исправление playtest blockers, crashes и operational tooling;
 - Google Play Internal Testing; официальный Apple signing/TestFlight отдельно от unsigned test flow.
+
+Current delivery checkpoint: `v0.1.0-prealpha.4` adds responsive twin-stick controls, explicit authoritative container transfers and resilient production HTTPS/WSS connection establishment.
 
 ## v0.2 - Survival Foundation
 

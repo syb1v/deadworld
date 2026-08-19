@@ -9,7 +9,7 @@ const password = required("ADMIN_PASSWORD");
 const sessionKey = required("ADMIN_SESSION_KEY");
 const nakamaHttpKey = required("NAKAMA_HTTP_KEY");
 const nakamaUrl = process.env.NAKAMA_INTERNAL_URL || "http://nakama:7350";
-const releaseTag = process.env.RELEASE_TAG || "v0.1.0-prealpha.3";
+const releaseTag = process.env.RELEASE_TAG || "v0.1.0-prealpha.4";
 const repository = process.env.GITHUB_REPOSITORY || "syb1v/deadworld";
 const releasesUrl = process.env.GITHUB_RELEASES_URL || `https://api.github.com/repos/${repository}/releases?per_page=10`;
 const settingsPath = process.env.LANDING_SETTINGS_PATH || "/data/landing-settings.json";

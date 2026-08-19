@@ -8,6 +8,7 @@ const CombatEffectScript = preload("res://scripts/ui/CombatEffect.gd")
 const FloatingDamageScript = preload("res://scripts/ui/FloatingDamage.gd")
 const WorldMapScript = preload("res://scripts/world/WorldMap.gd")
 const TouchControlsScript = preload("res://scripts/ui/TouchControls.gd")
+const InteractionTarget = preload("res://scripts/ui/InteractionTarget.gd")
 const ITEM_NAMES: Dictionary = preload("res://data/item_names_ru.json").data
 const ERROR_NAMES := {
 	"BAD_PAYLOAD": "Некорректный запрос",
@@ -17,13 +18,16 @@ const ERROR_NAMES := {
 	"ITEM_NOT_OWNED": "Предмет вам не принадлежит",
 	"STALE_WORLD_VERSION": "Мир изменился, повторите действие",
 	"STALE_CONTAINER_VERSION": "Содержимое контейнера изменилось",
+	"CONTAINER_NOT_FOUND": "Контейнер больше недоступен",
 	"WEAPON_NOT_OWNED": "В выбранном слоте нет оружия",
 	"NO_AMMO": "Нет патронов",
 	"MAGAZINE_EMPTY": "Магазин пуст. Нажмите R для перезарядки",
 	"MAGAZINE_FULL": "Магазин уже полон",
 	"PISTOL_NOT_SELECTED": "Для перезарядки выберите пистолет",
 	"ATTACK_COOLDOWN": "Оружие ещё не готово",
-	"PLAYER_DEAD": "Мёртвый игрок не может действовать"
+	"PLAYER_DEAD": "Мёртвый игрок не может действовать",
+	"BAD_OPERATION": "Недоступное действие с контейнером",
+	"PERSISTENCE_CONFLICT": "Мир изменился. Переподключитесь"
 }
 var players: Dictionary = {}
 var zombies: Dictionary = {}
@@ -41,6 +45,10 @@ var touch_controls
 var touch_attack_requested := false
 var current_aim := Vector2.RIGHT
 var connecting := false
+var interaction_target: Dictionary = {}
+var open_container_id := ""
+var container_mutation_pending := false
+var pending_container_version := -1
 
 func _ready() -> void:
 	var world_map := Node2D.new()
@@ -66,13 +74,16 @@ func _ready() -> void:
 	touch_controls.pause_pressed.connect(_toggle_pause)
 	touch_controls.slot_pressed.connect(func():
 		if game_started and not game_paused: _select_next_slot())
+	$HUD/ContainerPanel/Margin/Layout/Header/Close.pressed.connect(_close_container)
+	$HUD/ContainerPanel/Margin/Layout/Columns/ContainerColumn/Take.pressed.connect(_take_selected_container_item)
+	$HUD/ContainerPanel/Margin/Layout/Columns/InventoryColumn/Deposit.pressed.connect(_deposit_selected_inventory_item)
 	Network.status_changed.connect(_on_network_status)
 	Network.snapshot_received.connect(_on_snapshot)
 	Network.inventory_received.connect(_on_inventory)
 	Network.damage_received.connect(_on_damage)
 	Network.attack_confirmed.connect(_on_attack_confirmed)
 	Network.reload_confirmed.connect(_on_reload_confirmed)
-	Network.server_error.connect(func(code: String): $HUD/Status.text = ERROR_NAMES.get(code, "Действие отклонено: %s" % code))
+	Network.server_error.connect(_on_server_error)
 	$Menus/MainMenu/Play.pressed.connect(_start_game)
 	$Menus/MainMenu/ServerHost.text = Network.saved_server_url()
 	$Menus/MainMenu/Quit.pressed.connect(func(): get_tree().quit())
@@ -102,11 +113,16 @@ func _process(delta: float) -> void:
 	$HUD/Crosshair.visible = touch_controls == null or not touch_controls.visible
 	$HUD/Crosshair.position = get_viewport().get_mouse_position()
 	_update_aim_line()
+	_update_interaction_target()
 	if not game_started:
 		return
 	if Input.is_action_just_pressed("pause"):
 		_toggle_pause()
 	if game_paused:
+		return
+	if not open_container_id.is_empty():
+		mouse_attack_requested = false
+		touch_attack_requested = false
 		return
 	send_accumulator += delta
 	if send_accumulator >= 1.0 / 20.0:
@@ -172,6 +188,7 @@ func _on_snapshot(snapshot: Dictionary) -> void:
 	world_version = snapshot.get("world_version", world_version)
 	_sync_world_items(snapshot.get("world_items", []))
 	_sync_containers(snapshot.get("containers", []))
+	_refresh_container_panel()
 
 func _sync_world_items(states: Array) -> void:
 	var seen := {}
@@ -180,6 +197,7 @@ func _sync_world_items(states: Array) -> void:
 		seen[id] = true
 		if not world_items.has(id):
 			var item := Node2D.new(); item.set_script(WorldItemScript); $Items.add_child(item); world_items[id] = item
+		world_items[id].set_meta("state", state)
 		world_items[id].setup(state)
 	for id in world_items.keys():
 		if not seen.has(id): world_items[id].queue_free(); world_items.erase(id)
@@ -201,6 +219,7 @@ func _on_inventory(items: Array) -> void:
 		selected_item_id = inventory[mini(selected_slot, inventory.size() - 1)].id if not inventory.is_empty() else ""
 	selected_slot = maxi(0, _selected_slot())
 	_update_inventory_label()
+	_refresh_container_panel()
 
 func _update_inventory_label() -> void:
 	var lines: Array[String] = []
@@ -222,17 +241,12 @@ func _update_inventory_label() -> void:
 	$HUD/WeaponPanel/Ammo.text = "Магазин: %d/6 | Запас: %d | R: перезарядить" % [selected_magazine, reserve] if selected != null and selected.definitionId == "pistol" else ""
 
 func _interact() -> void:
-	var local_player = players.get(Network.player_id)
-	if local_player == null: return
-	var nearest_id := ""; var nearest_distance := 97.0
-	for id in world_items:
-		var distance: float = local_player.position.distance_to(world_items[id].position)
-		if distance < nearest_distance: nearest_distance = distance; nearest_id = id
-	if not nearest_id.is_empty(): Network.pickup(nearest_id, world_version); return
-	for id in containers:
-		var state: Dictionary = containers[id].get_meta("state")
-		if local_player.position.distance_to(containers[id].position) <= 96.0 and not state.items.is_empty():
-			Network.take_from_container(id, state.items[0].id, state.version); return
+	if interaction_target.is_empty():
+		return
+	if interaction_target.kind == "world_item":
+		Network.pickup(interaction_target.id, world_version)
+	else:
+		_open_container(interaction_target.id)
 
 func _draw_grid() -> void:
 	for x in range(0, 1281, 64):
@@ -278,6 +292,7 @@ func _toggle_pause() -> void:
 	if game_paused:
 		touch_controls.reset_input()
 		Network.send_move(Vector2.ZERO)
+		_close_container()
 
 func _update_ui_layout() -> void:
 	var viewport_size := get_viewport_rect().size
@@ -292,6 +307,11 @@ func _update_ui_layout() -> void:
 	$HUD/Inventory.offset_right = safe.end.x - viewport_size.x - 16.0
 	$HUD/Inventory.offset_bottom = 300.0 if not compact else 250.0
 	$HUD/Inventory.add_theme_font_size_override("font_size", 16 if not compact else 13)
+	var panel_size := Vector2(minf(860.0, viewport_size.x - 32.0), minf(490.0, viewport_size.y - 32.0))
+	$HUD/ContainerPanel.offset_left = -panel_size.x * 0.5
+	$HUD/ContainerPanel.offset_top = -panel_size.y * 0.5
+	$HUD/ContainerPanel.offset_right = panel_size.x * 0.5
+	$HUD/ContainerPanel.offset_bottom = panel_size.y * 0.5
 	if mobile_layout:
 		$HUD/PlayerPanel.set_anchors_preset(Control.PRESET_TOP_LEFT)
 		$HUD/PlayerPanel.position = safe.position + Vector2(16, 80)
@@ -352,3 +372,132 @@ func _select_next_slot() -> void:
 	selected_slot = next
 	selected_item_id = inventory[next].id
 	_update_inventory_label()
+
+func _update_interaction_target() -> void:
+	var local_player = players.get(Network.player_id)
+	interaction_target = {}
+	if local_player == null or not game_started or game_paused or not open_container_id.is_empty():
+		$HUD/InteractionPrompt.text = ""
+		return
+	var candidates: Array[Dictionary] = []
+	for id in world_items:
+		var distance: float = local_player.position.distance_to(world_items[id].position)
+		if distance <= 96.0:
+			var state: Dictionary = world_items[id].get_meta("state", {})
+			candidates.append({"kind": "world_item", "id": id, "distance": distance, "label": _item_name(state.get("definitionId", "предмет"))})
+	for id in containers:
+		var distance: float = local_player.position.distance_to(containers[id].position)
+		if distance <= 96.0:
+			var state: Dictionary = containers[id].get_meta("state", {})
+			candidates.append({"kind": "container", "id": id, "distance": distance, "label": "Контейнер · %d" % state.get("items", []).size()})
+	if candidates.is_empty():
+		$HUD/InteractionPrompt.text = ""
+		return
+	interaction_target = InteractionTarget.nearest(candidates)
+	var action := "взять" if interaction_target.kind == "world_item" else "открыть"
+	$HUD/InteractionPrompt.text = "%s — %s %s" % ["ДЕЙСТВИЕ" if touch_controls.visible else "E", action, interaction_target.label]
+
+func _open_container(container_id: String) -> void:
+	if not containers.has(container_id):
+		return
+	open_container_id = container_id
+	container_mutation_pending = false
+	pending_container_version = -1
+	$HUD/ContainerPanel.show()
+	$HUD/InteractionPrompt.text = ""
+	if touch_controls.visible:
+		touch_controls.reset_input()
+		touch_controls.hide()
+	Network.send_move(Vector2.ZERO)
+	_refresh_container_panel()
+
+func _close_container() -> void:
+	open_container_id = ""
+	container_mutation_pending = false
+	pending_container_version = -1
+	$HUD/ContainerPanel.hide()
+	if game_started and not game_paused and (OS.has_feature("mobile") or OS.get_cmdline_user_args().has("--touch-controls")):
+		touch_controls.show()
+
+func _refresh_container_panel() -> void:
+	if open_container_id.is_empty():
+		return
+	if not containers.has(open_container_id):
+		_close_container()
+		return
+	var local_player = players.get(Network.player_id)
+	if local_player == null or local_player.position.distance_to(containers[open_container_id].position) > 96.0:
+		_close_container()
+		return
+	var state: Dictionary = containers[open_container_id].get_meta("state", {})
+	var version := int(state.get("version", -1))
+	if container_mutation_pending and version != pending_container_version:
+		container_mutation_pending = false
+		pending_container_version = -1
+		$HUD/ContainerPanel/Margin/Layout/Feedback.text = "Перенос подтверждён сервером"
+	var container_list: ItemList = $HUD/ContainerPanel/Margin/Layout/Columns/ContainerColumn/Items
+	var inventory_list: ItemList = $HUD/ContainerPanel/Margin/Layout/Columns/InventoryColumn/Items
+	var selected_container_id := _selected_list_item_id(container_list)
+	var selected_inventory_id := _selected_list_item_id(inventory_list)
+	container_list.clear()
+	inventory_list.clear()
+	for item in state.get("items", []):
+		var index := container_list.add_item(_item_display(item))
+		container_list.set_item_metadata(index, item.get("id", ""))
+		if item.get("id", "") == selected_container_id: container_list.select(index)
+	for item in inventory:
+		var index := inventory_list.add_item(_item_display(item))
+		inventory_list.set_item_metadata(index, item.get("id", ""))
+		if item.get("id", "") == selected_inventory_id: inventory_list.select(index)
+	$HUD/ContainerPanel/Margin/Layout/Title.text = "КОНТЕЙНЕР · %d ПРЕДМ. · V%d" % [state.get("items", []).size(), version]
+	$HUD/ContainerPanel/Margin/Layout/Columns/ContainerColumn/Take.disabled = container_mutation_pending or container_list.item_count == 0
+	$HUD/ContainerPanel/Margin/Layout/Columns/InventoryColumn/Deposit.disabled = container_mutation_pending or inventory_list.item_count == 0
+
+func _take_selected_container_item() -> void:
+	if container_mutation_pending or not containers.has(open_container_id):
+		return
+	var list: ItemList = $HUD/ContainerPanel/Margin/Layout/Columns/ContainerColumn/Items
+	var item_id := _selected_list_item_id(list)
+	if item_id.is_empty():
+		$HUD/ContainerPanel/Margin/Layout/Feedback.text = "Выберите предмет в контейнере"
+		return
+	var state: Dictionary = containers[open_container_id].get_meta("state", {})
+	_begin_container_mutation(int(state.get("version", -1)))
+	Network.take_from_container(open_container_id, item_id, pending_container_version)
+
+func _deposit_selected_inventory_item() -> void:
+	if container_mutation_pending or not containers.has(open_container_id):
+		return
+	var list: ItemList = $HUD/ContainerPanel/Margin/Layout/Columns/InventoryColumn/Items
+	var item_id := _selected_list_item_id(list)
+	if item_id.is_empty():
+		$HUD/ContainerPanel/Margin/Layout/Feedback.text = "Выберите предмет в рюкзаке"
+		return
+	var state: Dictionary = containers[open_container_id].get_meta("state", {})
+	_begin_container_mutation(int(state.get("version", -1)))
+	Network.deposit_to_container(open_container_id, item_id, pending_container_version)
+
+func _begin_container_mutation(version: int) -> void:
+	container_mutation_pending = true
+	pending_container_version = version
+	$HUD/ContainerPanel/Margin/Layout/Feedback.text = "Ожидание подтверждения сервера..."
+	_refresh_container_panel()
+
+func _selected_list_item_id(list: ItemList) -> String:
+	var selected := list.get_selected_items()
+	return str(list.get_item_metadata(selected[0])) if not selected.is_empty() else ""
+
+func _item_display(item: Dictionary) -> String:
+	var quantity := int(item.get("quantity", 1))
+	var suffix := " x%d" % quantity if quantity > 1 else ""
+	var ammo := " [%d/6]" % int(item.get("magazineAmmo", 0)) if item.get("definitionId", "") == "pistol" else ""
+	return "%s%s%s" % [_item_name(item.get("definitionId", "")), suffix, ammo]
+
+func _on_server_error(code: String) -> void:
+	var message: String = ERROR_NAMES.get(code, "Действие отклонено: %s" % code)
+	$HUD/Status.text = message
+	if not open_container_id.is_empty():
+		container_mutation_pending = false
+		pending_container_version = -1
+		$HUD/ContainerPanel/Margin/Layout/Feedback.text = message
+		_refresh_container_panel()
