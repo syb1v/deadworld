@@ -79,6 +79,13 @@ lipo -archs "${EXECUTABLE}" | tr ' ' '\n' | grep -qx arm64 || { echo "Built app 
 [[ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "${PLIST}")" == "org.staydev.deadworld" ]] || { echo "Unexpected bundle identifier" >&2; exit 1; }
 /usr/libexec/PlistBuddy -c 'Print :CFBundleDisplayName' "${PLIST}"
 /usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "${PLIST}"
+python3 - "${PLIST}" <<'PY'
+import plistlib, sys
+with open(sys.argv[1], "rb") as stream:
+    families = plistlib.load(stream).get("UIDeviceFamily", [])
+if 1 not in families:
+    raise SystemExit(f"Built app does not target iPhone: UIDeviceFamily={families}")
+PY
 if codesign -dv "${APP}" >/dev/null 2>&1; then
 	echo "App unexpectedly contains a code signature" >&2
 	exit 1
