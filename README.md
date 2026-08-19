@@ -6,7 +6,7 @@ Current client metadata version: `0.1.0`; public test label/tag: `v0.1.0-prealph
 
 Production pre-alpha backend: `https://game.staydev.org` (HTTPS/WSS). Physical Android crossplay and clean-install acceptance remain release gates.
 
-The public landing groups every asset actually published in the selected release: Linux TAR.GZ/DEB/RPM architectures, Windows ZIP/EXE architectures, universal Android APK, optional unsigned iOS IPA and checksum files. Linux x86_64, Windows x86_64 and Android remain the automatic release-selection core; the separately uploaded iOS artifact does not delay selection and is shown as soon as GitHub reports it.
+The public landing groups every asset actually published in the selected release: Linux TAR.GZ/DEB/RPM architectures, Windows ZIP/EXE architectures, universal Android APK, optional unsigned iOS IPA and checksum files. iOS IPA filenames include the release tag so GBox and iOS import caches cannot silently reuse an older payload with the same filename. Linux x86_64, Windows x86_64 and Android remain the automatic release-selection core; the separately uploaded iOS artifact does not delay selection and is shown as soon as GitHub reports it.
 
 Temporary authenticated test operations are served at `https://game.staydev.org/admin/`. Credentials are production-host secrets; the panel exposes recent authoritative events and a persisted dead-zombie respawn action without exposing Nakama console or raw backend ports.
 
