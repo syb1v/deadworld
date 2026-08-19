@@ -77,7 +77,7 @@ services:
       NAKAMA_HTTP_KEY: ${NAKAMA_HTTP_KEY:?NAKAMA_HTTP_KEY is required}
       NAKAMA_INTERNAL_URL: http://nakama:7350
       LANDING_SETTINGS_PATH: /data/landing-settings.json
-      RELEASE_TAG: ${RELEASE_TAG:-v0.1.0-prealpha.5}
+      RELEASE_TAG: ${RELEASE_TAG:-v0.1.0-prealpha.6}
       GITHUB_REPOSITORY: ${GITHUB_REPOSITORY:-syb1v/deadworld}
     command: ["node", "/app/server.mjs"]
     volumes:

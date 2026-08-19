@@ -9,29 +9,31 @@ const password = required("ADMIN_PASSWORD");
 const sessionKey = required("ADMIN_SESSION_KEY");
 const nakamaHttpKey = required("NAKAMA_HTTP_KEY");
 const nakamaUrl = process.env.NAKAMA_INTERNAL_URL || "http://nakama:7350";
-const releaseTag = process.env.RELEASE_TAG || "v0.1.0-prealpha.5";
+const releaseTag = process.env.RELEASE_TAG || "v0.1.0-prealpha.6";
 const repository = process.env.GITHUB_REPOSITORY || "syb1v/deadworld";
 const releasesUrl = process.env.GITHUB_RELEASES_URL || `https://api.github.com/repos/${repository}/releases?per_page=10`;
 const settingsPath = process.env.LANDING_SETTINGS_PATH || "/data/landing-settings.json";
-const coreReleaseAssets = ["deadworld-linux-x86_64.tar.gz", "deadworld-windows-x86_64.zip", "deadworld-android-universal.apk"];
-const releaseAssetGroups = [
+const coreReleaseAssets = (tag) => [artifact(tag, "linux", "x86_64", "tar.gz"), artifact(tag, "windows", "x86_64", "zip"), artifact(tag, "android", "universal", "apk")];
+const releaseAssetGroups = (tag) => [
   { title: "Linux", note: "TAR.GZ, DEB и RPM", assets: [
-    ["deadworld-linux-x86_64.tar.gz", "TAR.GZ x86_64"], ["deadworld-linux-x86_32.tar.gz", "TAR.GZ x86_32"], ["deadworld-linux-arm64.tar.gz", "TAR.GZ ARM64"], ["deadworld-linux-arm32.tar.gz", "TAR.GZ ARM32"],
-    ["deadworld-linux-amd64.deb", "DEB amd64"], ["deadworld-linux-i386.deb", "DEB i386"], ["deadworld-linux-arm64.deb", "DEB arm64"], ["deadworld-linux-armhf.deb", "DEB armhf"],
-    ["deadworld-linux-x86_64.rpm", "RPM x86_64"], ["deadworld-linux-i686.rpm", "RPM i686"], ["deadworld-linux-aarch64.rpm", "RPM aarch64"], ["deadworld-linux-armv7hl.rpm", "RPM armv7hl"]
+    [artifact(tag, "linux", "x86_64", "tar.gz"), "TAR.GZ x86_64"], [artifact(tag, "linux", "x86_32", "tar.gz"), "TAR.GZ x86_32"], [artifact(tag, "linux", "arm64", "tar.gz"), "TAR.GZ ARM64"], [artifact(tag, "linux", "arm32", "tar.gz"), "TAR.GZ ARM32"],
+    [artifact(tag, "linux", "amd64", "deb"), "DEB amd64"], [artifact(tag, "linux", "i386", "deb"), "DEB i386"], [artifact(tag, "linux", "arm64", "deb"), "DEB arm64"], [artifact(tag, "linux", "armhf", "deb"), "DEB armhf"],
+    [artifact(tag, "linux", "x86_64", "rpm"), "RPM x86_64"], [artifact(tag, "linux", "i686", "rpm"), "RPM i686"], [artifact(tag, "linux", "aarch64", "rpm"), "RPM aarch64"], [artifact(tag, "linux", "armv7hl", "rpm"), "RPM armv7hl"]
   ] },
   { title: "Windows", note: "Portable ZIP или standalone EXE", assets: [
-    ["deadworld-windows-x86_64.zip", "ZIP x86_64"], ["deadworld-windows-x86_32.zip", "ZIP x86_32"], ["deadworld-windows-arm64.zip", "ZIP ARM64"],
-    ["deadworld-windows-x86_64.exe", "EXE x86_64"], ["deadworld-windows-x86_32.exe", "EXE x86_32"], ["deadworld-windows-arm64.exe", "EXE ARM64"]
+    [artifact(tag, "windows", "x86_64", "zip"), "ZIP x86_64"], [artifact(tag, "windows", "x86_32", "zip"), "ZIP x86_32"], [artifact(tag, "windows", "arm64", "zip"), "ZIP ARM64"],
+    [artifact(tag, "windows", "x86_64", "exe"), "EXE x86_64"], [artifact(tag, "windows", "x86_32", "exe"), "EXE x86_32"], [artifact(tag, "windows", "arm64", "exe"), "EXE ARM64"]
   ] },
-  { title: "Android", note: "Release-signed universal APK · ARMv7 + ARM64", assets: [["deadworld-android-universal.apk", "СКАЧАТЬ APK"]] }
+  { title: "Android", note: "Release-signed universal APK · ARMv7 + ARM64", assets: [[artifact(tag, "android", "universal", "apk"), `СКАЧАТЬ APK ${tag}`]] },
+  { title: "iOS", note: "Unsigned ARM64 IPA · требуется переподписание; имя файла содержит версию для обхода cache GBox", assets: [[`deadworld-${tag}-ios-arm64-unsigned.ipa`, `СКАЧАТЬ IPA ${tag}`], [`deadworld-${tag}-ios-arm64-unsigned.ipa.sha256`, `SHA256 ${tag}`]] }
 ];
-const knownReleaseAssets = new Set([...releaseAssetGroups.flatMap((group) => group.assets.map(([name]) => name)), "SHA256SUMS.txt"]);
+function artifact(tag, platform, architecture, extension) { return `deadworld-${tag}-${platform}-${architecture}.${extension}`; }
+function knownReleaseAssets(tag) { return new Set([...releaseAssetGroups(tag).flatMap((group) => group.assets.map(([name]) => name)), `SHA256SUMS-${tag}.txt`]); }
 const sessions = new Map();
 const loginAttempts = new Map();
 let landingSettings = loadLandingSettings();
-const persistedReleaseAssets = normalizeAssetNames(landingSettings.lastReleaseAssets);
-let releaseCache = { tag: landingSettings.lastReleaseTag || releaseTag, assets: persistedReleaseAssets.length ? persistedReleaseAssets : coreReleaseAssets, expires: 0 };
+const persistedReleaseAssets = normalizeAssetNames(landingSettings.lastReleaseTag || releaseTag, landingSettings.lastReleaseAssets);
+let releaseCache = { tag: landingSettings.lastReleaseTag || releaseTag, assets: persistedReleaseAssets.length ? persistedReleaseAssets : null, expires: 0 };
 
 createServer(async (request, response) => {
   securityHeaders(response);
@@ -150,14 +152,13 @@ function legacyLandingPage(activeReleaseTag) {
 }
 function landingPage(release) {
   const html = legacyLandingPage(release.tag);
-  const versionedIpa = `deadworld-ios-arm64-${release.tag}-unsigned.ipa`;
-  const groups = [...releaseAssetGroups, { title: "iOS", note: `Unsigned ARM64 IPA ${release.tag} · требуется переподписание; имя файла содержит версию для обхода cache GBox`, assets: [[versionedIpa, `СКАЧАТЬ ${release.tag} IPA`], [`${versionedIpa}.sha256`, `SHA256 ${release.tag}`]] }];
-  const cards = groups.map((group) => {
+  const cards = releaseAssetGroups(release.tag).map((group) => {
     const links = group.assets.filter(([name]) => release.assets === null || release.assets.includes(name)).map(([name, label]) => `<a href="${releaseAssetUrl(release.tag, name)}">${escapeHtml(label)} →</a>`).join("");
     if (!links) return "";
     return `<article class="card"><b>${escapeHtml(group.title)}</b><p>${escapeHtml(group.note)}</p><div class="asset-links">${links}</div></article>`;
   }).join("");
-  const checksums = release.assets === null || release.assets.includes("SHA256SUMS.txt") ? `<a class="checksums" href="${releaseAssetUrl(release.tag, "SHA256SUMS.txt")}">SHA256SUMS.txt →</a>` : "";
+  const checksumName = `SHA256SUMS-${release.tag}.txt`;
+  const checksums = release.assets === null || release.assets.includes(checksumName) ? `<a class="checksums" href="${releaseAssetUrl(release.tag, checksumName)}">${escapeHtml(checksumName)} →</a>` : "";
   return html
     .replace('<div class="downloads"><a class="card" href="https://github.com/' + repository + '/releases/download/' + release.tag + '/deadworld-linux-x86_64.tar.gz"><b>Linux</b><p>x86_64 · TAR.GZ; DEB/RPM и ARM в релизе</p><span>СКАЧАТЬ TAR.GZ →</span></a><a class="card" href="https://github.com/' + repository + '/releases/download/' + release.tag + '/deadworld-windows-x86_64.zip"><b>Windows</b><p>x86_64 · portable pre-alpha</p><span>СКАЧАТЬ ZIP →</span></a><a class="card" href="https://github.com/' + repository + '/releases/download/' + release.tag + '/deadworld-android-universal.apk"><b>Android</b><p>ARMv7 + ARM64 · release signed APK</p><span>СКАЧАТЬ APK →</span></a></div>', `<div class="downloads">${cards}</div>${checksums}`)
     .replace("grid-template-columns:repeat(3,1fr)", "grid-template-columns:repeat(auto-fit,minmax(240px,1fr))")
@@ -170,10 +171,10 @@ async function selectedRelease() {
     const response = await fetch(releasesUrl, { headers: { Accept: "application/vnd.github+json", "User-Agent": "deadworld-landing" }, signal: AbortSignal.timeout(5000) });
     if (!response.ok) throw new Error(`GitHub releases returned ${response.status}`);
     const releases = await response.json();
-    const latest = releases.find((release) => !release.draft && coreReleaseAssets.every((name) => (release.assets || []).some((asset) => asset.name === name)));
+    const latest = releases.find((release) => !release.draft && release.tag_name && coreReleaseAssets(String(release.tag_name)).every((name) => (release.assets || []).some((asset) => asset.name === name)));
     if (!latest?.tag_name) throw new Error("No complete release found");
     releaseCache.tag = String(latest.tag_name);
-    releaseCache.assets = normalizeAssetNames((latest.assets || []).map((asset) => asset.name));
+    releaseCache.assets = normalizeAssetNames(releaseCache.tag, (latest.assets || []).map((asset) => asset.name));
     landingSettings.lastReleaseTag = releaseCache.tag;
     landingSettings.lastReleaseAssets = releaseCache.assets;
     persistLandingSettings();
@@ -187,7 +188,7 @@ function defaultLandingSettings() { return { description: "Один постоя
 function loadLandingSettings() { try { return { ...defaultLandingSettings(), ...JSON.parse(readFileSync(settingsPath, "utf8")) }; } catch (_error) { return defaultLandingSettings(); } }
 function validateLandingSettings(body) { const value = { ...landingSettings, description: String(body.get("description") || "").trim(), announcement: String(body.get("announcement") || "").trim(), releaseMode: body.get("releaseMode") === "manual" ? "manual" : "auto", manualReleaseTag: String(body.get("manualReleaseTag") || "").trim() }; if (!value.description || value.description.length > 500 || value.announcement.length > 300 || !/^[A-Za-z0-9._-]{1,80}$/.test(value.manualReleaseTag)) throw new Error("Invalid landing settings"); return value; }
 function persistLandingSettings() { mkdirSync(dirname(settingsPath), { recursive: true }); const temporary = `${settingsPath}.${process.pid}.tmp`; writeFileSync(temporary, `${JSON.stringify(landingSettings, null, 2)}\n`, { mode: 0o600 }); renameSync(temporary, settingsPath); }
-function normalizeAssetNames(values) { return Array.isArray(values) ? [...new Set(values.filter((name) => typeof name === "string" && (knownReleaseAssets.has(name) || /^deadworld-ios-arm64-v[A-Za-z0-9._-]+-unsigned\.ipa(?:\.sha256)?$/.test(name))))] : []; }
+function normalizeAssetNames(tag, values) { const known = knownReleaseAssets(tag); return Array.isArray(values) ? [...new Set(values.filter((name) => typeof name === "string" && known.has(name)))] : []; }
 function releaseAssetUrl(tag, name) { return `https://github.com/${repository}/releases/download/${encodeURIComponent(tag)}/${encodeURIComponent(name)}`; }
 function eventName(value) { return ({ player_join: "Игрок вошёл", player_leave: "Игрок вышел", attack: "Атака", zombie_death: "Зомби убит", player_death: "Игрок погиб", item_pickup: "Предмет подобран", item_drop: "Предмет выброшен", container_take: "Взято из контейнера", container_deposit: "Положено в контейнер", admin_respawn_zombies: "Админ: возрождение зомби" })[value] || value; }
 function page(title, content) { return `<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>${title} | Deadworld</title><style>:root{color-scheme:dark;--bg:#090d0b;--panel:#111914;--line:#26352b;--ink:#dbe9d9;--muted:#789080;--acid:#b9d45d;--danger:#c85b4d}*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 15% 0,#19271d 0,transparent 35%),var(--bg);color:var(--ink);font:15px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;min-height:100vh;padding:clamp(20px,4vw,64px)}body>header,body>section,body>.notice{max-width:1180px;margin:0 auto 28px}header{display:flex;justify-content:space-between;align-items:end;border-bottom:1px solid var(--line);padding-bottom:22px}.eyebrow{color:var(--acid);font-size:12px;letter-spacing:.16em}h1{font:700 clamp(36px,7vw,80px)/.95 system-ui;margin:12px 0}h2{font:650 20px system-ui}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.stats article,.actions,.login{background:color-mix(in srgb,var(--panel) 90%,transparent);border:1px solid var(--line);padding:24px}.stats b{display:block;font:700 34px system-ui;color:var(--acid)}.stats span,p{color:var(--muted)}.actions{display:flex;align-items:center;justify-content:space-between}.table{overflow:auto;border:1px solid var(--line)}table{border-collapse:collapse;width:100%;background:var(--panel)}th,td{text-align:left;padding:12px;border-bottom:1px solid var(--line);white-space:nowrap}th{color:var(--muted);font-size:12px}button{border:0;background:var(--acid);color:#10150e;font:700 14px ui-monospace;padding:13px 18px;cursor:pointer}.danger{background:var(--danger);color:white}.quiet{background:transparent;color:var(--muted);border:1px solid var(--line)}.login{max-width:460px;margin:10vh auto}.login form{display:grid;gap:18px;margin-top:30px}label{display:grid;gap:7px;color:var(--muted)}input{width:100%;background:#080c09;color:var(--ink);border:1px solid var(--line);padding:13px;font:inherit}.error{color:#ff8c7c}.notice{border-left:3px solid var(--acid);background:var(--panel);padding:12px 18px;color:var(--ink)}a{color:var(--acid)}@media(max-width:760px){.stats{grid-template-columns:1fr 1fr}.actions{align-items:stretch;flex-direction:column;gap:18px}.actions button{width:100%}header{align-items:start}}</style></head><body>${content}</body></html>`; }

@@ -2,7 +2,9 @@
 
 > **Pre-alpha / vertical-slice stage**
 
-Current client metadata version: `0.1.0`; public test label/tag: `v0.1.0-prealpha.5`. The final MVP tag `v0.1.0-mvp` remains gated by physical cross-platform acceptance of the updated client.
+Current client metadata version: `0.1.0`; public test label/tag: `v0.1.0-prealpha.6`. The final MVP tag `v0.1.0-mvp` remains gated by physical cross-platform acceptance of the updated client.
+
+Versioning is driven by the repository-root `VERSION` file. `make version-stamp` writes that tag into the Godot menu label, in-game build marker, Android `versionCode`/`versionName`, iOS `CFBundleShortVersionString`/`CFBundleVersion`, DEB/RPM package versions and the deployment defaults; `make version-check` fails when any of them drift. Every published artifact is named `deadworld-<tag>-<platform>-<arch>.<ext>`, so downloads, installers and GBox imports never collide with a previously cached file.
 
 Production pre-alpha backend: `https://game.staydev.org` (HTTPS/WSS). Physical Android crossplay and clean-install acceptance remain release gates.
 

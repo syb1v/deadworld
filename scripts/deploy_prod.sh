@@ -14,8 +14,9 @@ read -r -p "Production hostname (example: game.example.com): " GAME_HOSTNAME
 [[ "${GAME_HOSTNAME}" =~ ^[A-Za-z0-9.-]+$ ]] || { echo "Invalid hostname" >&2; exit 1; }
 read -r -p "Admin login [operator]: " ADMIN_USERNAME
 ADMIN_USERNAME="${ADMIN_USERNAME:-operator}"
-	read -r -p "Release tag [v0.1.0-prealpha.5]: " RELEASE_TAG
-	RELEASE_TAG="${RELEASE_TAG:-v0.1.0-prealpha.5}"
+DEFAULT_RELEASE_TAG="$(python3 "$(dirname "${BASH_SOURCE[0]}")/version.py" print --field tag 2>/dev/null || echo v0.1.0-prealpha.6)"
+read -r -p "Release tag [${DEFAULT_RELEASE_TAG}]: " RELEASE_TAG
+RELEASE_TAG="${RELEASE_TAG:-${DEFAULT_RELEASE_TAG}}"
 read -r -p "GitHub repository [syb1v/deadworld]: " GITHUB_REPOSITORY
 GITHUB_REPOSITORY="${GITHUB_REPOSITORY:-syb1v/deadworld}"
 read -r -p "Edge mode: standalone or shared-caddy [standalone]: " EDGE_MODE
