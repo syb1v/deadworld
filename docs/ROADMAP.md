@@ -17,6 +17,7 @@ Current release sequence:
 
 - `v0.1.0-prealpha.1`: public backend, landing/status, protected test admin and downloadable platform builds;
 - `v0.1.0-prealpha.2`: landing status fix, reliable zombie contact attacks, smoother snapshot presentation and primitive 2.5D visual/animation pass;
+- `v0.1.0-prealpha.3`: release-signed universal Android APK, native Linux packages, 32/64-bit and ARM desktop matrix, standalone Windows executables and installation documentation;
 - `v0.1.0-mvp`: only after physical PC ↔ Android crossplay and playtest acceptance of the updated client.
 
 ## v0.1.1 — MVP Polish Sprint
@@ -27,6 +28,8 @@ Current release sequence:
 - basic sound/visual feedback;
 - replace temporary admin controls with reviewed operational tooling;
 - no new survival systems before MVP acceptance.
+- Google Play Internal Testing distribution to reduce sideload security warnings;
+- macOS/Xcode iOS export pipeline, Apple signing and TestFlight after MVP stabilization.
 
 ## v0.1.x — hardening
 

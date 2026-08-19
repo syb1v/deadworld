@@ -208,7 +208,7 @@ Current acceptance status:
 Current public test prerelease:
 
 ```text
-v0.1.0-prealpha.2
+v0.1.0-prealpha.3
 ```
 
 Final MVP tag after all mandatory acceptance gates:

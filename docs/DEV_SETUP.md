@@ -259,4 +259,4 @@ The landing and public status endpoint are `https://game.staydev.org/` and `http
 
 ### GitHub prerelease
 
-Run `make package-release` for local archives. Tags matching `v*-prealpha.*` trigger GitHub Actions tests and all three platform exports, then publish desktop ZIPs, Android APK and `SHA256SUMS.txt` as a prerelease. Do not tag `v0.1.0-mvp` before physical crossplay acceptance.
+Run `make package-release` for local packages. Tags matching `v*-prealpha.*` build the supported Linux/Windows architecture matrix, a release-signed universal Android APK, native Linux packages and checksums before creating a GitHub prerelease. Android signing uses repository secrets `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS` and `ANDROID_KEY_PASSWORD`; never put their values in files or logs. Play Console AAB requires a separate custom-Gradle pipeline and remains pending. Do not tag `v0.1.0-mvp` before physical crossplay acceptance.

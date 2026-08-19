@@ -2,7 +2,7 @@
 
 > **Pre-alpha / vertical-slice stage**
 
-Current client metadata version: `0.1.0`; public test label/tag: `v0.1.0-prealpha.2`. The final MVP tag `v0.1.0-mvp` remains gated by physical PC ↔ Android acceptance of the updated client.
+Current client metadata version: `0.1.0`; public test label/tag: `v0.1.0-prealpha.3`. The final MVP tag `v0.1.0-mvp` remains gated by physical PC ↔ Android acceptance of the updated client.
 
 Production pre-alpha backend: `https://game.staydev.org` (HTTPS/WSS). Physical Android crossplay and clean-install acceptance remain release gates.
 
@@ -30,15 +30,83 @@ https://github.com/syb1v/deadworld
 
 ### MVP
 
-- Windows
-- Android
-- Linux — если не мешает сроку
+- Windows x86_64, x86_32 и ARM64
+- Android ARMv7 + ARM64
+- Linux x86_64, x86_32, ARMv7 и ARM64
 
 ### Позже
 
 - iOS/iPadOS
 - macOS
 - Steam / Google Play / App Store
+
+## Установка игры
+
+Все пользовательские сборки находятся на `https://game.staydev.org/` и в текущем GitHub prerelease. Перед запуском сверяйте файл с `SHA256SUMS.txt`.
+
+### Как выбрать архитектуру
+
+| Устройство | Сборка |
+|---|---|
+| Обычный современный ПК Intel/AMD | `x86_64` |
+| Старый 32-битный ПК | `x86_32` / `i386` / `i686` |
+| Windows on ARM | `windows-arm64` |
+| Raspberry Pi 4/5, ARM64 Linux | `linux-arm64` / `arm64` / `aarch64` |
+| Старый 32-битный ARM Linux | `linux-arm32` / `armhf` / `armv7hl` |
+| Android | universal APK: ARMv7 + ARM64 |
+
+### Windows
+
+Рекомендуемый вариант: скачать `deadworld-windows-x86_64.zip`, распаковать папку и запустить `deadworld.exe`. Game data встроены в executable.
+
+Отдельный самодостаточный `deadworld-windows-<arch>.exe` также публикуется. Windows SmartScreen может предупредить о новом неподписанном EXE: Microsoft Authenticode certificate пока отсутствует.
+
+### Debian, Ubuntu, Linux Mint
+
+```bash
+sudo apt install ./deadworld-linux-amd64.deb
+/opt/deadworld/deadworld
+```
+
+Для других процессоров выберите `i386`, `armhf` или `arm64`.
+
+### Fedora, RHEL, Rocky, openSUSE
+
+```bash
+sudo dnf install ./deadworld-linux-x86_64.rpm
+/opt/deadworld/deadworld
+```
+
+Для других процессоров выберите `i686`, `armv7hl` или `aarch64`. На системах без `dnf` используйте штатный RPM package manager.
+
+### Arch, Manjaro и другие Linux
+
+Скачайте подходящий `deadworld-linux-<arch>.tar.gz`:
+
+```bash
+tar -xzf deadworld-linux-x86_64.tar.gz
+cd deadworld
+chmod +x deadworld
+./deadworld
+```
+
+Godot runtime динамически использует системные библиотеки Linux. На очень старых дистрибутивах может потребоваться более новая glibc; минимальная совместимость конкретного ARM-устройства подтверждается отдельным hardware test.
+
+### Android
+
+Скачайте `deadworld-android-universal.apk`. APK поддерживает ARMv7 и ARM64 и подписан постоянным release key. Certificate SHA-256:
+
+```text
+9cebee147a1946f48083a6798480cc314f936833282384aa20d36ab00595233c
+```
+
+Android, Google Play Protect, Samsung Auto Blocker и Xiaomi Security могут предупреждать о любом APK, установленном не из Google Play. Release signature снижает подозрительность и обеспечивает безопасные обновления, но полностью убрать OEM warnings можно только распространением через Google Play. Следующий шаг публикации — настроить reproducible AAB export и закрытый Play Internal Testing track.
+
+Не отключайте защиту устройства глобально. Разрешайте установку только браузеру/файловому менеджеру, которым скачан APK, проверяйте checksum и certificate fingerprint, затем возвращайте настройку в исходное состояние.
+
+### iOS и iPadOS
+
+iOS запланирован после стабилизации MVP. Godot поддерживает iOS export, но рабочая сборка требует macOS, Xcode, Apple Developer Program, provisioning profiles, Apple signing и тестов touch/safe-area/background behavior. Linux CI не может легитимно создать подписанный `.ipa`. План распространения: сначала TestFlight, затем App Store; даты пока нет.
 
 ## Стек MVP
 
@@ -252,7 +320,7 @@ sudo scripts/deploy_prod.sh
 
 The script asks for hostname, admin login, prerelease tag and edge mode; installs Docker/Compose, generates host-only secrets, builds the Nakama runtime, starts PostgreSQL/Nakama/portal/Caddy, configures UFW, creates the backup cron and validates HTTPS health. `shared-caddy` mode safely backs up, validates and reloads an existing Caddy configuration.
 
-CI runs from `.github/workflows/ci-release.yml`. Tags matching `v*-prealpha.*` build three platform artifacts and create a GitHub prerelease. `v0.1.0-mvp` must not be created until physical PC ↔ Android acceptance passes.
+CI runs from `.github/workflows/ci-release.yml`. Tags matching `v*-prealpha.*` build the documented architecture/package matrix and create a GitHub prerelease. `v0.1.0-mvp` must not be created until physical PC ↔ Android acceptance passes.
 
 ```bash
 make logs

@@ -154,7 +154,7 @@ offset_top = 265.0
 offset_right = 890.0
 offset_bottom = 287.0
 theme_override_colors/font_color = Color(0.35, 0.46, 0.4, 1)
-text = "v0.1.0-prealpha.2 | PRE-ALPHA"
+text = "v0.1.0-prealpha.3 | PRE-ALPHA"
 horizontal_alignment = 1
 
 [node name="Play" type="Button" parent="Menus/MainMenu"]
