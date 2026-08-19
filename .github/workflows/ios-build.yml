@@ -69,7 +69,10 @@ jobs:
             fi
             sleep 15
           done
+          VERSIONED_IPA="deadworld-ios-arm64-${RELEASE_TAG}-unsigned.ipa"
+          cp dist/deadworld-ios-arm64-unsigned.ipa "dist/${VERSIONED_IPA}"
+          shasum -a 256 "dist/${VERSIONED_IPA}" | awk -v name="${VERSIONED_IPA}" '{print $1 "  " name}' > "dist/${VERSIONED_IPA}.sha256"
           gh release upload "${RELEASE_TAG}" \
-            dist/deadworld-ios-arm64-unsigned.ipa \
-            dist/deadworld-ios-arm64-unsigned.ipa.sha256 \
+            "dist/${VERSIONED_IPA}" \
+            "dist/${VERSIONED_IPA}.sha256" \
             --clobber
