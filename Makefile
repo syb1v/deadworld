@@ -61,16 +61,21 @@ prod-config:
 	docker compose --env-file .env -f infra/docker-compose.prod.yml config --quiet
 
 export-linux:
-	mkdir -p dist
-	godot --headless --path client --export-release Linux ../dist/deadworld-linux.x86_64
+	mkdir -p dist/linux-x86_64 dist/linux-x86_32 dist/linux-arm64 dist/linux-arm32
+	godot --headless --path client --export-release "Linux x86_64"
+	godot --headless --path client --export-release "Linux x86_32"
+	godot --headless --path client --export-release "Linux arm64"
+	godot --headless --path client --export-release "Linux arm32"
 
 export-windows:
-	mkdir -p dist
-	godot --headless --path client --export-release Windows ../dist/deadworld-windows.exe
+	mkdir -p dist/windows-x86_64 dist/windows-x86_32 dist/windows-arm64
+	godot --headless --path client --export-release "Windows x86_64"
+	godot --headless --path client --export-release "Windows x86_32"
+	godot --headless --path client --export-release "Windows arm64"
 
 export-android:
 	mkdir -p dist
-	godot --headless --path client --export-debug Android ../dist/deadworld-android.apk
+	./scripts/export_android_release.sh
 
 export-all: export-linux export-windows export-android
 

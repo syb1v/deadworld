@@ -11,7 +11,7 @@ test("admin login, status and CSRF-protected respawn", async (context) => {
     calls.push(url.pathname);
     if (url.pathname === "/releases") {
       response.setHeader("Content-Type", "application/json");
-      return response.end(JSON.stringify([{ tag_name: "v9.9.9-prealpha.1", draft: false, prerelease: true, assets: [{ name: "deadworld-linux-x86_64.zip" }, { name: "deadworld-windows-x86_64.zip" }, { name: "deadworld-android-arm64.apk" }] }]));
+      return response.end(JSON.stringify([{ tag_name: "v9.9.9-prealpha.1", draft: false, prerelease: true, assets: [{ name: "deadworld-linux-x86_64.tar.gz" }, { name: "deadworld-windows-x86_64.zip" }, { name: "deadworld-android-universal.apk" }] }]));
     }
     const result = url.pathname.endsWith("admin_respawn_zombies") ? { ok: true, respawned: 2 } : { ok: true, players_online: 1, zombies_alive: 1, zombies_total: 3, events: [] };
     response.setHeader("Content-Type", "application/json");
@@ -28,7 +28,7 @@ test("admin login, status and CSRF-protected respawn", async (context) => {
   assert.match(landingResponse.headers.get("content-security-policy") ?? "", /connect-src 'self'/);
   const landing = await landingResponse.text();
   assert.match(landing, /МЁРТВЫЙ/);
-  assert.match(landing, /deadworld-linux-x86_64\.zip/);
+  assert.match(landing, /deadworld-linux-x86_64\.tar\.gz/);
   assert.match(landing, /v9\.9\.9-prealpha\.1/);
   const status = await (await fetch("http://127.0.0.1:18182/status")).json();
   assert.deepEqual(status, { online: true, players: 1, zombies_alive: 1, zombies_total: 3 });
