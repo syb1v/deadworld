@@ -107,4 +107,7 @@ ios:
 
 client:
 	@NAKAMA_SERVER_KEY=$$(grep '^NAKAMA_SERVER_KEY=' .env | cut -d= -f2-); godot --path client -- --server-host=127.0.0.1 --server-port=7350 --server-scheme=http --server-key=$${NAKAMA_SERVER_KEY:-deadworld-mvp-client-v1}
+
+client-2d25d:
+	@NAKAMA_SERVER_KEY=$$(grep '^NAKAMA_SERVER_KEY=' .env | cut -d= -f2-); godot --path client -- --2d25d --server-host=127.0.0.1 --server-port=7350 --server-scheme=http --server-key=$${NAKAMA_SERVER_KEY:-deadworld-mvp-client-v1}
 COMPOSE = docker compose --env-file .env -f infra/docker-compose.yml -f infra/docker-compose.host.yml
