@@ -130,7 +130,9 @@ def main() -> int:
         for error in errors:
             print(f"ERROR: {error}", file=sys.stderr)
         return 1
-    print(f"Validated {len(json.loads(args.manifest.read_text(encoding='utf-8')).get('entries', []))} sprite entries")
+    manifest = json.loads(args.manifest.read_text(encoding="utf-8"))
+    count = len(manifest.get("entries", [])) or len(manifest.get("atlases", {}))
+    print(f"Validated {count} sprite entries/atlases")
     return 0
 
 
