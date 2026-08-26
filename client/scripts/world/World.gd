@@ -13,6 +13,7 @@ const GameCameraScript = preload("res://scripts/world/GameCamera.gd")
 const AtmosphereScript = preload("res://scripts/world/Atmosphere.gd")
 const WorldPartitionScript = preload("res://scripts/world2d/WorldPartition2D.gd")
 const Palette = preload("res://scripts/data/Palette.gd")
+const ItemLabel = preload("res://scripts/ui/ItemLabel.gd")
 const MAP: Dictionary = preload("res://data/world_map.json").data
 const BUILD_LABEL := "v0.1.0-prealpha.7"
 const ITEM_NAMES: Dictionary = preload("res://data/item_names_ru.json").data
@@ -498,7 +499,7 @@ func _refresh_container_panel() -> void:
 		var index := inventory_list.add_item(_item_quantity_label(item), ItemIcons.get_icon(str(item.get("definitionId", ""))))
 		inventory_list.set_item_metadata(index, item.get("id", ""))
 		if item.get("id", "") == selected_inventory_id: inventory_list.select(index)
-	$HUD/ContainerPanel/Margin/Layout/Title.text = "КОНТЕЙНЕР · %d ПРЕДМ. · V%d" % [state.get("items", []).size(), version]
+	$HUD/ContainerPanel/Margin/Layout/Header/Title.text = "КОНТЕЙНЕР · %d ПРЕДМ. · V%d" % [state.get("items", []).size(), version]
 	$HUD/ContainerPanel/Margin/Layout/Columns/ContainerColumn/Take.disabled = container_mutation_pending or container_list.item_count == 0
 	$HUD/ContainerPanel/Margin/Layout/Columns/InventoryColumn/Deposit.disabled = container_mutation_pending or inventory_list.item_count == 0
 
@@ -537,11 +538,7 @@ func _selected_list_item_id(list: ItemList) -> String:
 	return str(list.get_item_metadata(selected[0])) if not selected.is_empty() else ""
 
 func _item_quantity_label(item: Dictionary) -> String:
-	var quantity := int(item.get("quantity", 1))
-	var suffix := "x%d" % quantity if quantity > 1 else ""
-	if item.get("definitionId", "") == "pistol":
-		return "%s\n%d/6" % [suffix, int(item.get("magazineAmmo", 0))] if not suffix.is_empty() else "\n%d/6" % int(item.get("magazineAmmo", 0))
-	return suffix
+	return ItemLabel.quantity_label(item)
 
 func _on_server_error(code: String) -> void:
 	var message: String = ERROR_NAMES.get(code, "Действие отклонено: %s" % code)
