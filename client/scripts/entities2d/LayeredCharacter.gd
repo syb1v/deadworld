@@ -16,6 +16,7 @@ var _layers: Dictionary = {}
 var _frame_counts := {"idle": 6, "walk": 6, "attack": 4, "hit": 4, "death": 4}
 var _loaded_state: StringName = &""
 var _textures_ready := false
+static var _texture_cache: Dictionary = {}
 
 func _ready() -> void:
 	for layer_name in ["shadow", "backpack", "body", "clothing", "weapon"]:
@@ -59,8 +60,8 @@ func _refresh_textures() -> void:
 	for layer_name in _layers:
 		var sprite: Sprite2D = _layers[layer_name]
 		var path := "res://assets/generated/characters/%s/%s_%s.png" % [asset_id, layer_name, character_state]
-		var loaded: Resource = load(path)
-		if loaded is Texture2D:
+		var loaded := _load_png_texture(path)
+		if loaded != null:
 			sprite.texture = loaded
 			sprite.hframes = DirectionalSet.DIRECTIONS.size()
 			sprite.vframes = int(_frame_counts.get(character_state, 6))
@@ -68,6 +69,16 @@ func _refresh_textures() -> void:
 			sprite.texture = null
 			_textures_ready = false
 	_loaded_state = character_state
+
+func _load_png_texture(path: String) -> Texture2D:
+	if _texture_cache.has(path):
+		return _texture_cache[path]
+	var image := Image.load_from_file(ProjectSettings.globalize_path(path))
+	if image == null or image.is_empty():
+		return null
+	var texture := ImageTexture.create_from_image(image)
+	_texture_cache[path] = texture
+	return texture
 
 func _refresh_frame() -> void:
 	if _loaded_state != character_state:
