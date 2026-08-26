@@ -11,7 +11,7 @@ func setup(value: Dictionary, as_proxy := false) -> void:
 	cell_id = str(value.get("id", ""))
 	district_id = StringName(str(value.get("districtId", "safehouse")))
 	proxy = as_proxy
-	position = Vector2(float(value.get("x", 0)), float(value.get("y", 0)))
+	position = Vector2(str(value.get("x", 0)).to_float(), str(value.get("y", 0)).to_float())
 	name = "Cell_%s%s" % [cell_id.replace(":", "_"), "_Proxy" if proxy else ""]
 	queue_redraw()
 

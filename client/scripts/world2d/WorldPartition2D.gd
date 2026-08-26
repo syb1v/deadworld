@@ -22,7 +22,7 @@ func set_descriptor(value: Dictionary) -> void:
 	_clear_cells()
 
 func configure_tier(tier: StringName) -> void:
-	var settings: int = int({&"mobile": 1, &"fallback": 1, &"desktop": 2}.get(tier, 2))
+	var settings: int = str({&"mobile": 1, &"fallback": 1, &"desktop": 2}.get(tier, 2)).to_int()
 	mobile_radius = settings
 	desktop_radius = settings
 	use_mobile_budget = tier != &"desktop"
