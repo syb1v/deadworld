@@ -1,7 +1,9 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource path="res://scripts/world/World.gd" type="Script" id="1"]
 [ext_resource path="res://scripts/ui/Crosshair.gd" type="Script" id="2"]
+[ext_resource path="res://scripts/ui/Hotbar.gd" type="Script" id="5"]
+[ext_resource path="res://scripts/ui/StatusPanel.gd" type="Script" id="6"]
 
 [node name="World" type="Node2D"]
 script = ExtResource("1")
@@ -55,6 +57,7 @@ theme_override_colors/font_color = Color(0.5, 0.62, 0.57, 1)
 text = "WASD: движение | E: взять | Q: выбросить | 1-8: слот | ЛКМ/Пробел: атака | R: перезарядка | Esc: пауза"
 
 [node name="Inventory" type="Label" parent="HUD"]
+visible = false
 anchor_left = 1.0
 anchor_right = 1.0
 offset_left = -350.0
@@ -66,7 +69,28 @@ theme_override_font_sizes/font_size = 16
 text = "Инвентарь пуст"
 horizontal_alignment = 2
 
+[node name="Hotbar" type="Control" parent="HUD"]
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -240.0
+offset_top = -78.0
+offset_right = 240.0
+offset_bottom = -24.0
+script = ExtResource("5")
+
+[node name="StatusPanel" type="Control" parent="HUD"]
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 24.0
+offset_top = -92.0
+offset_right = 254.0
+offset_bottom = -34.0
+script = ExtResource("6")
+
 [node name="PlayerPanel" type="ColorRect" parent="HUD"]
+visible = false
 anchor_top = 1.0
 anchor_bottom = 1.0
 offset_left = 24.0
@@ -92,6 +116,7 @@ value = 100.0
 show_percentage = false
 
 [node name="WeaponPanel" type="ColorRect" parent="HUD"]
+visible = false
 anchor_top = 1.0
 anchor_bottom = 1.0
 offset_left = 390.0
@@ -206,11 +231,17 @@ size_flags_horizontal = 3
 [node name="Label" type="Label" parent="HUD/ContainerPanel/Margin/Layout/Columns/ContainerColumn"]
 layout_mode = 2
 text = "СОДЕРЖИМОЕ"
+theme_override_colors/font_color = Color(0.55, 0.7, 0.58, 1)
 
 [node name="Items" type="ItemList" parent="HUD/ContainerPanel/Margin/Layout/Columns/ContainerColumn"]
 layout_mode = 2
 size_flags_vertical = 3
 allow_reselect = true
+max_columns = 4
+fixed_icon_size = Vector2i(72, 72)
+icon_mode = 1
+same_column_width = true
+allow_rmb_select = false
 
 [node name="Take" type="Button" parent="HUD/ContainerPanel/Margin/Layout/Columns/ContainerColumn"]
 layout_mode = 2
@@ -223,11 +254,17 @@ size_flags_horizontal = 3
 [node name="Label" type="Label" parent="HUD/ContainerPanel/Margin/Layout/Columns/InventoryColumn"]
 layout_mode = 2
 text = "МОЙ РЮКЗАК"
+theme_override_colors/font_color = Color(0.55, 0.7, 0.58, 1)
 
 [node name="Items" type="ItemList" parent="HUD/ContainerPanel/Margin/Layout/Columns/InventoryColumn"]
 layout_mode = 2
 size_flags_vertical = 3
 allow_reselect = true
+max_columns = 4
+fixed_icon_size = Vector2i(72, 72)
+icon_mode = 1
+same_column_width = true
+allow_rmb_select = false
 
 [node name="Deposit" type="Button" parent="HUD/ContainerPanel/Margin/Layout/Columns/InventoryColumn"]
 layout_mode = 2

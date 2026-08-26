@@ -9,6 +9,9 @@ const FloatingDamageScript = preload("res://scripts/ui/FloatingDamage.gd")
 const WorldMapScript = preload("res://scripts/world/WorldMap.gd")
 const TouchControlsScript = preload("res://scripts/ui/TouchControls.gd")
 const InteractionTarget = preload("res://scripts/ui/InteractionTarget.gd")
+const GameCameraScript = preload("res://scripts/world/GameCamera.gd")
+const AtmosphereScript = preload("res://scripts/world/Atmosphere.gd")
+const Palette = preload("res://scripts/data/Palette.gd")
 const BUILD_LABEL := "v0.1.0-prealpha.6"
 const ITEM_NAMES: Dictionary = preload("res://data/item_names_ru.json").data
 const ERROR_NAMES := {
@@ -50,12 +53,21 @@ var interaction_target: Dictionary = {}
 var open_container_id := ""
 var container_mutation_pending := false
 var pending_container_version := -1
+var camera: Camera2D = null
+var atmosphere: Node2D = null
 
 func _ready() -> void:
 	var world_map := Node2D.new()
 	world_map.set_script(WorldMapScript)
 	add_child(world_map)
 	move_child(world_map, $Background.get_index() + 1)
+	camera = Camera2D.new()
+	camera.set_script(GameCameraScript)
+	add_child(camera)
+	camera.make_current()
+	atmosphere = Node2D.new()
+	atmosphere.set_script(AtmosphereScript)
+	add_child(atmosphere)
 	var touch_layer := CanvasLayer.new()
 	touch_layer.layer = 5
 	add_child(touch_layer)
@@ -76,6 +88,7 @@ func _ready() -> void:
 	touch_controls.slot_pressed.connect(func():
 		if game_started and not game_paused: _select_next_slot())
 	$HUD/ContainerPanel/Margin/Layout/Header/Close.pressed.connect(_close_container)
+	$HUD/Hotbar.slot_selected.connect(_select_slot)
 	$HUD/ContainerPanel/Margin/Layout/Columns/ContainerColumn/Take.pressed.connect(_take_selected_container_item)
 	$HUD/ContainerPanel/Margin/Layout/Columns/InventoryColumn/Deposit.pressed.connect(_deposit_selected_inventory_item)
 	Network.status_changed.connect(_on_network_status)
@@ -94,7 +107,7 @@ func _ready() -> void:
 	get_viewport().size_changed.connect(_update_ui_layout)
 	_update_ui_layout()
 	$HUD/BuildMarker.text = "%s · %s" % [BUILD_LABEL, "TOUCH" if _touch_enabled() else "DESKTOP"]
-	_draw_grid()
+
 	if OS.get_cmdline_user_args().has("--auto-start"):
 		_start_game()
 
@@ -140,9 +153,7 @@ func _process(delta: float) -> void:
 		Network.reload(_selected_slot())
 	for slot in range(8):
 		if Input.is_key_pressed(KEY_1 + slot) and selected_slot != slot:
-			selected_slot = slot
-			selected_item_id = inventory[slot].id if slot < inventory.size() else ""
-			_update_inventory_label()
+			_select_slot(slot)
 	if Input.is_action_just_pressed("attack") or mouse_attack_requested or touch_attack_requested:
 		mouse_attack_requested = false
 		touch_attack_requested = false
@@ -162,11 +173,15 @@ func _on_snapshot(snapshot: Dictionary) -> void:
 			$Players.add_child(player)
 			player.setup(id == Network.player_id)
 			players[id] = player
+			if id == Network.player_id:
+				if camera != null:
+					camera.set_target(player)
+				if atmosphere != null:
+					atmosphere.set_player(player)
 		players[id].set_authoritative_position(Vector2(state.x, state.y))
 		players[id].set_authoritative_state(state)
 		if id == Network.player_id:
-			$HUD/PlayerPanel/HealthBar.value = state.health
-			$HUD/PlayerPanel/HealthText.text = "Здоровье %d/100" % state.health
+			$HUD/StatusPanel.set_health(int(state.health))
 	for id in players.keys():
 		if not seen.has(id):
 			players[id].queue_free()
@@ -223,24 +238,22 @@ func _on_inventory(items: Array) -> void:
 	_update_inventory_label()
 	_refresh_container_panel()
 
+## Обновляет игровой HUD по авторитетному снимку инвентаря.
+## Клиент ничего не досчитывает: показывается ровно то, что прислал сервер.
 func _update_inventory_label() -> void:
-	var lines: Array[String] = []
-	for index in range(inventory.size()):
-		var item = inventory[index]
-		var item_quantity = item.get("quantity") if item.get("quantity") != null else 1
-		var magazine_ammo = item.get("magazineAmmo") if item.get("magazineAmmo") != null else 0
-		var quantity := " x%d" % item_quantity if item_quantity > 1 else ""
-		var ammo := " [%d/6]" % magazine_ammo if item.definitionId == "pistol" else ""
-		lines.append("%s[%d] %s%s%s" % ["> " if item.id == selected_item_id else "  ", index + 1, _item_name(item.definitionId), quantity, ammo])
 	var reserve := 0
 	for item in inventory:
-		if item.definitionId == "pistol_ammo": reserve += item.get("quantity") if item.get("quantity") != null else 1
-	lines.append("Запас патронов: %d" % reserve)
-	$HUD/Inventory.text = "Инвентарь (%d/8), слот %d\n%s" % [inventory.size(), selected_slot + 1, "\n".join(lines) if not lines.is_empty() else "Пусто"]
+		if item.definitionId == "pistol_ammo":
+			reserve += item.get("quantity") if item.get("quantity") != null else 1
+
+	$HUD/Hotbar.set_inventory(inventory, selected_item_id)
+
 	var selected = inventory[_selected_slot()] if _selected_slot() >= 0 else null
-	$HUD/WeaponPanel/Weapon.text = "Выбрано: %s" % _item_name(selected.definitionId) if selected != null else "Оружие не выбрано"
-	var selected_magazine = selected.get("magazineAmmo") if selected != null and selected.get("magazineAmmo") != null else 0
-	$HUD/WeaponPanel/Ammo.text = "Магазин: %d/6 | Запас: %d | R: перезарядить" % [selected_magazine, reserve] if selected != null and selected.definitionId == "pistol" else ""
+	var is_firearm: bool = selected != null and selected.definitionId == "pistol"
+	var selected_magazine: int = 0
+	if is_firearm and selected.get("magazineAmmo") != null:
+		selected_magazine = int(selected.get("magazineAmmo"))
+	$HUD/StatusPanel.set_ammo(selected_magazine, reserve, is_firearm)
 
 func _interact() -> void:
 	if interaction_target.is_empty():
@@ -249,18 +262,6 @@ func _interact() -> void:
 		Network.pickup(interaction_target.id, world_version)
 	else:
 		_open_container(interaction_target.id)
-
-func _draw_grid() -> void:
-	for x in range(0, 1281, 64):
-		var line := Line2D.new()
-		line.add_point(Vector2(x, 0)); line.add_point(Vector2(x, 720))
-		line.default_color = Color(0.12, 0.18, 0.16, 0.16)
-		line.width = 1.0; $Grid.add_child(line)
-	for y in range(0, 721, 64):
-		var line := Line2D.new()
-		line.add_point(Vector2(0, y)); line.add_point(Vector2(1280, y))
-		line.default_color = Color(0.12, 0.18, 0.16, 0.16)
-		line.width = 1.0; $Grid.add_child(line)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
@@ -304,24 +305,36 @@ func _update_ui_layout() -> void:
 	$HUD/Hint.visible = not compact and not mobile_layout
 	$HUD/Status.position = safe.position + Vector2(16, 12)
 	$HUD/ZombieCount.position = safe.position + Vector2(16, 48)
-	$HUD/Inventory.offset_left = -330.0 if not compact else -270.0
-	$HUD/Inventory.offset_top = 72.0
-	$HUD/Inventory.offset_right = safe.end.x - viewport_size.x - 16.0
-	$HUD/Inventory.offset_bottom = 300.0 if not compact else 250.0
-	$HUD/Inventory.add_theme_font_size_override("font_size", 16 if not compact else 13)
 	var panel_size := Vector2(minf(860.0, viewport_size.x - 32.0), minf(490.0, viewport_size.y - 32.0))
 	$HUD/ContainerPanel.offset_left = -panel_size.x * 0.5
 	$HUD/ContainerPanel.offset_top = -panel_size.y * 0.5
 	$HUD/ContainerPanel.offset_right = panel_size.x * 0.5
 	$HUD/ContainerPanel.offset_bottom = panel_size.y * 0.5
+
+	# Хотбар: слот должен оставаться пригодным для пальца на телефоне,
+	# но не занимать пол-экрана на десктопе.
+	var slot_size := 46.0 if compact else 54.0
 	if mobile_layout:
-		$HUD/PlayerPanel.set_anchors_preset(Control.PRESET_TOP_LEFT)
-		$HUD/PlayerPanel.position = safe.position + Vector2(16, 80)
-		$HUD/PlayerPanel.size = Vector2(280, 56)
-		$HUD/PlayerPanel/HealthBar.offset_right = 266.0
-		$HUD/WeaponPanel.set_anchors_preset(Control.PRESET_CENTER_TOP)
-		$HUD/WeaponPanel.position = Vector2(viewport_size.x * 0.5 - 150.0, safe.position.y + 12.0)
-		$HUD/WeaponPanel.size = Vector2(300, 56)
+		slot_size = clampf(safe.size.x / 13.0, 40.0, 58.0)
+	var gap := slot_size * 0.12
+	var hotbar: Control = $HUD/Hotbar
+	hotbar.configure(slot_size, gap)
+	var hotbar_width := slot_size * 8.0 + gap * 7.0
+	# На мобильных хотбар поднимается выше: снизу находятся стики.
+	var hotbar_bottom := safe.end.y - (150.0 if mobile_layout else 24.0)
+	hotbar.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	hotbar.position = Vector2(safe.position.x + (safe.size.x - hotbar_width) * 0.5,
+		hotbar_bottom - slot_size)
+
+	# Панель состояния: слева внизу на десктопе, слева сверху на телефоне,
+	# где низ экрана занят органами управления.
+	var status: Control = $HUD/StatusPanel
+	status.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	status.size = Vector2(minf(240.0, safe.size.x * 0.42), 58.0)
+	if mobile_layout:
+		status.position = safe.position + Vector2(16, 78)
+	else:
+		status.position = Vector2(safe.position.x + 16.0, hotbar_bottom - slot_size - 70.0)
 
 func _update_aim_line() -> void:
 	var local_player = players.get(Network.player_id)
@@ -342,7 +355,12 @@ func _on_attack_confirmed(event: Dictionary) -> void:
 	var player = players.get(event.get("player_id", ""))
 	if player == null:
 		return
-	_show_attack(player.position, Vector2(event.get("aim_x", 0.0), event.get("aim_y", 0.0)), event.get("weapon", "") == "baseball_bat")
+	var melee: bool = event.get("weapon", "") == "baseball_bat"
+	_show_attack(player.position, Vector2(event.get("aim_x", 0.0), event.get("aim_y", 0.0)), melee)
+	# Отдача чувствуется только для своего выстрела: чужая стрельба не
+	# должна трясти камеру игрока.
+	if camera != null and event.get("player_id", "") == Network.player_id:
+		camera.shake(3.0 if melee else 5.0)
 
 func _on_reload_confirmed(event: Dictionary) -> void:
 	if event.get("player_id", "") == Network.player_id:
@@ -357,6 +375,9 @@ func _on_damage(event: Dictionary) -> void:
 	label.set_script(FloatingDamageScript)
 	$Effects.add_child(label)
 	label.setup(int(event.get("damage", 0)), target.position)
+	# Получение урона игроком ощущается физически.
+	if camera != null and target_id == Network.player_id:
+		camera.shake(7.0, 0.22)
 
 func _item_name(definition_id: String) -> String:
 	return ITEM_NAMES.get(definition_id, definition_id)
@@ -371,8 +392,14 @@ func _select_next_slot() -> void:
 	if inventory.is_empty(): return
 	var current := _selected_slot()
 	var next := (current + 1) % inventory.size()
-	selected_slot = next
-	selected_item_id = inventory[next].id
+	_select_slot(next)
+
+## Выбор конкретного слота: клавишами 1-8 или тапом по хотбару.
+func _select_slot(index: int) -> void:
+	if index < 0 or index >= inventory.size():
+		return
+	selected_slot = index
+	selected_item_id = inventory[index].id
 	_update_inventory_label()
 
 func _update_interaction_target() -> void:
@@ -380,6 +407,7 @@ func _update_interaction_target() -> void:
 	interaction_target = {}
 	if local_player == null or not game_started or game_paused or not open_container_id.is_empty():
 		$HUD/InteractionPrompt.text = ""
+		_apply_highlight("")
 		return
 	var candidates: Array[Dictionary] = []
 	for id in world_items:
@@ -394,10 +422,20 @@ func _update_interaction_target() -> void:
 			candidates.append({"kind": "container", "id": id, "distance": distance, "label": "Контейнер · %d" % state.get("items", []).size()})
 	if candidates.is_empty():
 		$HUD/InteractionPrompt.text = ""
+		_apply_highlight("")
 		return
 	interaction_target = InteractionTarget.nearest(candidates)
+	_apply_highlight(interaction_target.id)
 	var action := "взять" if interaction_target.kind == "world_item" else "открыть"
 	$HUD/InteractionPrompt.text = "%s — %s %s" % ["ДЕЙСТВИЕ" if touch_controls.visible else "E", action, interaction_target.label]
+
+## Подсветка выбранной цели прямо в мире. Текстовой подсказки мало:
+## при нескольких объектах рядом игрок должен видеть, что именно сработает.
+func _apply_highlight(target_id: String) -> void:
+	for id in world_items:
+		world_items[id].set_highlighted(id == target_id)
+	for id in containers:
+		containers[id].set_highlighted(id == target_id)
 
 func _open_container(container_id: String) -> void:
 	if not containers.has(container_id):
@@ -444,11 +482,11 @@ func _refresh_container_panel() -> void:
 	container_list.clear()
 	inventory_list.clear()
 	for item in state.get("items", []):
-		var index := container_list.add_item(_item_display(item))
+		var index := container_list.add_item(_item_quantity_label(item), ItemIcons.get_icon(str(item.get("definitionId", ""))))
 		container_list.set_item_metadata(index, item.get("id", ""))
 		if item.get("id", "") == selected_container_id: container_list.select(index)
 	for item in inventory:
-		var index := inventory_list.add_item(_item_display(item))
+		var index := inventory_list.add_item(_item_quantity_label(item), ItemIcons.get_icon(str(item.get("definitionId", ""))))
 		inventory_list.set_item_metadata(index, item.get("id", ""))
 		if item.get("id", "") == selected_inventory_id: inventory_list.select(index)
 	$HUD/ContainerPanel/Margin/Layout/Title.text = "КОНТЕЙНЕР · %d ПРЕДМ. · V%d" % [state.get("items", []).size(), version]
@@ -489,11 +527,12 @@ func _selected_list_item_id(list: ItemList) -> String:
 	var selected := list.get_selected_items()
 	return str(list.get_item_metadata(selected[0])) if not selected.is_empty() else ""
 
-func _item_display(item: Dictionary) -> String:
+func _item_quantity_label(item: Dictionary) -> String:
 	var quantity := int(item.get("quantity", 1))
-	var suffix := " x%d" % quantity if quantity > 1 else ""
-	var ammo := " [%d/6]" % int(item.get("magazineAmmo", 0)) if item.get("definitionId", "") == "pistol" else ""
-	return "%s%s%s" % [_item_name(item.get("definitionId", "")), suffix, ammo]
+	var suffix := "x%d" % quantity if quantity > 1 else ""
+	if item.get("definitionId", "") == "pistol":
+		return "%s\n%d/6" % [suffix, int(item.get("magazineAmmo", 0))] if not suffix.is_empty() else "\n%d/6" % int(item.get("magazineAmmo", 0))
+	return suffix
 
 func _on_server_error(code: String) -> void:
 	var message: String = ERROR_NAMES.get(code, "Действие отклонено: %s" % code)

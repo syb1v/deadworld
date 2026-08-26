@@ -1,13 +1,13 @@
 {
   "bounds": { "x": 16, "y": 16, "width": 1248, "height": 688 },
   "areas": [
-    { "name": "ЗОНА СБОРА", "x": 510, "y": 285, "width": 260, "height": 190, "color": "344c43" },
-    { "name": "КЛИНИКА", "x": 70, "y": 70, "width": 270, "height": 170, "color": "405d62" },
-    { "name": "СКЛАД", "x": 930, "y": 65, "width": 270, "height": 180, "color": "5a5142" },
-    { "name": "ДОМ", "x": 55, "y": 335, "width": 250, "height": 170, "color": "544653" },
-    { "name": "МАГАЗИН", "x": 975, "y": 330, "width": 245, "height": 175, "color": "4d5942" },
-    { "name": "ГАРАЖ", "x": 215, "y": 555, "width": 280, "height": 125, "color": "4b5057" },
-    { "name": "УКРЫТИЕ", "x": 775, "y": 555, "width": 280, "height": 125, "color": "4d465b" }
+    { "name": "ЗОНА СБОРА", "x": 510, "y": 285, "width": 260, "height": 190, "color": "344c43", "surface": "concrete" },
+    { "name": "КЛИНИКА", "x": 70, "y": 70, "width": 270, "height": 170, "color": "405d62", "surface": "tile_clinic" },
+    { "name": "СКЛАД", "x": 930, "y": 65, "width": 270, "height": 180, "color": "5a5142", "surface": "concrete" },
+    { "name": "ДОМ", "x": 55, "y": 335, "width": 250, "height": 170, "color": "544653", "surface": "wood" },
+    { "name": "МАГАЗИН", "x": 975, "y": 330, "width": 245, "height": 175, "color": "4d5942", "surface": "tile_clinic" },
+    { "name": "ГАРАЖ", "x": 215, "y": 555, "width": 280, "height": 125, "color": "4b5057", "surface": "asphalt" },
+    { "name": "УКРЫТИЕ", "x": 775, "y": 555, "width": 280, "height": 125, "color": "4d465b", "surface": "wood" }
   ],
   "walls": [
     { "x": 70, "y": 70, "width": 270, "height": 12 },

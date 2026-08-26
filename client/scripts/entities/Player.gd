@@ -1,5 +1,16 @@
 extends Node2D
 
+## Отрисовка игрока.
+##
+## Читаемость важнее детализации: на телефоне персонаж занимает мало
+## пикселей, поэтому силуэт, направление взгляда и состояние здоровья
+## должны угадываться мгновенно.
+##
+## Позиция приходит от сервера. Здесь только сглаживание отображения:
+## клиент не является источником истины для координат.
+
+const Palette = preload("res://scripts/data/Palette.gd")
+
 var target_position := Vector2.ZERO
 var is_local := false
 var health := 100
@@ -11,6 +22,8 @@ var facing := Vector2.RIGHT
 
 func setup(local: bool) -> void:
 	is_local = local
+	# Сортировка по глубине: кто ниже на экране, тот ближе к зрителю.
+	y_sort_enabled = true
 	queue_redraw()
 
 func set_authoritative_position(value: Vector2) -> void:
@@ -36,6 +49,7 @@ func _process(delta: float) -> void:
 	var distance := position.distance_to(presented_target)
 	var response := 18.0 if distance > 24.0 else 12.0
 	position = position.lerp(presented_target, 1.0 - exp(-response * delta))
+	z_index = int(position.y)
 	queue_redraw()
 
 func set_facing(value: Vector2) -> void:
@@ -43,23 +57,69 @@ func set_facing(value: Vector2) -> void:
 		facing = value.normalized()
 
 func _draw() -> void:
-	var color := Color("565a57") if player_state == "dead" else Color("4bb5d8") if is_local else Color("d5a452")
 	if player_state == "dead":
-		draw_set_transform(Vector2.ZERO, 0.7)
-		draw_ellipse(Vector2(3, 3), 20.0, 8.0, Color(0, 0, 0, 0.38))
-		draw_line(Vector2(-14, 0), Vector2(14, 0), Color("222825"), 12.0)
-		draw_circle(Vector2(17, 0), 7.0, color)
+		_draw_corpse()
 		return
+
 	var moving := authoritative_velocity.length_squared() > 16.0
-	var stride := sin(animation_time * 11.0) * 4.0 if moving else 0.0
-	var bob := absf(sin(animation_time * 11.0)) * 2.0 if moving else sin(animation_time * 2.5) * 0.7
-	draw_ellipse(Vector2(4, 3), 15.0, 7.0, Color(0, 0, 0, 0.42))
-	draw_line(Vector2(-5, -1), Vector2(-5 + stride, 8), Color("1b2522"), 6.0)
-	draw_line(Vector2(5, -1), Vector2(5 - stride, 8), Color("1b2522"), 6.0)
-	draw_circle(Vector2(0, -10 - bob), 10.5, Color("17201d"))
-	draw_circle(Vector2(0, -11 - bob), 9.0, color)
-	draw_circle(Vector2(0, -27 - bob), 6.5, Color("c7a983"))
-	draw_line(Vector2(0, -12 - bob), facing * 18.0 + Vector2(0, -12 - bob), Color("d9ded8"), 3.0)
+	var stride := sin(animation_time * 10.0) * 3.6 if moving else 0.0
+	var bob := absf(sin(animation_time * 10.0)) * 1.8 if moving else sin(animation_time * 2.2) * 0.6
+	var body_color := Palette.PLAYER_LOCAL if is_local else Palette.PLAYER_REMOTE
+
+	# Тень: привязывает фигуру к земле, без неё персонаж «парит».
+	draw_ellipse_shape(Vector2(2, 5), 13.0, 5.5, Palette.SHADOW)
+
+	# Ноги.
+	draw_line(Vector2(-4.5, 0), Vector2(-4.5 + stride, 9), Palette.shade(body_color, 0.55), 5.5)
+	draw_line(Vector2(4.5, 0), Vector2(4.5 - stride, 9), Palette.shade(body_color, 0.55), 5.5)
+
+	# Корпус: тёмный контур + заливка. Контур даёт читаемость на любом фоне.
+	var torso := Vector2(0, -9 - bob)
+	draw_circle(torso, 10.0, Palette.WALL_EDGE)
+	draw_circle(torso, 8.6, body_color)
+	# Блик сверху: подсказывает направление света в сцене.
+	draw_circle(torso + Vector2(-2, -2.5), 4.2, Palette.light(body_color, 0.16))
+
+	# Рюкзак: силуэт выживальщика, а не абстрактного кружка.
+	var back := torso - facing * 6.0
+	draw_circle(back, 5.6, Palette.shade(Palette.PLAYER_REMOTE, 0.35))
+
+	# Голова.
+	var head := Vector2(0, -24 - bob)
+	draw_circle(head, 6.4, Palette.WALL_EDGE)
+	draw_circle(head, 5.4, Palette.SKIN)
+
+	# Оружие/направление взгляда.
+	var muzzle := torso + facing * 17.0
+	draw_line(torso, muzzle, Palette.METAL, 3.4)
+	draw_circle(muzzle, 1.8, Palette.shade(Palette.METAL, 0.3))
+
 	if health < 100:
-		draw_rect(Rect2(-14, -39, 28, 4), Color("321919"), true)
-		draw_rect(Rect2(-14, -39, 28.0 * health / 100.0, 4), Color("7fd36c"), true)
+		_draw_health_bar()
+
+	# Маркер своего персонажа: в общем мире важно не терять себя из виду.
+	if is_local:
+		var pulse: float = 0.4 + absf(sin(animation_time * 2.0)) * 0.2
+		draw_arc(Vector2(0, 2), 19.0, 0.0, TAU, 28, Color(Palette.UI_ACCENT, pulse), 1.4)
+
+func _draw_corpse() -> void:
+	draw_ellipse_shape(Vector2(3, 3), 19.0, 7.0, Palette.SHADOW_SOFT)
+	# Лужа крови: смерть должна читаться однозначно.
+	draw_ellipse_shape(Vector2(0, 2), 16.0, 6.0, Color(Palette.BLOOD, 0.55))
+	draw_line(Vector2(-13, 0), Vector2(13, 0), Palette.PLAYER_DEAD, 11.0)
+	draw_circle(Vector2(15, 0), 6.0, Palette.shade(Palette.SKIN, 0.4))
+
+func _draw_health_bar() -> void:
+	var width := 26.0
+	var ratio := clampf(float(health) / 100.0, 0.0, 1.0)
+	var origin := Vector2(-width * 0.5, -37)
+	draw_rect(Rect2(origin - Vector2(1, 1), Vector2(width + 2, 5)), Palette.WALL_EDGE, true)
+	draw_rect(Rect2(origin, Vector2(width, 3)), Palette.HEALTH_BG, true)
+	draw_rect(Rect2(origin, Vector2(width * ratio, 3)), Palette.HEALTH, true)
+
+## Эллипс для теней и луж. draw_circle со сжатием по вертикали даёт
+## нужную «проекцию на пол» без отдельной текстуры.
+func draw_ellipse_shape(center: Vector2, radius_x: float, radius_y: float, color: Color) -> void:
+	draw_set_transform(center, 0.0, Vector2(1.0, radius_y / radius_x))
+	draw_circle(Vector2.ZERO, radius_x, color)
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
