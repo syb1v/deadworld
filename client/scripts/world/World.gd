@@ -11,7 +11,9 @@ const TouchControlsScript = preload("res://scripts/ui/TouchControls.gd")
 const InteractionTarget = preload("res://scripts/ui/InteractionTarget.gd")
 const GameCameraScript = preload("res://scripts/world/GameCamera.gd")
 const AtmosphereScript = preload("res://scripts/world/Atmosphere.gd")
+const WorldPartitionScript = preload("res://scripts/world2d/WorldPartition2D.gd")
 const Palette = preload("res://scripts/data/Palette.gd")
+const MAP: Dictionary = preload("res://data/world_map.json").data
 const BUILD_LABEL := "v0.1.0-prealpha.7"
 const ITEM_NAMES: Dictionary = preload("res://data/item_names_ru.json").data
 const ERROR_NAMES := {
@@ -55,6 +57,7 @@ var container_mutation_pending := false
 var pending_container_version := -1
 var camera: Camera2D = null
 var atmosphere: Node2D = null
+var world_partition: Node2D = null
 
 func _ready() -> void:
 	var world_map := Node2D.new()
@@ -68,6 +71,10 @@ func _ready() -> void:
 	atmosphere = Node2D.new()
 	atmosphere.set_script(AtmosphereScript)
 	add_child(atmosphere)
+	world_partition = Node2D.new()
+	world_partition.set_script(WorldPartitionScript)
+	add_child(world_partition)
+	world_partition.set_descriptor(MAP)
 	var touch_layer := CanvasLayer.new()
 	touch_layer.layer = 5
 	add_child(touch_layer)
@@ -182,6 +189,8 @@ func _on_snapshot(snapshot: Dictionary) -> void:
 		players[id].set_authoritative_state(state)
 		if id == Network.player_id:
 			$HUD/StatusPanel.set_health(int(state.health))
+			if world_partition != null:
+				world_partition.update_relevance(Vector2(state.x, state.y))
 	for id in players.keys():
 		if not seen.has(id):
 			players[id].queue_free()
