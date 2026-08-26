@@ -51,7 +51,7 @@ class SpriteValidatorTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = pathlib.Path(directory)
             atlas = root / "atlas.png"
-            rows = [bytes([0]) + bytes([column, 0, 0, 255] * 8) for column in range(4)]
+            rows = [bytes([0]) + b"".join(bytes([column, 0, 0, 255]) for column in range(8)) for _ in range(4)]
             raw = b"".join(rows)
             header = struct.pack(">IIBBBBB", 8, 4, 8, 6, 0, 0, 0)
 
