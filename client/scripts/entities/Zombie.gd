@@ -9,6 +9,7 @@ extends Node2D
 ## Состояние приходит от сервера; клиент только отображает.
 
 const Palette = preload("res://scripts/data/Palette.gd")
+const LayeredCharacterScript = preload("res://scripts/entities2d/LayeredCharacter.gd")
 
 var target_position := Vector2.ZERO
 var state := "IDLE"
@@ -17,9 +18,18 @@ var velocity := Vector2.ZERO
 var snapshot_age := 0.0
 var animation_time := 0.0
 var facing := Vector2.LEFT
+var _layered_character: Node2D = null
+var _use_directional_sprites := false
 
 func _ready() -> void:
 	y_sort_enabled = true
+	_use_directional_sprites = "--2d25d" in OS.get_cmdline_user_args()
+	if _use_directional_sprites:
+		_layered_character = LayeredCharacterScript.new()
+		_layered_character.asset_id = "zombie"
+		_layered_character.position = Vector2.ZERO
+		add_child(_layered_character)
+		_layered_character.z_index = 20
 	# Разводим фазы анимации, иначе толпа движется синхронно как один организм.
 	animation_time = float(get_instance_id() % 100) * 0.07
 	queue_redraw()
@@ -30,6 +40,9 @@ func apply_snapshot(value: Dictionary) -> void:
 	hp = value.hp
 	velocity = Vector2(value.get("vx", 0.0), value.get("vy", 0.0))
 	if velocity.length_squared() > 1.0: facing = velocity.normalized()
+	if _layered_character != null:
+		var visual_state: StringName = &"death" if state == "DEAD" else (&"attack" if state == "ATTACK" else (&"walk" if state == "CHASE" or velocity.length_squared() > 4.0 else &"idle"))
+		_layered_character.apply_presentation(velocity, facing, visual_state)
 	snapshot_age = 0.0
 	if position == Vector2.ZERO:
 		position = target_position
@@ -44,6 +57,8 @@ func _process(delta: float) -> void:
 	queue_redraw()
 
 func _draw() -> void:
+	if _use_directional_sprites:
+		return
 	if state == "DEAD":
 		_draw_corpse()
 		return

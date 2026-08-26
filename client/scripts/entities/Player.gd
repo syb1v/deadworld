@@ -10,6 +10,7 @@ extends Node2D
 ## клиент не является источником истины для координат.
 
 const Palette = preload("res://scripts/data/Palette.gd")
+const LayeredCharacterScript = preload("res://scripts/entities2d/LayeredCharacter.gd")
 
 var target_position := Vector2.ZERO
 var is_local := false
@@ -19,9 +20,19 @@ var authoritative_velocity := Vector2.ZERO
 var snapshot_age := 0.0
 var animation_time := 0.0
 var facing := Vector2.RIGHT
+var _layered_character: Node2D = null
+var _use_directional_sprites := false
 
 func setup(local: bool) -> void:
 	is_local = local
+	_use_directional_sprites = "--2d25d" in OS.get_cmdline_user_args()
+	if _use_directional_sprites:
+		_layered_character = LayeredCharacterScript.new()
+		_layered_character.asset_id = "survivor"
+		_layered_character.position = Vector2.ZERO
+		add_child(_layered_character)
+		_layered_character.z_index = 20
+		queue_redraw()
 	# Сортировка по глубине: кто ниже на экране, тот ближе к зрителю.
 	y_sort_enabled = true
 	queue_redraw()
@@ -40,6 +51,9 @@ func set_authoritative_state(value: Dictionary) -> void:
 	authoritative_velocity = Vector2(value.get("vx", 0.0), value.get("vy", 0.0))
 	if authoritative_velocity.length_squared() > 4.0:
 		facing = authoritative_velocity.normalized()
+	if _layered_character != null:
+		var visual_state: StringName = &"death" if player_state == "dead" else (&"walk" if authoritative_velocity.length_squared() > 16.0 else &"idle")
+		_layered_character.apply_presentation(authoritative_velocity, facing, visual_state)
 	queue_redraw()
 
 func _process(delta: float) -> void:
@@ -57,6 +71,8 @@ func set_facing(value: Vector2) -> void:
 		facing = value.normalized()
 
 func _draw() -> void:
+	if _use_directional_sprites:
+		return
 	if player_state == "dead":
 		_draw_corpse()
 		return

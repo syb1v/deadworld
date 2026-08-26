@@ -29,6 +29,9 @@ func _ready() -> void:
 
 func apply_snapshot(new_position: Vector2, new_velocity: Vector2, aim: Vector2, state: StringName, event_id: int = -1) -> void:
 	position = new_position
+	apply_presentation(new_velocity, aim, state, event_id)
+
+func apply_presentation(new_velocity: Vector2, aim: Vector2, state: StringName, event_id: int = -1) -> void:
 	velocity = new_velocity
 	if aim.length_squared() > 0.0001:
 		facing = aim.normalized()

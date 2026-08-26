@@ -39,6 +39,33 @@ def compile_map() -> dict:
         {"id": "poi_industrial", "x": 1450, "y": 900, "districtId": "industrial"},
         {"id": "poi_perimeter", "x": 3200, "y": 1700, "districtId": "perimeter"}
     ]
+    district_width = bounds["width"] // 3
+    district_height = bounds["height"] // 3
+    district_ids = [
+        "safehouse", "residential", "clinic",
+        "industrial", "commercial", "warehouse",
+        "park", "fuel", "perimeter"
+    ]
+    surface_by_district = {
+        "safehouse": "concrete", "residential": "wood", "clinic": "tile_clinic",
+        "industrial": "asphalt", "commercial": "concrete", "warehouse": "concrete",
+        "park": "grass", "fuel": "asphalt", "perimeter": "soil"
+    }
+    areas = []
+    for index, district_id in enumerate(district_ids):
+        column = index % 3
+        row = index // 3
+        areas.append({
+            "name": district_id.upper(),
+            "districtId": district_id,
+            "x": column * district_width + 28,
+            "y": row * district_height + 28,
+            "width": district_width - 56,
+            "height": district_height - 56,
+            "color": "3a433b",
+            "surface": surface_by_district[district_id]
+        })
+    data["areas"] = areas
     return data
 
 
