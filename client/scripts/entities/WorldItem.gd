@@ -8,6 +8,7 @@ extends Node2D
 
 const Palette = preload("res://scripts/data/Palette.gd")
 const ItemIcons = preload("res://scripts/data/ItemIcons.gd")
+const DepthSort = preload("res://scripts/world2d/DepthSort2D.gd")
 const ITEM_NAMES: Dictionary = preload("res://data/item_names_ru.json").data
 
 const ICON_SIZE := 26.0
@@ -27,7 +28,7 @@ func setup(state: Dictionary) -> void:
 	var state_quantity = state.get("quantity")
 	quantity = state_quantity if state_quantity != null else 1
 	position = Vector2(state.x, state.y)
-	z_index = int(position.y)
+	DepthSort.apply(self, str(state.get("id", definition_id)))
 	_icon = ItemIcons.get_icon(definition_id)
 	queue_redraw()
 

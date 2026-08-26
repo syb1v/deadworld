@@ -76,6 +76,10 @@ test-sprites:
 	python3 scripts/generate_sprite_sets.py --output /tmp/deadworld-sprites --seed 20260826
 	python3 scripts/validate_sprite_assets.py --manifest /tmp/deadworld-sprites/characters/manifest.json --root /tmp/deadworld-sprites
 
+test-world:
+	python3 -m unittest scripts/test_validate_world_descriptor.py -v
+	python3 scripts/validate_world_descriptor.py client/data/world_map.json
+
 prod-config:
 	docker compose --env-file .env -f infra/docker-compose.prod.yml config --quiet
 
