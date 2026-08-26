@@ -14,6 +14,10 @@ Temporary authenticated test operations are served at `https://game.staydev.org/
 
 The Russian landing page at `https://game.staydev.org/` shows live server/player status and links to the current GitHub prerelease builds.
 
+### Release workflow
+
+A push to `main` runs validation only. Applications are built and attached to GitHub as a prerelease only for a tag matching `v*-prealpha.*`, and the tag must exactly match `VERSION`. Before publishing a new build, update `VERSION`, run `python3 scripts/version.py stamp`, run `make version-check` and the relevant tests, then push both `main` and the matching tag. Confirm the result with `gh release view <tag>` and verify that the expected assets are present.
+
 Project Deadworld — рабочее название кроссплатформенной persistent online survival RPG с изометрическим/2.5D представлением, server-authoritative сетевой моделью и постепенным развитием от небольшого multiplayer vertical slice до MMO-архитектуры.
 
 Главный принцип проекта:

@@ -149,7 +149,37 @@ NetworkFix.gd
 
 обнови соответствующую документацию в том же change.
 
-## 12. Финальный отчёт агента
+## 12. Release/version gate перед commit и push
+
+Любое изменение, которое должно попасть в новый prerelease/release, обязано иметь новый tag в `VERSION`. Нельзя пушить release-bound изменения с прежним `VERSION`: обычный push в `main` запускает проверки, но не публикует приложения.
+
+Перед commit и особенно перед push release-bound изменений агент обязан:
+
+1. увеличить prerelease номер в `VERSION` (например, `v0.1.0-prealpha.6` → `v0.1.0-prealpha.7`);
+2. выполнить `python3 scripts/version.py stamp`, чтобы обновить все generated version fields;
+3. выполнить `python3 scripts/version.py check` или `make version-check`;
+4. проверить `git diff`, чтобы в одном commit были `VERSION` и все затронутые platform metadata;
+5. прогнать релевантные tests/build checks;
+6. создать annotated tag, строго равный значению `VERSION`;
+7. передать в push и commit только согласованные `main` и matching version tag.
+
+`version-stamp` должен обновлять как минимум `client/export_presets.cfg`, `client/scenes/Boot.tscn`, `client/scripts/world/World.gd`, `admin/server.mjs`, `infra/docker-compose.prod.yml` и `.env.example`, если эти файлы содержат version metadata. Не редактируй отдельные версии вручную, если это можно сделать через `scripts/version.py`.
+
+Минимальный release checklist:
+
+```bash
+printf 'v0.1.0-prealpha.N\n' > VERSION
+python3 scripts/version.py stamp
+make version-check
+make test
+git diff --check
+git tag -a "$(python3 scripts/version.py print --field tag)" -m "Release $(python3 scripts/version.py print --field tag)"
+git push origin main "$(python3 scripts/version.py print --field tag)"
+```
+
+Перед объявлением release опубликованные assets нужно проверить через `gh run list` и `gh release view <tag>`. Если build job не запускался по tag или release не содержит ожидаемые assets, не считать push успешной публикацией.
+
+## 13. Финальный отчёт агента
 
 В конце задачи всегда:
 
