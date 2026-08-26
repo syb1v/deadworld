@@ -67,23 +67,15 @@ func _draw_ground(world_rect: Rect2) -> void:
 
 ## Дороги: связывают зоны и задают направление движения по карте.
 func _draw_roads(world_rect: Rect2) -> void:
-	var center_y := world_rect.position.y + world_rect.size.y * 0.5
-	var center_x := world_rect.position.x + world_rect.size.x * 0.5
-	var horizontal := Rect2(world_rect.position.x, center_y - 62.0, world_rect.size.x, 124.0)
-	var vertical := Rect2(center_x - 58.0, world_rect.position.y, 116.0, world_rect.size.y)
-	for road in [horizontal, vertical]:
+	var roads: Array[Rect2] = []
+	for fraction: float in [1.0 / 3.0, 2.0 / 3.0]:
+		var road_y: float = world_rect.position.y + world_rect.size.y * fraction
+		var road_x: float = world_rect.position.x + world_rect.size.x * fraction
+		roads.append(Rect2(world_rect.position.x, road_y - 46.0, world_rect.size.x, 92.0))
+		roads.append(Rect2(road_x - 44.0, world_rect.position.y, 88.0, world_rect.size.y))
+	for road in roads:
 		_draw_tiled(road, _surfaces["asphalt"], Palette.ASPHALT)
 		draw_rect(road, Color(Palette.VOID, 0.18), false, 2.0)
-	# Дорожная разметка: прерывистая, выцветшая.
-	var dash := 26.0
-	var x := horizontal.position.x + 12.0
-	while x < horizontal.end.x - dash:
-		draw_rect(Rect2(x, center_y - 2.0, dash, 4.0), Color(Palette.UI_ACCENT, 0.22), true)
-		x += dash * 2.2
-	var y := vertical.position.y + 12.0
-	while y < vertical.end.y - dash:
-		draw_rect(Rect2(center_x - 2.0, y, 4.0, dash), Color(Palette.UI_ACCENT, 0.18), true)
-		y += dash * 2.2
 
 ## Зона: пол помещения со своей поверхностью и мягкой границей.
 func _draw_area(area: Dictionary) -> void:
