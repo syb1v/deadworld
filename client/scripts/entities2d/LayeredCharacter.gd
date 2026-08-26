@@ -14,6 +14,7 @@ var animation_time := 0.0
 var authoritative_event_id := -1
 var _layers: Dictionary = {}
 var _frame_counts := {"idle": 6, "walk": 6, "attack": 4, "hit": 4, "death": 4}
+var _loaded_state: StringName = &""
 
 func _ready() -> void:
 	for layer_name in ["shadow", "backpack", "body", "clothing", "weapon"]:
@@ -53,6 +54,7 @@ func _process(delta: float) -> void:
 	_refresh_frame()
 
 func _refresh_textures() -> void:
+	_loaded_state = character_state
 	for layer_name in _layers:
 		var sprite: Sprite2D = _layers[layer_name]
 		var path := "res://assets/generated/characters/%s/%s_%s.png" % [asset_id, layer_name, character_state]
@@ -67,8 +69,7 @@ func _refresh_frame() -> void:
 	var frame := int(floor(animation_time * frame_rate)) % frame_count
 	for layer_name in _layers:
 		var sprite: Sprite2D = _layers[layer_name]
-		var expected_path := "res://assets/generated/characters/%s/%s_%s.png" % [asset_id, layer_name, character_state]
-		if sprite.texture == null or sprite.texture.resource_path != expected_path:
+		if sprite.texture == null or _loaded_state != character_state:
 			_refresh_textures()
 			sprite = _layers[layer_name]
 		sprite.frame = DirectionalSet.frame_index(sector, frame, frame_count)
