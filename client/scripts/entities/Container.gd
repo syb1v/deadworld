@@ -7,6 +7,7 @@ extends Node2D
 ## когда игрок рядом — иначе карта превращается в свалку текста.
 
 const Palette = preload("res://scripts/data/Palette.gd")
+const DepthSort = preload("res://scripts/world2d/DepthSort2D.gd")
 
 var item_count := 0
 var highlighted := false
@@ -18,7 +19,7 @@ func _ready() -> void:
 func setup(state: Dictionary) -> void:
 	position = Vector2(state.x, state.y)
 	item_count = state.items.size()
-	z_index = int(position.y)
+	DepthSort.apply(self, str(state.get("id", "container")))
 	queue_redraw()
 
 ## Подсветка активной цели взаимодействия. Вызывается миром, когда этот
