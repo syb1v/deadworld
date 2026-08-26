@@ -86,7 +86,7 @@ func _draw() -> void:
 					Vector2(_slot_size - padding * 2.0, _slot_size - padding * 2.0)), false)
 
 		# Количество в стаке.
-		var quantity: int = floori(float(item.get("quantity", 1)))
+		var quantity: int = str(item.get("quantity", 1)).to_int()
 		if quantity > 1:
 			var text := str(quantity)
 			draw_string(font, origin + Vector2(_slot_size - 4, _slot_size - 5), text,
@@ -94,7 +94,7 @@ func _draw() -> void:
 
 		# Патроны в магазине оружия: критичная боевая информация.
 		if item.get("definitionId", "") == "pistol":
-			var magazine: int = floori(float(item.get("magazineAmmo", 0)))
+			var magazine: int = str(item.get("magazineAmmo", 0)).to_int()
 			var color := Palette.UI_DANGER if magazine == 0 else Palette.AMMO
 			draw_string(font, origin + Vector2(_slot_size - 4, 13), "%d/6" % magazine,
 				HORIZONTAL_ALIGNMENT_RIGHT, -1, 10, color)
