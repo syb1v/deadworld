@@ -1,0 +1,419 @@
+{
+  "atlases": {
+    "characters/survivor/backpack_attack.png": {
+      "frame_height": 128,
+      "frame_width": 96,
+      "frames": 4,
+      "height": 512,
+      "sha256": "ed7966e0b6aaffe5656b794828f6a6faba79bbb1beb2cb43a89c09b92f2cc41a",
+      "width": 768
+    },
+    "characters/survivor/backpack_death.png": {
+      "frame_height": 128,
+      "frame_width": 96,
+      "frames": 4,
+      "height": 512,
+      "sha256": "8f6ac4231ea5d246cc0299ac6250025f41d225b00f67d615f0cd55729421db78",
+      "width": 768
+    },
+    "characters/survivor/backpack_hit.png": {
+      "frame_height": 128,
+      "frame_width": 96,
+      "frames": 4,
+      "height": 512,
+      "sha256": "ed7966e0b6aaffe5656b794828f6a6faba79bbb1beb2cb43a89c09b92f2cc41a",
+      "width": 768
+    },
+    "characters/survivor/backpack_idle.png": {
+      "frame_height": 128,
+      "frame_width": 96,
+      "frames": 6,
+      "height": 768,
+      "sha256": "1c09d9c5f5bf80eb6977dcd3d04540f2b578215c6bfa7509cf08579dcd71ea52",
+      "width": 768
+    },
+    "characters/survivor/backpack_walk.png": {
+      "frame_height": 128,
+      "frame_width": 96,
+      "frames": 6,
+      "height": 768,
+      "sha256": "2efa096dcac97e6bea89cecf203f73913c83aaa0b1bc8a32fd92375ade38b7a9",
+      "width": 768
+    },
+    "characters/survivor/body_attack.png": {
+      "frame_height": 128,
+      "frame_width": 96,
+      "frames": 4,
+      "height": 512,
+      "sha256": "ce1cd11a77edb8262a4725cb19687fac0672e0f74fd90d1489eabbc66d83d18e",
+      "width": 768
+    },
+    "characters/survivor/body_death.png": {
+      "frame_height": 128,
+      "frame_width": 96,
+      "frames": 4,
+      "height": 512,
+      "sha256": "9a48d230b00f060a9f22dcde2171b35a5b46bf0ae94dd69c5c90c74d0f64d54b",
+      "width": 768
+    },
+    "characters/survivor/body_hit.png": {
+      "frame_height": 128,
+      "frame_width": 96,
+      "frames": 4,
+      "height": 512,
+      "sha256": "ce1cd11a77edb8262a4725cb19687fac0672e0f74fd90d1489eabbc66d83d18e",
+      "width": 768
+    },
+    "characters/survivor/body_idle.png": {
+      "frame_height": 128,
+      "frame_width": 96,
+      "frames": 6,
+      "height": 768,
+      "sha256": "1a53e7d75ad2eabdf0b8666021ec86aafc14a05280ce26eadc4d9fe1981b34d0",
+      "width": 768
+    },
+    "characters/survivor/body_walk.png": {
+      "frame_height": 128,
+      "frame_width": 96,
+      "frames": 6,
+      "height": 768,
+      "sha256": "96df828407b2d8a21948ee53383a93851272318a67b9d624b7bd482a3e2e353c",
+      "width": 768
+    },
+    "characters/survivor/clothing_attack.png": {
+      "frame_height": 128,
+      "frame_width": 96,
+      "frames": 4,
+      "height": 512,
+      "sha256": "251274db3f06a02596d925ab6785864ec1516f09f53f72ff1bc89bf38be41f47",
+      "width": 768
+    },
+    "characters/survivor/clothing_death.png": {
+      "frame_height": 128,
+      "frame_width": 96,
+      "frames": 4,
+      "height": 512,
+      "sha256": "c524afa479d02cd71f10d83207d45b98c08ea43f0e961a0379ac65e331d67c80",
+      "width": 768
+    },
+    "characters/survivor/clothing_hit.png": {
+      "frame_height": 128,
+      "frame_width": 96,
+      "frames": 4,
+      "height": 512,
+      "sha256": "251274db3f06a02596d925ab6785864ec1516f09f53f72ff1bc89bf38be41f47",
+      "width": 768
+    },
+    "characters/survivor/clothing_idle.png": {
+      "frame_height": 128,
+      "frame_width": 96,
+      "frames": 6,
+      "height": 768,
+      "sha256": "32ed1553859a67037fb6ce788e5b5cfa97c19bedccfa66991f9be84e3f6f8e6b",
+      "width": 768
+    },
+    "characters/survivor/clothing_walk.png": {
+      "frame_height": 128,
+      "frame_width": 96,
+      "frames": 6,
+      "height": 768,
+      "sha256": "1620816ace849594c31444a008441baa941536c6ff9464355d444b1d898a061b",
+      "width": 768
+    },
+    "characters/survivor/shadow_attack.png": {
+      "frame_height": 128,
+      "frame_width": 96,
+      "frames": 4,
+      "height": 512,
+      "sha256": "879a66cf41258a9481c77408e07a43406c8d0e26bf28e762ae1b16bce9afe703",
+      "width": 768
+    },
+    "characters/survivor/shadow_death.png": {
+      "frame_height": 128,
+      "frame_width": 96,
+      "frames": 4,
+      "height": 512,
+      "sha256": "879a66cf41258a9481c77408e07a43406c8d0e26bf28e762ae1b16bce9afe703",
+      "width": 768
+    },
+    "characters/survivor/shadow_hit.png": {
+      "frame_height": 128,
+      "frame_width": 96,
+      "frames": 4,
+      "height": 512,
+      "sha256": "879a66cf41258a9481c77408e07a43406c8d0e26bf28e762ae1b16bce9afe703",
+      "width": 768
+    },
+    "characters/survivor/shadow_idle.png": {
+      "frame_height": 128,
+      "frame_width": 96,
+      "frames": 6,
+      "height": 768,
+      "sha256": "50b0247ac781994d6fb5b879d9075475429e64bac845b9ac5a5850489e11c03f",
+      "width": 768
+    },
+    "characters/survivor/shadow_walk.png": {
+      "frame_height": 128,
+      "frame_width": 96,
+      "frames": 6,
+      "height": 768,
+      "sha256": "50b0247ac781994d6fb5b879d9075475429e64bac845b9ac5a5850489e11c03f",
+      "width": 768
+    },
+    "characters/survivor/weapon_attack.png": {
+      "frame_height": 128,
+      "frame_width": 96,
+      "frames": 4,
+      "height": 512,
+      "sha256": "406291b11c8bfa943dda97a1f526157bfc1675f1745a87e903a9de0ba04f8968",
+      "width": 768
+    },
+    "characters/survivor/weapon_death.png": {
+      "frame_height": 128,
+      "frame_width": 96,
+      "frames": 4,
+      "height": 512,
+      "sha256": "584fe28ca41e8fc18310d10935c03af267df88b6298abf66cc5c80cbd5410ff9",
+      "width": 768
+    },
+    "characters/survivor/weapon_hit.png": {
+      "frame_height": 128,
+      "frame_width": 96,
+      "frames": 4,
+      "height": 512,
+      "sha256": "92e79e4126671fb3c069b6e0dcc5878208dc2c17166dcbb6a4bc60834da733cc",
+      "width": 768
+    },
+    "characters/survivor/weapon_idle.png": {
+      "frame_height": 128,
+      "frame_width": 96,
+      "frames": 6,
+      "height": 768,
+      "sha256": "7746fdb3888bdc4ffcc720f8500576c37b2e5c0a9fcf63aefb087ad6d85d022d",
+      "width": 768
+    },
+    "characters/survivor/weapon_walk.png": {
+      "frame_height": 128,
+      "frame_width": 96,
+      "frames": 6,
+      "height": 768,
+      "sha256": "031c1dbe0a17c293a8b7947e0a0648e4e471fb22a60498fd66d1b9becf322eb4",
+      "width": 768
+    },
+    "characters/zombie/backpack_attack.png": {
+      "frame_height": 128,
+      "frame_width": 96,
+      "frames": 4,
+      "height": 512,
+      "sha256": "ed7966e0b6aaffe5656b794828f6a6faba79bbb1beb2cb43a89c09b92f2cc41a",
+      "width": 768
+    },
+    "characters/zombie/backpack_death.png": {
+      "frame_height": 128,
+      "frame_width": 96,
+      "frames": 4,
+      "height": 512,
+      "sha256": "8f6ac4231ea5d246cc0299ac6250025f41d225b00f67d615f0cd55729421db78",
+      "width": 768
+    },
+    "characters/zombie/backpack_hit.png": {
+      "frame_height": 128,
+      "frame_width": 96,
+      "frames": 4,
+      "height": 512,
+      "sha256": "ed7966e0b6aaffe5656b794828f6a6faba79bbb1beb2cb43a89c09b92f2cc41a",
+      "width": 768
+    },
+    "characters/zombie/backpack_idle.png": {
+      "frame_height": 128,
+      "frame_width": 96,
+      "frames": 6,
+      "height": 768,
+      "sha256": "1c09d9c5f5bf80eb6977dcd3d04540f2b578215c6bfa7509cf08579dcd71ea52",
+      "width": 768
+    },
+    "characters/zombie/backpack_walk.png": {
+      "frame_height": 128,
+      "frame_width": 96,
+      "frames": 6,
+      "height": 768,
+      "sha256": "2efa096dcac97e6bea89cecf203f73913c83aaa0b1bc8a32fd92375ade38b7a9",
+      "width": 768
+    },
+    "characters/zombie/body_attack.png": {
+      "frame_height": 128,
+      "frame_width": 96,
+      "frames": 4,
+      "height": 512,
+      "sha256": "7708b79d2c90965454f5d8c06194146654d88114314c96f1cbe0ef2a0ebd5492",
+      "width": 768
+    },
+    "characters/zombie/body_death.png": {
+      "frame_height": 128,
+      "frame_width": 96,
+      "frames": 4,
+      "height": 512,
+      "sha256": "0b28c53d7dd2e62765439f37d0d3f9bab3936539640114b4fbe57e30d3decdf2",
+      "width": 768
+    },
+    "characters/zombie/body_hit.png": {
+      "frame_height": 128,
+      "frame_width": 96,
+      "frames": 4,
+      "height": 512,
+      "sha256": "7708b79d2c90965454f5d8c06194146654d88114314c96f1cbe0ef2a0ebd5492",
+      "width": 768
+    },
+    "characters/zombie/body_idle.png": {
+      "frame_height": 128,
+      "frame_width": 96,
+      "frames": 6,
+      "height": 768,
+      "sha256": "1bd9395294f98a06ffbc55548008f214d8008e1d73ce4a8667e34daad17da98e",
+      "width": 768
+    },
+    "characters/zombie/body_walk.png": {
+      "frame_height": 128,
+      "frame_width": 96,
+      "frames": 6,
+      "height": 768,
+      "sha256": "2dd955282bdc1f8905bf17ca6e7ce9fbaa621407ed561a55359f55a4259caecc",
+      "width": 768
+    },
+    "characters/zombie/clothing_attack.png": {
+      "frame_height": 128,
+      "frame_width": 96,
+      "frames": 4,
+      "height": 512,
+      "sha256": "251274db3f06a02596d925ab6785864ec1516f09f53f72ff1bc89bf38be41f47",
+      "width": 768
+    },
+    "characters/zombie/clothing_death.png": {
+      "frame_height": 128,
+      "frame_width": 96,
+      "frames": 4,
+      "height": 512,
+      "sha256": "c524afa479d02cd71f10d83207d45b98c08ea43f0e961a0379ac65e331d67c80",
+      "width": 768
+    },
+    "characters/zombie/clothing_hit.png": {
+      "frame_height": 128,
+      "frame_width": 96,
+      "frames": 4,
+      "height": 512,
+      "sha256": "251274db3f06a02596d925ab6785864ec1516f09f53f72ff1bc89bf38be41f47",
+      "width": 768
+    },
+    "characters/zombie/clothing_idle.png": {
+      "frame_height": 128,
+      "frame_width": 96,
+      "frames": 6,
+      "height": 768,
+      "sha256": "32ed1553859a67037fb6ce788e5b5cfa97c19bedccfa66991f9be84e3f6f8e6b",
+      "width": 768
+    },
+    "characters/zombie/clothing_walk.png": {
+      "frame_height": 128,
+      "frame_width": 96,
+      "frames": 6,
+      "height": 768,
+      "sha256": "1620816ace849594c31444a008441baa941536c6ff9464355d444b1d898a061b",
+      "width": 768
+    },
+    "characters/zombie/shadow_attack.png": {
+      "frame_height": 128,
+      "frame_width": 96,
+      "frames": 4,
+      "height": 512,
+      "sha256": "879a66cf41258a9481c77408e07a43406c8d0e26bf28e762ae1b16bce9afe703",
+      "width": 768
+    },
+    "characters/zombie/shadow_death.png": {
+      "frame_height": 128,
+      "frame_width": 96,
+      "frames": 4,
+      "height": 512,
+      "sha256": "879a66cf41258a9481c77408e07a43406c8d0e26bf28e762ae1b16bce9afe703",
+      "width": 768
+    },
+    "characters/zombie/shadow_hit.png": {
+      "frame_height": 128,
+      "frame_width": 96,
+      "frames": 4,
+      "height": 512,
+      "sha256": "879a66cf41258a9481c77408e07a43406c8d0e26bf28e762ae1b16bce9afe703",
+      "width": 768
+    },
+    "characters/zombie/shadow_idle.png": {
+      "frame_height": 128,
+      "frame_width": 96,
+      "frames": 6,
+      "height": 768,
+      "sha256": "50b0247ac781994d6fb5b879d9075475429e64bac845b9ac5a5850489e11c03f",
+      "width": 768
+    },
+    "characters/zombie/shadow_walk.png": {
+      "frame_height": 128,
+      "frame_width": 96,
+      "frames": 6,
+      "height": 768,
+      "sha256": "50b0247ac781994d6fb5b879d9075475429e64bac845b9ac5a5850489e11c03f",
+      "width": 768
+    },
+    "characters/zombie/weapon_attack.png": {
+      "frame_height": 128,
+      "frame_width": 96,
+      "frames": 4,
+      "height": 512,
+      "sha256": "406291b11c8bfa943dda97a1f526157bfc1675f1745a87e903a9de0ba04f8968",
+      "width": 768
+    },
+    "characters/zombie/weapon_death.png": {
+      "frame_height": 128,
+      "frame_width": 96,
+      "frames": 4,
+      "height": 512,
+      "sha256": "584fe28ca41e8fc18310d10935c03af267df88b6298abf66cc5c80cbd5410ff9",
+      "width": 768
+    },
+    "characters/zombie/weapon_hit.png": {
+      "frame_height": 128,
+      "frame_width": 96,
+      "frames": 4,
+      "height": 512,
+      "sha256": "92e79e4126671fb3c069b6e0dcc5878208dc2c17166dcbb6a4bc60834da733cc",
+      "width": 768
+    },
+    "characters/zombie/weapon_idle.png": {
+      "frame_height": 128,
+      "frame_width": 96,
+      "frames": 6,
+      "height": 768,
+      "sha256": "7746fdb3888bdc4ffcc720f8500576c37b2e5c0a9fcf63aefb087ad6d85d022d",
+      "width": 768
+    },
+    "characters/zombie/weapon_walk.png": {
+      "frame_height": 128,
+      "frame_width": 96,
+      "frames": 6,
+      "height": 768,
+      "sha256": "031c1dbe0a17c293a8b7947e0a0648e4e471fb22a60498fd66d1b9becf322eb4",
+      "width": 768
+    }
+  },
+  "directions": [
+    "N",
+    "NE",
+    "E",
+    "SE",
+    "S",
+    "SW",
+    "W",
+    "NW"
+  ],
+  "frame": {
+    "height": 128,
+    "width": 96
+  },
+  "version": 2
+}
