@@ -4,11 +4,11 @@
 
 Current client metadata version: `0.1.0`; public test label/tag: `v0.1.0-prealpha.6`. The final MVP tag `v0.1.0-mvp` remains gated by physical cross-platform acceptance of the updated client.
 
-Versioning is driven by the repository-root `VERSION` file. `make version-stamp` writes that tag into the Godot menu label, in-game build marker, Android `versionCode`/`versionName`, iOS `CFBundleShortVersionString`/`CFBundleVersion`, DEB/RPM package versions and the deployment defaults; `make version-check` fails when any of them drift. Every published artifact is named `deadworld-<tag>-<platform>-<arch>.<ext>`, so downloads, installers and GBox imports never collide with a previously cached file.
+Versioning is driven by the repository-root `VERSION` file. `make version-stamp` writes that tag into the Godot menu label, in-game build marker, Android `versionCode`/`versionName`, iOS `CFBundleShortVersionString`/`CFBundleVersion` and deployment defaults; `make version-check` fails when any of them drift. Every published artifact is named `deadworld-<tag>-<platform>-<arch>.<ext>`, so downloads and GBox imports never collide with a previously cached file.
 
 Production pre-alpha backend: `https://game.staydev.org` (HTTPS/WSS). Physical Android crossplay and clean-install acceptance remain release gates.
 
-The public landing groups every asset actually published in the selected release: Linux TAR.GZ/DEB/RPM architectures, Windows ZIP/EXE architectures, universal Android APK, optional unsigned iOS IPA and checksum files. iOS IPA filenames include the release tag so GBox and iOS import caches cannot silently reuse an older payload with the same filename. Linux x86_64, Windows x86_64 and Android remain the automatic release-selection core; the separately uploaded iOS artifact does not delay selection and is shown as soon as GitHub reports it.
+The public landing groups every asset actually published in the selected release: Linux x86_64/ARM64 TAR.GZ, Windows x86_64/ARM64 EXE, universal Android APK, unsigned iOS IPA and checksum files. iOS IPA filenames include the release tag so GBox and iOS import caches cannot silently reuse an older payload with the same filename. Linux x86_64, Windows x86_64 and Android remain the automatic release-selection core; the separately uploaded iOS artifact does not delay selection and is shown as soon as GitHub reports it.
 
 Temporary authenticated test operations are served at `https://game.staydev.org/admin/`. Credentials are production-host secrets; the panel exposes recent authoritative events and a persisted dead-zombie respawn action without exposing Nakama console or raw backend ports.
 
@@ -34,9 +34,9 @@ https://github.com/syb1v/deadworld
 
 ### MVP
 
-- Windows x86_64, x86_32 и ARM64
+- Windows x86_64 и ARM64
 - Android ARMv7 + ARM64
-- Linux x86_64, x86_32, ARMv7 и ARM64
+- Linux x86_64 и ARM64
 
 ### Позже
 
@@ -52,37 +52,15 @@ https://github.com/syb1v/deadworld
 | Устройство | Сборка |
 |---|---|
 | Обычный современный ПК Intel/AMD | `x86_64` |
-| Старый 32-битный ПК | `x86_32` / `i386` / `i686` |
 | Windows on ARM | `windows-arm64` |
 | Raspberry Pi 4/5, ARM64 Linux | `linux-arm64` / `arm64` / `aarch64` |
-| Старый 32-битный ARM Linux | `linux-arm32` / `armhf` / `armv7hl` |
 | Android | universal APK: ARMv7 + ARM64 |
 
 ### Windows
 
-Рекомендуемый вариант: скачать `deadworld-windows-x86_64.zip`, распаковать папку и запустить `deadworld.exe`. Game data встроены в executable.
+Скачайте самодостаточный `deadworld-windows-<arch>.exe` и запустите его. Game data встроены в executable. Windows SmartScreen может предупредить о новом неподписанном EXE: Microsoft Authenticode certificate пока отсутствует.
 
-Отдельный самодостаточный `deadworld-windows-<arch>.exe` также публикуется. Windows SmartScreen может предупредить о новом неподписанном EXE: Microsoft Authenticode certificate пока отсутствует.
-
-### Debian, Ubuntu, Linux Mint
-
-```bash
-sudo apt install ./deadworld-linux-amd64.deb
-/opt/deadworld/deadworld
-```
-
-Для других процессоров выберите `i386`, `armhf` или `arm64`.
-
-### Fedora, RHEL, Rocky, openSUSE
-
-```bash
-sudo dnf install ./deadworld-linux-x86_64.rpm
-/opt/deadworld/deadworld
-```
-
-Для других процессоров выберите `i686`, `armv7hl` или `aarch64`. На системах без `dnf` используйте штатный RPM package manager.
-
-### Arch, Manjaro и другие Linux
+### Linux
 
 Скачайте подходящий `deadworld-linux-<arch>.tar.gz`:
 
