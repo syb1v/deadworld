@@ -63,12 +63,18 @@ test-restart:
 	npm --prefix server test
 	npm --prefix server run build
 	$(COMPOSE) down
+
 	$(COMPOSE) up -d --wait
 	sleep 6
 	docker run --rm --network host --env-file .env -v "$(CURDIR)/server:/work" -v "/tmp/opencode:/tmp/opencode" -w /work -e GAME_HOST=127.0.0.1 node:24-alpine npm run test:restart:prepare
 	$(COMPOSE) down
 	$(COMPOSE) up -d --wait
 	docker run --rm --network host --env-file .env -v "$(CURDIR)/server:/work" -v "/tmp/opencode:/tmp/opencode" -w /work -e GAME_HOST=127.0.0.1 node:24-alpine npm run test:restart:verify
+
+test-sprites:
+	python3 -m unittest scripts/test_validate_sprite_assets.py -v
+	python3 scripts/generate_sprite_sets.py --output /tmp/deadworld-sprites --seed 20260826
+	python3 scripts/validate_sprite_assets.py --manifest /tmp/deadworld-sprites/characters/manifest.json --root /tmp/deadworld-sprites
 
 prod-config:
 	docker compose --env-file .env -f infra/docker-compose.prod.yml config --quiet
