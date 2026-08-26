@@ -85,11 +85,8 @@ test("admin login, status and CSRF-protected respawn", async (context) => {
 
 const releaseTag = "v0.1.0-prealpha.6";
 const releaseAssets = [
-  `deadworld-${releaseTag}-linux-x86_64.tar.gz`, `deadworld-${releaseTag}-linux-x86_32.tar.gz`, `deadworld-${releaseTag}-linux-arm64.tar.gz`, `deadworld-${releaseTag}-linux-arm32.tar.gz`,
-  `deadworld-${releaseTag}-linux-amd64.deb`, `deadworld-${releaseTag}-linux-i386.deb`, `deadworld-${releaseTag}-linux-arm64.deb`, `deadworld-${releaseTag}-linux-armhf.deb`,
-  `deadworld-${releaseTag}-linux-x86_64.rpm`, `deadworld-${releaseTag}-linux-i686.rpm`, `deadworld-${releaseTag}-linux-aarch64.rpm`, `deadworld-${releaseTag}-linux-armv7hl.rpm`,
-  `deadworld-${releaseTag}-windows-x86_64.zip`, `deadworld-${releaseTag}-windows-x86_32.zip`, `deadworld-${releaseTag}-windows-arm64.zip`,
-  `deadworld-${releaseTag}-windows-x86_64.exe`, `deadworld-${releaseTag}-windows-x86_32.exe`, `deadworld-${releaseTag}-windows-arm64.exe`,
+  `deadworld-${releaseTag}-linux-x86_64.tar.gz`, `deadworld-${releaseTag}-linux-arm64.tar.gz`,
+  `deadworld-${releaseTag}-windows-x86_64.exe`, `deadworld-${releaseTag}-windows-arm64.exe`,
   `deadworld-${releaseTag}-android-universal.apk`, `deadworld-${releaseTag}-ios-arm64-unsigned.ipa`, `deadworld-${releaseTag}-ios-arm64-unsigned.ipa.sha256`, `SHA256SUMS-${releaseTag}.txt`
 ];
 

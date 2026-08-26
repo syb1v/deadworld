@@ -74,16 +74,13 @@ prod-config:
 	docker compose --env-file .env -f infra/docker-compose.prod.yml config --quiet
 
 export-linux:
-	mkdir -p dist/linux-x86_64 dist/linux-x86_32 dist/linux-arm64 dist/linux-arm32
+	mkdir -p dist/linux-x86_64 dist/linux-arm64
 	godot --headless --path client --export-release "Linux x86_64"
-	godot --headless --path client --export-release "Linux x86_32"
 	godot --headless --path client --export-release "Linux arm64"
-	godot --headless --path client --export-release "Linux arm32"
 
 export-windows:
-	mkdir -p dist/windows-x86_64 dist/windows-x86_32 dist/windows-arm64
+	mkdir -p dist/windows-x86_64 dist/windows-arm64
 	godot --headless --path client --export-release "Windows x86_64"
-	godot --headless --path client --export-release "Windows x86_32"
 	godot --headless --path client --export-release "Windows arm64"
 
 export-android:
