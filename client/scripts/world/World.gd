@@ -12,7 +12,7 @@ const InteractionTarget = preload("res://scripts/ui/InteractionTarget.gd")
 const GameCameraScript = preload("res://scripts/world/GameCamera.gd")
 const AtmosphereScript = preload("res://scripts/world/Atmosphere.gd")
 const Palette = preload("res://scripts/data/Palette.gd")
-const BUILD_LABEL := "v0.1.0-prealpha.6"
+const BUILD_LABEL := "v0.1.0-prealpha.7"
 const ITEM_NAMES: Dictionary = preload("res://data/item_names_ru.json").data
 const ERROR_NAMES := {
 	"BAD_PAYLOAD": "Некорректный запрос",
