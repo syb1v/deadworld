@@ -44,6 +44,7 @@ func _draw() -> void:
 	for area in MAP.areas:
 		_draw_area(area)
 	_draw_debris(world_rect)
+	_draw_district_landmarks(world_rect)
 	for wall in MAP.walls:
 		_draw_wall(Rect2(wall.x, wall.y, wall.width, wall.height))
 	_draw_boundary(world_rect)
@@ -93,7 +94,7 @@ func _draw_area(area: Dictionary) -> void:
 
 ## Мусор и следы: мир должен выглядеть обжитым и заброшенным.
 func _draw_debris(world_rect: Rect2) -> void:
-	for index in range(150):
+	for index in range(420):
 		var seed_value := 5100 + index * 7
 		var px := world_rect.position.x + noise(seed_value) * world_rect.size.x
 		var py := world_rect.position.y + noise(seed_value + 3) * world_rect.size.y
@@ -111,6 +112,22 @@ func _draw_debris(world_rect: Rect2) -> void:
 			_:
 				draw_rect(Rect2(point, Vector2(3.0, 2.0) * (1.0 + noise(seed_value + 37))),
 					Color(Palette.RUST, 0.26), true)
+
+func _draw_district_landmarks(world_rect: Rect2) -> void:
+	var district_width := world_rect.size.x / 3.0
+	var district_height := world_rect.size.y / 3.0
+	for index in range(9):
+		var column := index % 3
+		var row := index / 3
+		var origin := world_rect.position + Vector2(column * district_width, row * district_height)
+		var center := origin + Vector2(district_width * 0.5, district_height * 0.5)
+		var accent: Color = [Palette.UI_OK, Palette.WALL_TRIM, Palette.METAL, Palette.RUST, Palette.UI_ACCENT][index % 5]
+		# Each district gets a landmark silhouette. These remain part of the
+		# static map draw, avoiding hundreds of independent decorative nodes.
+		draw_rect(Rect2(center - Vector2(34, 25), Vector2(68, 50)), Color(Palette.VOID, 0.22), true)
+		draw_rect(Rect2(center - Vector2(28, 19), Vector2(56, 38)), Color(accent, 0.22), true)
+		draw_line(center + Vector2(-26, 12), center + Vector2(26, 12), Color(accent, 0.62), 3.0)
+		draw_circle(center + Vector2(0, -4), 5.0 + noise(index * 101) * 4.0, Color(accent, 0.62))
 
 ## Стена с фальш-объёмом: тень, боковая грань, освещённый верх.
 ## Порядок отрисовки важен — он и создаёт ощущение высоты.
