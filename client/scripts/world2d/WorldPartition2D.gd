@@ -15,6 +15,12 @@ func set_descriptor(value: Dictionary) -> void:
 	descriptor = value
 	_clear_cells()
 
+func configure_tier(tier: StringName) -> void:
+	var settings: int = int({&"mobile": 1, &"fallback": 1, &"desktop": 2}.get(tier, 2))
+	mobile_radius = settings
+	desktop_radius = settings
+	use_mobile_budget = tier != &"desktop"
+
 func update_relevance(authoritative_position: Vector2) -> void:
 	if descriptor.is_empty():
 		return
