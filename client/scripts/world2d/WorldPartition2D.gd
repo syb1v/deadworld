@@ -7,12 +7,18 @@ const WorldCell = preload("res://scripts/world2d/WorldCell2D.gd")
 @export var mobile_radius := 1
 @export var desktop_radius := 2
 var descriptor: Dictionary = {}
+var cell_index: Dictionary = {}
 var loaded_cells: Dictionary = {}
 var proxy_cells: Dictionary = {}
 var use_mobile_budget := false
+var _last_relevance_cell := Vector2i(2147483647, 2147483647)
 
 func set_descriptor(value: Dictionary) -> void:
 	descriptor = value
+	cell_index.clear()
+	for cell in descriptor.get("cells", []):
+		cell_index[str(cell.get("id", ""))] = cell
+	_last_relevance_cell = Vector2i(2147483647, 2147483647)
 	_clear_cells()
 
 func configure_tier(tier: StringName) -> void:
@@ -26,6 +32,9 @@ func update_relevance(authoritative_position: Vector2) -> void:
 		return
 	var radius := mobile_radius if use_mobile_budget else desktop_radius
 	var center := _cell_coords(authoritative_position)
+	if center == _last_relevance_cell:
+		return
+	_last_relevance_cell = center
 	var wanted: Dictionary = {}
 	var wanted_proxies: Dictionary = {}
 	for row in range(center.y - radius - 1, center.y + radius + 2):
@@ -67,10 +76,7 @@ func _activate(cell_id: String, as_proxy: bool) -> void:
 		loaded_cells[cell_id] = cell
 
 func _find_cell(cell_id: String) -> Dictionary:
-	for cell in descriptor.get("cells", []):
-		if str(cell.get("id", "")) == cell_id:
-			return cell
-	return {}
+	return cell_index.get(cell_id, {})
 
 func _cell_coords(value: Vector2) -> Vector2i:
 	return Vector2i(floori(value.x / CELL_SIZE), floori(value.y / CELL_SIZE))
