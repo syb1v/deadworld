@@ -1,0 +1,6 @@
+{
+  "version": 1,
+  "directions": ["N", "NE", "E", "SE", "S", "SW", "W", "NW"],
+  "character_frame": {"width": 96, "height": 128},
+  "entries": []
+}
