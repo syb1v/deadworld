@@ -31,12 +31,54 @@ def validate(manifest_path: pathlib.Path, root: pathlib.Path) -> list[str]:
     directions = tuple(manifest.get("directions", []))
     if directions != DIRECTIONS:
         errors.append(f"directions must be {DIRECTIONS}, got {directions}")
-    frame = manifest.get("character_frame", {})
+    frame = manifest.get("character_frame", manifest.get("frame", {}))
     expected_size = (int(frame.get("width", 0)), int(frame.get("height", 0)))
     if expected_size != (96, 128):
         errors.append(f"character_frame must be 96x128, got {expected_size}")
 
     entries = manifest.get("entries", [])
+    atlases = manifest.get("atlases", {})
+    for relative, atlas in sorted(atlases.items()):
+        path = root / relative
+        if not path.is_file():
+            errors.append(f"missing sprite atlas: {path}")
+            continue
+        try:
+            width, height, _ = png_info(path)
+        except (OSError, ValueError) as error:
+            errors.append(str(error))
+            continue
+        expected_width = expected_size[0] * len(DIRECTIONS)
+        expected_height = expected_size[1] * int(atlas.get("frames", 0))
+        if (width, height) != (expected_width, expected_height):
+            errors.append(f"{relative}: atlas size {(width, height)} != {(expected_width, expected_height)}")
+        if (atlas.get("frame_width"), atlas.get("frame_height")) != expected_size:
+            errors.append(f"{relative}: frame size must be {expected_size}")
+        if hashlib.sha256(path.read_bytes()).hexdigest() != atlas.get("sha256"):
+            errors.append(f"{relative}: SHA256 mismatch")
+    if not entries and manifest.get("hashes"):
+        entries = []
+        for relative, expected_hash in sorted(manifest["hashes"].items()):
+            parts = pathlib.PurePosixPath(relative).parts
+            if len(parts) != 4:
+                entries.append({"path": relative, "sha256": expected_hash, "kind": "invalid"})
+                continue
+            _, asset, layer, frame_name = parts
+            stem = pathlib.PurePosixPath(frame_name).stem
+            state, direction, frame = stem.rsplit("_", 2)
+            entries.append({
+                "path": relative,
+                "sha256": expected_hash,
+                "kind": "character",
+                "asset": asset,
+                "layer": layer,
+                "state": state,
+                "direction": direction.upper(),
+                "frame": int(frame),
+                "width": expected_size[0],
+                "height": expected_size[1],
+                "pivot": [expected_size[0] // 2, expected_size[1] - 1],
+            })
     seen: set[str] = set()
     layer_contract: dict[tuple[str, str, int], tuple[int, int, int, int]] = {}
     for entry in entries:
