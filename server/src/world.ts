@@ -1,10 +1,12 @@
 import mapData from "../../client/data/world_map.json";
+import { normalizeWorldDescriptor } from "./world_cells";
 
 export interface Point { x: number; y: number; }
 interface Rect extends Point { width: number; height: number; }
 
-export const WORLD_BOUNDS: Rect = mapData.bounds;
-export const WORLD_WALLS: Rect[] = mapData.walls;
+const WORLD_DESCRIPTOR = normalizeWorldDescriptor();
+export const WORLD_BOUNDS: Rect = WORLD_DESCRIPTOR.bounds;
+export const WORLD_WALLS: Rect[] = WORLD_DESCRIPTOR.walls;
 export const PLAYER_RADIUS = 13;
 export const ZOMBIE_RADIUS = 12;
 
