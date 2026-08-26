@@ -5,6 +5,7 @@ import struct
 import sys
 import tempfile
 import unittest
+import zlib
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from validate_sprite_assets import validate
@@ -45,6 +46,25 @@ class SpriteValidatorTest(unittest.TestCase):
             entry = {"path": "missing.png", "kind": "character", "asset": "survivor", "layer": "body", "state": "idle", "direction": "N", "frame": 0, "width": 96, "height": 128, "pivot": [48, 127]}
             errors = validate(self.write_manifest(root, [entry]), root)
             self.assertEqual(errors, [f"missing sprite: {root / 'missing.png'}"])
+
+    def test_directional_atlas_columns_are_not_identical(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory)
+            atlas = root / "atlas.png"
+            rows = [bytes([0]) + bytes([column, 0, 0, 255] * 8) for column in range(4)]
+            raw = b"".join(rows)
+            header = struct.pack(">IIBBBBB", 8, 4, 8, 6, 0, 0, 0)
+
+            def chunk(tag, data):
+                return struct.pack(">I", len(data)) + tag + data + struct.pack(">I", zlib.crc32(tag + data) & 0xFFFFFFFF)
+
+            atlas.write_bytes(b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", header) + chunk(b"IDAT", zlib.compress(raw, 9)) + chunk(b"IEND", b""))
+            payload = atlas.read_bytes()
+            idat_start = payload.index(b"IDAT") + 4
+            idat_size = struct.unpack(">I", payload[idat_start - 8:idat_start - 4])[0]
+            pixels = zlib.decompress(payload[idat_start:idat_start + idat_size])
+            columns = [pixels[1 + column * 4:1 + column * 4 + 4] for column in range(8)]
+            self.assertGreater(len({bytes(column) for column in columns}), 1)
 
 
 if __name__ == "__main__":

@@ -20,49 +20,75 @@ STATES = ("idle", "walk", "attack", "hit", "death")
 LAYERS = ("shadow", "body", "clothing", "weapon", "backpack")
 
 
+def pixel_disc(c: Canvas, cx: int, cy: int, rx: int, ry: int, color: tuple[int, int, int]) -> None:
+    """Hard-edged stepped ellipse for pixel-art silhouettes."""
+    for y in range(-ry, ry + 1):
+        span = int(rx * math.sqrt(max(0.0, 1.0 - (y / max(1, ry)) ** 2)))
+        c.rect(cx - span, cy + y, span * 2 + 1, 1, color)
+
+
+def pixel_line(c: Canvas, x0: int, y0: int, x1: int, y1: int, color: tuple[int, int, int], width: int = 3) -> None:
+    steps = max(abs(x1 - x0), abs(y1 - y0), 1)
+    for step in range(steps + 1):
+        x = round(x0 + (x1 - x0) * step / steps)
+        y = round(y0 + (y1 - y0) * step / steps)
+        c.rect(x - width // 2, y - width // 2, width, width, color)
+
+
 def actor_layer(seed: int, survivor: bool, state: str, direction: str, frame: int, layer: str) -> Canvas:
-    rng = random.Random(seed)
     c = Canvas(*SIZE)
     sector = DIRECTIONS.index(direction)
-    side = math.sin(sector * math.pi / 4.0)
-    motion = math.sin(frame * math.pi / 3.0) * (2 if state == "walk" else 0)
-    cx = 48 + int(side * 2)
-    if layer == "shadow":
-        for offset in range(-18, 19):
-            radius = max(2.0, 6.0 * (1.0 - abs(offset) / 20.0))
-            c.circle(cx + offset, 119, radius, (8, 10, 8), 0.18)
-        return c
+    forward = ((0, -1), (1, -1), (1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1))[sector]
+    side = ((1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1), (0, -1), (1, -1))[sector]
+    walk_shift = (-2, 0, 2, 0)[frame % 4] if state == "walk" else 0
+    cx = 48 + side[0] * 2
     if state == "death":
-        cx += int(math.sin(frame * 0.8) * 8)
-    head_y = 39 + (2 if direction in ("N", "NW", "NE") else 0)
-    body_y = 57 + int(motion)
+        cx += side[0] * 10
+    if layer == "shadow":
+        pixel_disc(c, cx + 2, 118, 20 if state != "death" else 25, 5, (12, 14, 12))
+        return c
+    head_y = 37 + forward[1] * 2
+    body_y = 57 + walk_shift
+    skin = (188, 158, 121) if survivor else (126, 132, 99)
+    skin_shadow = (112, 85, 67) if survivor else (74, 78, 62)
+    body = (43, 66, 58) if survivor else (77, 65, 58)
+    body_light = (76, 105, 82) if survivor else (116, 92, 68)
+    cloth = (139, 101, 59) if survivor else (91, 73, 61)
     if layer == "body":
-        skin = (173, 150, 121) if survivor else (118, 126, 102)
-        body = (55, 72, 61) if survivor else (83, 66, 60)
-        c.circle(cx, head_y, 10, skin)
-        c.rect(cx - 13, body_y, 26, 39, body)
-        c.rect(cx - 17, body_y + 10, 5, 25, skin)
-        c.rect(cx + 12, body_y + 10, 5, 25, skin)
-        c.rect(cx - 10 + int(motion), body_y + 37, 8, 22, (35, 40, 37))
-        c.rect(cx + 2 - int(motion), body_y + 37, 8, 22, (35, 40, 37))
+        if state == "death":
+            c.rect(cx - 26, 96, 45, 9, body)
+            pixel_disc(c, cx + 23, 97, 7, 7, skin)
+            return c
+        pixel_disc(c, cx, head_y, 8 if direction in ("E", "W") else 9, 10, skin)
+        c.rect(cx - 12, body_y, 25, 36, body)
+        c.rect(cx - 8, body_y + 4, 16, 18, body_light)
+        pixel_line(c, cx - 13, body_y + 10, cx - 17 + side[0] * 4, body_y + 29, skin_shadow, 5)
+        pixel_line(c, cx + 12, body_y + 10, cx + 16 + side[0] * 4, body_y + 29, skin, 5)
+        c.rect(cx - 10 + walk_shift, body_y + 34, 8, 24, (28, 34, 34))
+        c.rect(cx + 2 - walk_shift, body_y + 34, 8, 24, (28, 34, 34))
         if direction in ("S", "SE", "SW"):
-            c.rect(cx - 6, head_y - 2, 12, 4, (42, 45, 39))
+            c.rect(cx - 5, head_y - 3, 11, 3, (36, 36, 32))
+        if direction in ("E", "W"):
+            c.rect(cx + (7 if direction == "E" else -9), head_y - 1, 3, 4, skin_shadow)
     elif layer == "clothing":
-        c.rect(cx - 13, body_y + 4, 26, 9, (122, 91, 55))
-        c.rect(cx - 9, body_y + 18, 18, 3, (183, 156, 83))
-        c.circle(cx - 7, body_y + 14, 2, (204, 180, 109))
-        c.circle(cx + 7, body_y + 14, 2, (204, 180, 109))
+        c.rect(cx - 12, body_y + 3, 25, 8, cloth)
+        c.rect(cx - 9, body_y + 16, 18, 3, (190, 157, 79))
+        c.rect(cx - 8, body_y + 22, 6, 8, (54, 66, 57))
+        c.rect(cx + 4, body_y + 22, 6, 8, (54, 66, 57))
+        c.rect(cx - 10, body_y + 5, 3, 12, body_light)
     elif layer == "weapon":
-        if state == "attack":
-            x0, y0 = cx + int(side * 8), body_y + 15
-            c.line(x0, y0, x0 + int(side * 24) + 10, y0 - 10, (82, 87, 84), 4)
-            c.line(x0 + int(side * 24) + 10, y0 - 10, x0 + int(side * 24) + 22, y0 - 12, (189, 177, 126), 3)
-        else:
-            c.line(cx + 8, body_y + 15, cx + 19, body_y + 23, (82, 87, 84), 4)
-            c.line(cx + 17, body_y + 21, cx + 25, body_y + 20, (189, 177, 126), 3)
-    elif layer == "backpack" and direction in ("N", "NE", "NW"):
-        c.rect(cx - 17, body_y + 7, 7, 22, (74, 82, 70))
-        c.rect(cx - 18, body_y + 12, 5, 10, (110, 92, 60))
+        aim_x = cx + forward[0] * (29 if state == "attack" else 22)
+        aim_y = body_y + 13 + forward[1] * 8
+        pixel_line(c, cx + forward[0] * 5, body_y + 13, aim_x, aim_y, (46, 51, 52), 4)
+        pixel_line(c, aim_x - forward[0] * 2, aim_y, aim_x + forward[0] * 8, aim_y + forward[1] * 2, (198, 174, 106), 3)
+        if state == "attack" and frame == 1:
+            pixel_disc(c, aim_x + forward[0] * 8, aim_y + forward[1] * 2, 4, 3, (235, 193, 88))
+    elif layer == "backpack":
+        if direction in ("N", "NE", "NW"):
+            c.rect(cx - 16, body_y + 5, 8, 23, (60, 77, 68))
+            c.rect(cx - 17, body_y + 12, 5, 9, (122, 91, 55))
+        elif direction in ("E", "W"):
+            c.rect(cx + (-13 if direction == "W" else 7), body_y + 8, 6, 17, (60, 77, 68))
     return c
 
 
