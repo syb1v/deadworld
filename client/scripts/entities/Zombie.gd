@@ -23,7 +23,7 @@ var _use_directional_sprites := false
 
 func _ready() -> void:
 	y_sort_enabled = true
-	_use_directional_sprites = "--2d25d" in OS.get_cmdline_user_args()
+	_use_directional_sprites = "--2d25d" in OS.get_cmdline_user_args() or _has_profile_argument()
 	if _use_directional_sprites:
 		_layered_character = LayeredCharacterScript.new()
 		_layered_character.asset_id = "zombie"
@@ -106,6 +106,12 @@ func _draw() -> void:
 
 	if hp < 30:
 		_draw_health_bar()
+
+func _has_profile_argument() -> bool:
+	for argument in OS.get_cmdline_user_args():
+		if argument.begins_with("--profile="):
+			return true
+	return false
 
 func _draw_corpse() -> void:
 	draw_ellipse_shape(Vector2(4, 4), 20.0, 7.5, Palette.SHADOW_SOFT)

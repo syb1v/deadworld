@@ -2,11 +2,11 @@ extends RefCounted
 class_name DepthSort2D
 
 ## Stable screen-depth key for 2.5D entities.
-## The ID tie-breaker prevents two objects at the same Y from flickering.
+## Keep the value inside Godot's CanvasItem z-index range even on the expanded map.
 static func sort_key(world_position: Vector2, stable_id: String) -> int:
-	var y_key := int(round(world_position.y * 100.0))
-	var hash_key: int = absi(stable_id.hash()) % 97
-	return y_key * 100 + hash_key
+	var y_key := int(round(world_position.y))
+	var tie_breaker: int = absi(stable_id.hash()) % 2
+	return clampi(y_key + tie_breaker, -4096, 4096)
 
 static func apply(node: Node2D, stable_id: String) -> void:
 	node.z_index = sort_key(node.position, stable_id)

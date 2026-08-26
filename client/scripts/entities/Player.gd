@@ -25,7 +25,7 @@ var _use_directional_sprites := false
 
 func setup(local: bool) -> void:
 	is_local = local
-	_use_directional_sprites = "--2d25d" in OS.get_cmdline_user_args()
+	_use_directional_sprites = "--2d25d" in OS.get_cmdline_user_args() or _has_profile_argument()
 	if _use_directional_sprites:
 		_layered_character = LayeredCharacterScript.new()
 		_layered_character.asset_id = "survivor"
@@ -69,6 +69,12 @@ func _process(delta: float) -> void:
 func set_facing(value: Vector2) -> void:
 	if value.length_squared() > 0.01:
 		facing = value.normalized()
+
+func _has_profile_argument() -> bool:
+	for argument in OS.get_cmdline_user_args():
+		if argument.begins_with("--profile="):
+			return true
+	return false
 
 func _draw() -> void:
 	if _use_directional_sprites:
